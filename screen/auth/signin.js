@@ -8,54 +8,51 @@ import {
   TouchableOpacity,
   Alert,
 } from "react-native";
+import auth from '@react-native-firebase/auth';
 import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
+import 'expo-dev-client';
 
 // Complete any pending authentication sessions
 WebBrowser.maybeCompleteAuthSession();
 
 export default function SignInPage({ navigation }) {
-  const [token, setToken] = useState("");
   const [userInfo, setUserInfo] = useState(null);
 
-  // // Google OAuth configuration
-  // const [request, response, promptAsync] = Google.useAuthRequest({
-  //   androidClientId: "382896848352-664l10kdn3j8f880srb1f83t6leg67db.apps.googleusercontent.com",
-  //   iosClientId: "382896848352-664l10kdn3j8f880srb1f83t6leg67db.apps.googleusercontent.com",
-  //   webClientId: "",
-  // });
+  // Configure Google Sign-In
+  GoogleSignin.configure({
+    webClientId: 'AIzaSyA6kVfG09SlEvFMfhhGC4NHFOk1nI49Qs0.apps.googleusercontent.com',
+  });
 
-  // useEffect(() => {
-  //   handleEffect();
-  // }, [response, token]);
+  const onGoogleButtonPress = async () => {
+    try {
+      // Check if your device supports Google Play
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+      
+      // Get the user's ID token
+      const response = await GoogleSignin.signIn();
 
-  // const handleEffect = async () => {
-  //   const user = await getLocalUser();
-  //   if (!user) {
-  //     if (response?.type === "success") {
-  //       getUserInfo(response.authentication.accessToken);
-  //     }
-  //   } else {
-  //     setUserInfo(user);
-  //     console.log("Loaded user from local storage");
-  //   }
-  // };
+      // Create a Google credential with the token
+      const googleCredential = auth.GoogleAuthProvider.credential(response.idToken);
 
-  // const getUserInfo = async (token) => {
-  //   if (!token) return;
-  //   try {
-  //     const res = await fetch("https://www.googleapis.com/userinfo/v2/me", {
-  //       headers: { Authorization: `Bearer ${token}` },
-  //     });
-  //     const user = await res.json();
-  //     await AsyncStorage.setItem("@user", JSON.stringify(user));
-  //     setUserInfo(user);
-  //     navigation.navigate("Dashboard"); // Navigate to the dashboard after login
-  //   } catch (error) {
-  //     Alert.alert("Error", "Failed to fetch user info");
-  //   }
-  // };
+      // Sign in the user with the credential and handle response
+      const responseGoogle = await auth().signInWithCredential(googleCredential);
+      const user = responseGoogle.user;
+
+      console.log("Signed in with Google: ", user);
+
+      // Store user info and navigate to dashboard
+      setUserInfo(user);
+      await AsyncStorage.setItem("@user", JSON.stringify(user));
+      navigation.navigate("Dashboard");
+
+    } catch (error) {
+      console.error("Google Sign-In Error", error);
+      Alert.alert("Error", "Failed to sign in with Google");
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -69,7 +66,7 @@ export default function SignInPage({ navigation }) {
           {/* Sign In Button */}
           <TouchableOpacity
             style={styles.signInButton}
-            onPress={() => navigation.navigate('dashboard')} // Triggers Google OAuth flow
+            onPress={() => onGoogleButtonPress().then(() => console.log('Signed in with Google!'))}
           >
             <Image
               source={require('../../assets/google-signin-button.png')}
@@ -79,14 +76,12 @@ export default function SignInPage({ navigation }) {
         </View>
       ) : (
         <View style={styles.card}>
-          {userInfo?.picture && (
-            <Image source={{ uri: userInfo?.picture }} style={styles.image} />
+          {userInfo?.photoURL && (
+            <Image source={{ uri: userInfo?.photoURL }} style={styles.image} />
           )}
           <Text style={styles.text}>Email: {userInfo.email}</Text>
-          <Text style={styles.text}>
-            Verified: {userInfo.verified_email ? "yes" : "no"}
-          </Text>
-          <Text style={styles.text}>Name: {userInfo.name}</Text>
+          <Text style={styles.text}>Verified: {userInfo.emailVerified ? "yes" : "no"}</Text>
+          <Text style={styles.text}>Name: {userInfo.displayName}</Text>
         </View>
       )}
 
@@ -103,6 +98,7 @@ export default function SignInPage({ navigation }) {
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,

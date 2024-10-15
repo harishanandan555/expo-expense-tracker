@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "MyStackNavigationApp",
-    "slug": "MyStackNavigationApp",
+    "slug": "expense-tracker",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -11,24 +11,33 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "ios": {
-      "supportsTablet": true
-    },
+  
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.render.expensetracker"
-      
+      "googleServicesFile": "./google-services.json",     
+      "package": "com.expenseapp.app"                     
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "extra": {
       "eas": {
-        "projectId": "b8084cd6-59c3-4bc8-8a88-625d80c80926"
+        "projectId": "b4eae2be-aa03-42c5-bdae-cb49258843b2"
       }
-    }
+    },
+    "plugins": [
+      "expo-asset",
+      "@react-native-firebase/app",                       
+      "@react-native-google-signin/google-signin",      
+      [
+        "expo-build-properties"
+        
+        
+      ]
+    ],
+    "owner": "mango-leef-tech-labs-pvt-ltd"
   }
 }
