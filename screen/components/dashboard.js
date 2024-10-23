@@ -7,7 +7,7 @@ import {
     TouchableOpacity,
     Modal,
     TextInput,
-
+    Button
 } from 'react-native'; 
 
 import { MaterialIcons } from '@expo/vector-icons';
@@ -83,7 +83,6 @@ const DashboardScreen = () => {
 
     const handleSaveCategory = () => {
         if (newCategory && selectedIcon) {
-            // Save the new category (this is for demonstration; you may save it in a state)
             setCreateCategoryModalVisible(false);
         }
     };
@@ -128,7 +127,8 @@ const DashboardScreen = () => {
     };
 
     return (
-        <Provider>
+        
+        <Provider>   
             <ScrollView
                 contentContainerStyle={[
                     styles.container,
@@ -172,6 +172,17 @@ const DashboardScreen = () => {
                 <View style={[styles.upgradeBar, { backgroundColor: isDarkMode ? '#FF6A00' : '#FFD580' }]}>
                     <Text style={[styles.upgradeText, { color: textColor }]}>Upgrade to premium user</Text>
                 </View>
+
+                {/* <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <Button
+        title="Go to Transactions"
+        onPress={() => navigation.navigate('Transaction')} // Navigates to TransactionScreen
+      />
+    </View> */}
+               
+                {/* <View>
+              <Text style={[{color: textColor}]}>Hello Dashboard</Text>
+              </View> */}
 
                 {/* New Income and New Expense Buttons */}
                 <View style={styles.buttonsContainer}>
@@ -513,18 +524,19 @@ const DashboardScreen = () => {
 
 
             </ScrollView>
+       
         </Provider>
     );
 };
 
 const styles = StyleSheet.create({
-    container: {
-        marginTop: 30,
+    container: {  
+        marginTop: 10,
         padding: 20,
     },
     header: {
         flexDirection: 'row',
-        justifyContent: 'flex-end', // Align Avatar to the right
+        justifyContent: 'flex-end',
         alignItems: 'center',
     },
     avatarRight: {
