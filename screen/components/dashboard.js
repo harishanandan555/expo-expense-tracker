@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -17,6 +17,7 @@ import { format } from 'date-fns'; // Use date-fns for formatting dates
 import { Picker } from '@react-native-picker/picker'; // Import Picker from @react-native-picker/picker
 import EmojiSelector from 'react-native-emoji-selector'; // For emoji picking
 import { useNavigation } from '@react-navigation/native'; // Import useNavigation hook
+import { useSQLiteContext } from 'expo-sqlite/next'; // Assuming you're using expo-sqlite context
 
 const DashboardScreen = () => {
     const [theme, setTheme] = useState('dark'); // Set default theme to dark
@@ -35,6 +36,7 @@ const DashboardScreen = () => {
     const [selectedIcon, setSelectedIcon] = useState(null);
     const [newCategory, setNewCategory] = useState('');
     const [selectedCategory, setSelectedCategory] = useState(null);
+    const [totalIncome, setTotalIncome] = useState(0); // State to store total income
 
     const [newExpenseCategory, setNewExpenseCategory] = useState('');
     const [selectedExpenseIcon, setSelectedExpenseIcon] = useState(null);
@@ -43,6 +45,7 @@ const DashboardScreen = () => {
     const [selectedExpenseCategory, setSelectedExpenseCategory] = useState(null);
 
     const navigation = useNavigation();
+    const db = useSQLiteContext(); // Your SQLite context
 
     // Function to handle theme switching
     const handleThemeSwitch = (mode) => {
@@ -107,6 +110,28 @@ const DashboardScreen = () => {
         setDatePickerVisible(false);
     };
 
+    const fetchTotalIncome = async () => {
+        try {
+            const result = await db.getAllAsync('SELECT SUM(amount) as totalIncome FROM incomes');
+            console.log('Query Result:', result);
+    
+            if (result && result.length > 0) {
+                const totalIncome = result[0]?.totalIncome || 0;
+                console.log('Total Income:', totalIncome);
+                setTotalIncome(totalIncome);
+            } else {
+                console.log('No data found in the incomes table.');
+                setTotalIncome(0);
+            }
+        } catch (error) {
+            console.error('Error fetching total income:', error);
+        }
+    };
+    
+
+    useEffect(() => {
+        fetchTotalIncome(); // Fetch total income when the component mounts
+    }, []);
 
     const openMenu = () => setMenuVisible(true);
     const closeMenu = () => setMenuVisible(false);
@@ -255,7 +280,9 @@ const DashboardScreen = () => {
                     <MaterialIcons name="trending-up" size={32} color="green" />
                     <View>
                         <Text style={[styles.overviewLabel, { color: textColor }]}>Income</Text>
-                        <Text style={[styles.overviewValue, { color: textColor }]}>$0.00</Text>
+                        <Text style={[styles.overviewValue, { color: theme === 'dark' ? '#fff' : '#000' }]}>
+                            ${totalIncome.toFixed(2)}
+                        </Text>
                     </View>
                 </View>
 
