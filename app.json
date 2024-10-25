@@ -1,24 +1,41 @@
 {
   "expo": {
-    "name": "MyStackNavigationApp",
+    "name": "expense-tracker",
     "slug": "expense-tracker",
     "version": "1.0.0",
+    "plugins": [
+      "@react-native-firebase/app",
+      "@react-native-firebase/auth",
+      [
+        "expo-file-system",
+        {
+          "android": {
+            "minSdkVersion": 21
+          }
+        }
+      ],
+      "expo-media-library"
+    ],
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+    "entryPoint": "./App.js",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-  
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.expenseapp.app"
+    },
     "android": {
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "googleServicesFile": "./google-services.json",     
-      "package": "com.expenseapp.app"                     
+      "package": "com.expenseapp.app"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -28,16 +45,7 @@
         "projectId": "b4eae2be-aa03-42c5-bdae-cb49258843b2"
       }
     },
-    "plugins": [
-      "expo-asset",
-      "@react-native-firebase/app",                       
-      "@react-native-google-signin/google-signin",      
-      [
-        "expo-build-properties"
-        
-        
-      ]
-    ],
-    "owner": "mango-leef-tech-labs-pvt-ltd"
+    "jsEngine": "hermes", 
+    "owner":"mango-leef-tech-labs-pvt-ltd"
   }
 }

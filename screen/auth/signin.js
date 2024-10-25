@@ -1,30 +1,29 @@
-import React, { useEffect, useState } from "react";
+import React, { useState} from "react";
+import { StyleSheet } from "react-native";
 import {
   View,
   Text,
-  Image,
+  TextInput,
   Button,
-  StyleSheet,
-  TouchableOpacity,
   Alert,
+  TouchableOpacity,
+  Image,
 } from "react-native";
 import auth from '@react-native-firebase/auth';
 import * as WebBrowser from "expo-web-browser";
-import * as Google from "expo-auth-session/providers/google";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { GoogleSignin } from "@react-native-google-signin/google-signin";
-import 'expo-dev-client';
 
 // Complete any pending authentication sessions
 WebBrowser.maybeCompleteAuthSession();
 
 export default function SignInPage({ navigation }) {
   const [userInfo, setUserInfo] = useState(null);
-
-  // Configure Google Sign-In
-  GoogleSignin.configure({
-    webClientId: 'AIzaSyA6kVfG09SlEvFMfhhGC4NHFOk1nI49Qs0.apps.googleusercontent.com',
-  });
+ 
+  // // Google OAuth configuration
+  // const [request, response, promptAsync] = Google.useAuthRequest({
+  //   androidClientId: "382896848352-664l10kdn3j8f880srb1f83t6leg67db.apps.googleusercontent.com",
+  //   iosClientId: "382896848352-664l10kdn3j8f880srb1f83t6leg67db.apps.googleusercontent.com",
+  //   webClientId: "",
+  // });
 
   const onGoogleButtonPress = async () => {
     try {
@@ -59,17 +58,15 @@ export default function SignInPage({ navigation }) {
       {!userInfo ? (
         <View style={styles.authContainer}>
           {/* Title */}
-          <Text style={styles.title}>
-            Plan and Track {"\n"} Your Budget!
-          </Text>
+          <Text style={styles.title}>Plan and Track {"\n"} Your Budget!</Text>
 
-          {/* Sign In Button */}
+          {/* Sign In with Google Button */}
           <TouchableOpacity
             style={styles.signInButton}
-            onPress={() => onGoogleButtonPress().then(() => console.log('Signed in with Google!'))}
+            onPress={() => navigation.navigate("main")} // Triggers Google OAuth flow
           >
             <Image
-              source={require('../../assets/google-signin-button.png')}
+              source={require("../../assets/google-signin-button.png")}
               style={styles.googleIcon}
             />
           </TouchableOpacity>
@@ -102,7 +99,7 @@ export default function SignInPage({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#000", // Black background
+    backgroundColor: "#000",
     justifyContent: "center",
     alignItems: "center",
     padding: 20,
@@ -110,17 +107,23 @@ const styles = StyleSheet.create({
   authContainer: {
     alignItems: "center",
   },
-  logo: {
-    width: 150,
-    height: 150,
-    marginBottom: 30, // Space between the logo and the title
+  input: {
+    backgroundColor: "#fff",
+    color: "#000",
+    padding: 10,
+    borderRadius: 5,
+    width: "80%",
+    marginBottom: 10,
+  },
+  recaptchaContainer: {
+    marginTop: 20,
   },
   title: {
     fontSize: 32,
     fontWeight: "bold",
     textAlign: "center",
     marginBottom: 20,
-    color: "#fff", // White text for title
+    color: "#fff",
   },
   signInButton: {
     flexDirection: "row",
@@ -136,12 +139,7 @@ const styles = StyleSheet.create({
   googleIcon: {
     width: 200,
     height: 50,
-    marginRight: 10, // Space between icon and text
-  },
-  buttonText: {
-    color: "#000", // Text color for button
-    fontWeight: "bold",
-    fontSize: 16,
+    marginRight: 10,
   },
   card: {
     borderWidth: 1,
@@ -159,6 +157,16 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     marginBottom: 5,
-    color: "#fff", // White text for user info
+    color: "#fff",
+  },
+  phoneButton: {
+    backgroundColor: "#FFA500", // Orange color
+    padding: 10,
+    borderRadius: 5,
+    marginTop: 10,
+  },
+  phoneButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
   },
 });

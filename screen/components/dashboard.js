@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
     View,
     Text,
@@ -7,7 +7,7 @@ import {
     TouchableOpacity,
     Modal,
     TextInput,
-
+    Button
 } from 'react-native'; 
 
 import { MaterialIcons } from '@expo/vector-icons';
@@ -17,7 +17,6 @@ import { format } from 'date-fns'; // Use date-fns for formatting dates
 import { Picker } from '@react-native-picker/picker'; // Import Picker from @react-native-picker/picker
 import EmojiSelector from 'react-native-emoji-selector'; // For emoji picking
 import { useNavigation } from '@react-navigation/native'; // Import useNavigation hook
-import { useSQLiteContext } from 'expo-sqlite/next'; // Assuming you're using expo-sqlite context
 
 const DashboardScreen = () => {
     const [theme, setTheme] = useState('dark'); // Set default theme to dark
@@ -36,7 +35,6 @@ const DashboardScreen = () => {
     const [selectedIcon, setSelectedIcon] = useState(null);
     const [newCategory, setNewCategory] = useState('');
     const [selectedCategory, setSelectedCategory] = useState(null);
-    const [totalIncome, setTotalIncome] = useState(0); // State to store total income
 
     const [newExpenseCategory, setNewExpenseCategory] = useState('');
     const [selectedExpenseIcon, setSelectedExpenseIcon] = useState(null);
@@ -45,7 +43,6 @@ const DashboardScreen = () => {
     const [selectedExpenseCategory, setSelectedExpenseCategory] = useState(null);
 
     const navigation = useNavigation();
-    const db = useSQLiteContext(); // Your SQLite context
 
     // Function to handle theme switching
     const handleThemeSwitch = (mode) => {
@@ -86,7 +83,6 @@ const DashboardScreen = () => {
 
     const handleSaveCategory = () => {
         if (newCategory && selectedIcon) {
-            // Save the new category (this is for demonstration; you may save it in a state)
             setCreateCategoryModalVisible(false);
         }
     };
@@ -110,28 +106,6 @@ const DashboardScreen = () => {
         setDatePickerVisible(false);
     };
 
-    const fetchTotalIncome = async () => {
-        try {
-            const result = await db.getAllAsync('SELECT SUM(amount) as totalIncome FROM incomes');
-            console.log('Query Result:', result);
-    
-            if (result && result.length > 0) {
-                const totalIncome = result[0]?.totalIncome || 0;
-                console.log('Total Income:', totalIncome);
-                setTotalIncome(totalIncome);
-            } else {
-                console.log('No data found in the incomes table.');
-                setTotalIncome(0);
-            }
-        } catch (error) {
-            console.error('Error fetching total income:', error);
-        }
-    };
-    
-
-    useEffect(() => {
-        fetchTotalIncome(); // Fetch total income when the component mounts
-    }, []);
 
     const openMenu = () => setMenuVisible(true);
     const closeMenu = () => setMenuVisible(false);
@@ -153,7 +127,8 @@ const DashboardScreen = () => {
     };
 
     return (
-        <Provider>
+        
+        <Provider>   
             <ScrollView
                 contentContainerStyle={[
                     styles.container,
@@ -197,6 +172,17 @@ const DashboardScreen = () => {
                 <View style={[styles.upgradeBar, { backgroundColor: isDarkMode ? '#FF6A00' : '#FFD580' }]}>
                     <Text style={[styles.upgradeText, { color: textColor }]}>Upgrade to premium user</Text>
                 </View>
+
+                {/* <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <Button
+        title="Go to Transactions"
+        onPress={() => navigation.navigate('Transaction')} // Navigates to TransactionScreen
+      />
+    </View> */}
+               
+                {/* <View>
+              <Text style={[{color: textColor}]}>Hello Dashboard</Text>
+              </View> */}
 
                 {/* New Income and New Expense Buttons */}
                 <View style={styles.buttonsContainer}>
@@ -280,9 +266,7 @@ const DashboardScreen = () => {
                     <MaterialIcons name="trending-up" size={32} color="green" />
                     <View>
                         <Text style={[styles.overviewLabel, { color: textColor }]}>Income</Text>
-                        <Text style={[styles.overviewValue, { color: theme === 'dark' ? '#fff' : '#000' }]}>
-                            ${totalIncome.toFixed(2)}
-                        </Text>
+                        <Text style={[styles.overviewValue, { color: textColor }]}>$0.00</Text>
                     </View>
                 </View>
 
@@ -540,18 +524,19 @@ const DashboardScreen = () => {
 
 
             </ScrollView>
+       
         </Provider>
     );
 };
 
 const styles = StyleSheet.create({
-    container: {
-        marginTop: 30,
+    container: {  
+        marginTop: 10,
         padding: 20,
     },
     header: {
         flexDirection: 'row',
-        justifyContent: 'flex-end', // Align Avatar to the right
+        justifyContent: 'flex-end',
         alignItems: 'center',
     },
     avatarRight: {
