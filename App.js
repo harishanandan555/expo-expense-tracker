@@ -15,7 +15,9 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import PhoneAuth from './screen/auth/phoneAuth';
 import EmailAuth from './screen/auth/emailAuth';
 
-import {app, auth } from './config/firebaseConfig';
+import Constants from 'expo-constants';
+console.log(Constants.manifest);
+
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
