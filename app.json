@@ -1,7 +1,10 @@
 {
   "expo": {
-    "name": "MyStackNavigationApp",
-    "slug": "expense-tracker",
+    "name": "GoogleExpo",
+    "slug": "GoogleExpo",
+    "plugins": [
+      "@react-native-google-signin/google-signin"
+    ],
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -11,33 +14,25 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-  
+    "ios": {
+      "supportsTablet": true
+    },
     "android": {
       "adaptiveIcon": {
+        "googleServicesFile": "./google-services.json",
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "googleServicesFile": "./google-services.json",     
-      "package": "com.expenseapp.app"                     
+      "package": "com.anjali_b.GoogleExpo"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "extra": {
       "eas": {
-        "projectId": "b4eae2be-aa03-42c5-bdae-cb49258843b2"
+        "projectId": "ace26c91-e480-483f-a7a5-3ca9330bdabb"
       }
     },
-    "plugins": [
-      "expo-asset",
-      "@react-native-firebase/app",                       
-      "@react-native-google-signin/google-signin",      
-      [
-        "expo-build-properties"
-        
-        
-      ]
-    ],
-    "owner": "mango-leef-tech-labs-pvt-ltd"
+    "owner": "anjali_b"
   }
 }

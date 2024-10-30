@@ -8,7 +8,8 @@ import {
     Modal,
     TextInput,
 
-} from 'react-native'; 
+} from 'react-native';
+import { useRoute } from '@react-navigation/native';
 
 import { MaterialIcons } from '@expo/vector-icons';
 import { Avatar, Menu, Divider, Provider } from 'react-native-paper';
@@ -114,7 +115,7 @@ const DashboardScreen = () => {
         try {
             const result = await db.getAllAsync('SELECT SUM(amount) as totalIncome FROM incomes');
             console.log('Query Result:', result);
-    
+
             if (result && result.length > 0) {
                 const totalIncome = result[0]?.totalIncome || 0;
                 console.log('Total Income:', totalIncome);
@@ -127,11 +128,14 @@ const DashboardScreen = () => {
             console.error('Error fetching total income:', error);
         }
     };
-    
+
 
     useEffect(() => {
         fetchTotalIncome(); // Fetch total income when the component mounts
     }, []);
+
+    const route = useRoute();
+    const { userInfo } = route.params || {};
 
     const openMenu = () => setMenuVisible(true);
     const closeMenu = () => setMenuVisible(false);
@@ -168,10 +172,18 @@ const DashboardScreen = () => {
                         onDismiss={closeMenu}
                         anchor={
                             <TouchableOpacity onPress={openMenu}>
-                                <Avatar.Text size={40} label={initials} />
+                                {userInfo?.data?.user?.photo ? (
+                                    <Avatar.Image
+                                        size={40}
+                                        source={{ uri: userInfo.data.user.photo }}
+                                    />
+                                ) : (
+                                    <Avatar.Text size={40} label={initials} />
+                                )}
                             </TouchableOpacity>
                         }
                     >
+
                         <Menu.Item
                             onPress={() => {
                                 handleThemeSwitch('light');
@@ -526,15 +538,15 @@ const DashboardScreen = () => {
                 </Modal>
 
                 <Modal visible={isExpenseEmojiPickerVisible} animationType="slide" transparent={true}>
-    <View style={styles.emojiPickerContainer}>
-        <TouchableOpacity onPress={() => { setSelectedExpenseIcon('😎'); setExpenseEmojiPickerVisible(false); }} style={styles.emoji}>
-            <Text style={{ fontSize: 30 }}>😎</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => setExpenseEmojiPickerVisible(false)} style={styles.cancelButton}>
-            <Text style={styles.buttonText}>Close</Text>
-        </TouchableOpacity>
-    </View>
-</Modal>
+                    <View style={styles.emojiPickerContainer}>
+                        <TouchableOpacity onPress={() => { setSelectedExpenseIcon('😎'); setExpenseEmojiPickerVisible(false); }} style={styles.emoji}>
+                            <Text style={{ fontSize: 30 }}>😎</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={() => setExpenseEmojiPickerVisible(false)} style={styles.cancelButton}>
+                            <Text style={styles.buttonText}>Close</Text>
+                        </TouchableOpacity>
+                    </View>
+                </Modal>
 
 
 
