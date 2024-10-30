@@ -12,7 +12,7 @@ import auth from '@react-native-firebase/auth';
 import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { GoogleSignin } from "@react-native-google-signin/google-signin";
+import { GoogleSignin, GoogleSigninButton} from "@react-native-google-signin/google-signin";
 import 'expo-dev-client';
 
 // Complete any pending authentication sessions
@@ -20,40 +20,31 @@ WebBrowser.maybeCompleteAuthSession();
 
 export default function SignInPage({ navigation }) {
   const [userInfo, setUserInfo] = useState(null);
-
+  const [initialized, setInitialized] = useState(false);
   // Configure Google Sign-In
   GoogleSignin.configure({
-    webClientId: 'AIzaSyA6kVfG09SlEvFMfhhGC4NHFOk1nI49Qs0.apps.googleusercontent.com',
+    webClientId: '460628319637-dntmu7vjb3r6bfehrtdp38h1152qcsob.apps.googleusercontent.com',
   });
 
   const onGoogleButtonPress = async () => {
     try {
-      // Check if your device supports Google Play
+      // Check if device has Google Play Services
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+      // Sign in user and get user info
+      const userInfo = await GoogleSignin.signIn();
       
-      // Get the user's ID token
-      const response = await GoogleSignin.signIn();
+      // Log user details to the console
+      console.log("User Info: ", userInfo);
 
-      // Create a Google credential with the token
-      const googleCredential = auth.GoogleAuthProvider.credential(response.idToken);
-
-      // Sign in the user with the credential and handle response
-      const responseGoogle = await auth().signInWithCredential(googleCredential);
-      const user = responseGoogle.user;
-
-      console.log("Signed in with Google: ", user);
-
-      // Store user info and navigate to dashboard
-      setUserInfo(user);
-      await AsyncStorage.setItem("@user", JSON.stringify(user));
-      navigation.navigate("Dashboard");
-
+      // Set the user info to state
+      setUserInfo(userInfo);
+      setInitialized(true);
     } catch (error) {
-      console.error("Google Sign-In Error", error);
-      Alert.alert("Error", "Failed to sign in with Google");
+      console.error(error);
     }
   };
 
+  const user = userInfo?.data?.user;
   return (
     <View style={styles.container}>
       {!userInfo ? (
@@ -76,12 +67,12 @@ export default function SignInPage({ navigation }) {
         </View>
       ) : (
         <View style={styles.card}>
-          {userInfo?.photoURL && (
-            <Image source={{ uri: userInfo?.photoURL }} style={styles.image} />
-          )}
-          <Text style={styles.text}>Email: {userInfo.email}</Text>
-          <Text style={styles.text}>Verified: {userInfo.emailVerified ? "yes" : "no"}</Text>
-          <Text style={styles.text}>Name: {userInfo.displayName}</Text>
+          <Text>Welcome, {user.name}</Text>
+          <Text>Email: {user.email}</Text>
+          <Text>Google ID: {user.id}</Text>
+          <Text>Given Name: {user.givenName}</Text>
+          <Text>Family Name: {user.familyName}</Text>
+          <Text>Profile Picture: {user.photo}</Text>
         </View>
       )}
 
