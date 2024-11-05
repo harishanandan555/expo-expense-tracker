@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Image,
 } from "react-native";
+import auth from '@react-native-firebase/auth';
 import * as WebBrowser from "expo-web-browser";
 import { auth } from "../../config/firebaseConfig";
 import { signInWithEmailAndPassword, sendPasswordResetEmail, fetchSignInMethodsForEmail  } from "firebase/auth";
@@ -30,21 +31,16 @@ export default function SignInPage({ navigation }) {
   //   webClientId: "",
   // });
 
-  // useEffect(() => {
-  //   handleEffect();
-  // }, [response, token]);
+  // const onGoogleButtonPress = async () => {
+  //   try {
+  //     // Check if your device supports Google Play
+  //     await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+      
+  //     // Get the user's ID token
+  //     const response = await GoogleSignin.signIn();
 
-  // const handleEffect = async () => {
-  //   const user = await getLocalUser();
-  //   if (!user) {
-  //     if (response?.type === "success") {
-  //       getUserInfo(response.authentication.accessToken);
-  //     }
-  //   } else {
-  //     setUserInfo(user);
-  //     console.log("Loaded user from local storage");
-  //   }
-  // };
+  //     // Create a Google credential with the token
+  //     const googleCredential = auth.GoogleAuthProvider.credential(response.idToken);
 
   // const getUserInfo = async (token) => {
   //   if (!token) return;
@@ -59,6 +55,7 @@ export default function SignInPage({ navigation }) {
   //   } catch (error) {
   //   }
   // };
+
   
   const isEmail = (input) => {
     const emailRegex = /\S+@\S+\.\S+/;
@@ -247,14 +244,12 @@ try{
         </View>
       ) : (
         <View style={styles.card}>
-          {userInfo?.picture && (
-            <Image source={{ uri: userInfo?.picture }} style={styles.image} />
+          {userInfo?.photoURL && (
+            <Image source={{ uri: userInfo?.photoURL }} style={styles.image} />
           )}
           <Text style={styles.text}>Email: {userInfo.email}</Text>
-          <Text style={styles.text}>
-            Verified: {userInfo.verified_email ? "yes" : "no"}
-          </Text>
-          <Text style={styles.text}>Name: {userInfo.name}</Text>
+          <Text style={styles.text}>Verified: {userInfo.emailVerified ? "yes" : "no"}</Text>
+          <Text style={styles.text}>Name: {userInfo.displayName}</Text>
         </View>
       )}
 
@@ -271,6 +266,7 @@ try{
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {
@@ -427,4 +423,4 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: "Poppins, Arial",
   },
-});
+})
