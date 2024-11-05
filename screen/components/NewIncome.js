@@ -114,16 +114,12 @@ const NewIncomeScreen = ({ navigation }) => {
 
 
     const handleSaveIncome = async () => {
-        console.log('Save button clicked');
-
         if (!transactionAmount || !selectedCategory || !transactionDate) {
             Alert.alert('Error', 'Please fill out all required fields: amount, category, and date.');
             return;
         }
-
+    
         try {
-            console.log('Inserting into database...');
-
             const result = await db.runAsync(
                 'INSERT INTO incomes (description, amount, category, icon, date) VALUES (?, ?, ?, ?, ?)',
                 [
@@ -134,17 +130,16 @@ const NewIncomeScreen = ({ navigation }) => {
                     transactionDate.toISOString(),
                 ]
             );
-
-            console.log('Result:', result);
-
+    
             if (result && result.rowsAffected > 0) {
                 Alert.alert('Success', 'Income transaction saved successfully!');
                 setTransactionDescription('');
                 setTransactionAmount('');
                 setSelectedCategory(null);
                 setSelectedIcon(null);
-
-
+    
+                // Navigate back to DashboardScreen with a refresh flag
+                navigation.navigate('dashboard', { refresh: true });
             } else {
                 Alert.alert('Error', 'No rows were affected. Please try again.');
             }
@@ -153,6 +148,9 @@ const NewIncomeScreen = ({ navigation }) => {
             Alert.alert('Error', `Could not save income transaction: ${error.message}`);
         }
     };
+    
+    
+    
 
 
     return (

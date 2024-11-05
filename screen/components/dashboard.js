@@ -38,7 +38,7 @@ const DashboardScreen = () => {
     const [newCategory, setNewCategory] = useState('');
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [totalIncome, setTotalIncome] = useState(0); // State to store total income
-
+     const[totalExpense,settotalExpense] =useState(0);
     const [newExpenseCategory, setNewExpenseCategory] = useState('');
     const [selectedExpenseIcon, setSelectedExpenseIcon] = useState(null);
     const [isExpenseEmojiPickerVisible, setExpenseEmojiPickerVisible] = useState(false);
@@ -130,8 +130,28 @@ const DashboardScreen = () => {
     };
 
 
+    const fetchTotalExpense = async () => {
+        try {
+            const result = await db.getAllAsync('SELECT SUM(amount) as totalExpense FROM expense');
+            console.log('Query Result:', result);
+
+            if (result && result.length > 0) {
+                const totalExpense = result[0]?.totalExpense || 0;
+                console.log('Total Expense:', totalExpense);
+                settotalExpense(totalExpense);
+            } else {
+                console.log('No data found in the expense table.');
+                settotalExpense(0);
+            }
+        } catch (error) {
+            console.error('Error fetching total expense:', error);
+        }
+    };
+
+
     useEffect(() => {
-        fetchTotalIncome(); // Fetch total income when the component mounts
+        fetchTotalIncome(); 
+        fetchTotalExpense();// Fetch total income when the component mounts
     }, []);
 
     const route = useRoute();
@@ -302,7 +322,9 @@ const DashboardScreen = () => {
                     <MaterialIcons name="trending-down" size={32} color="red" />
                     <View>
                         <Text style={[styles.overviewLabel, { color: textColor }]}>Expense</Text>
-                        <Text style={[styles.overviewValue, { color: textColor }]}>$0.00</Text>
+                        <Text style={[styles.overviewValue, { color: theme === 'dark' ? '#fff' : '#000' }]}>
+                            ${totalExpense.toFixed(2)}
+                        </Text>
                     </View>
                 </View>
 
