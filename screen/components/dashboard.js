@@ -44,6 +44,7 @@ const DashboardScreen = () => {
     const [isExpenseEmojiPickerVisible, setExpenseEmojiPickerVisible] = useState(false);
     const [expenseCategories, setExpenseCategories] = useState([]);
     const [selectedExpenseCategory, setSelectedExpenseCategory] = useState(null);
+    const [balance, setBalance] = useState(0); // State for balance
 
     const navigation = useNavigation();
     const db = useSQLiteContext(); // Your SQLite context
@@ -52,6 +53,11 @@ const DashboardScreen = () => {
     const handleThemeSwitch = (mode) => {
         setTheme(mode);
     };
+
+    useEffect(() => {
+        setBalance(totalIncome - totalExpense);
+    }, [totalIncome, totalExpense]);
+
     const toggleIncomeModal = () => {
         setIncomeModalVisible(true);
         setExpenseModalVisible(false);
@@ -332,9 +338,9 @@ const DashboardScreen = () => {
                     <MaterialIcons name="account-balance-wallet" size={32} color="blue" />
                     <View>
                         <Text style={[styles.overviewLabel, { color: textColor }]}>Balance</Text>
-                        <Text style={[styles.overviewValue, { color: textColor }]}>$0.00</Text>
+                        <Text style={[styles.overviewValue, { color: textColor }]}>${balance.toFixed(2)}</Text>
                     </View>
-                </View>
+                    </View>
 
                 {/* Income and Expense Section */}
                 <Text style={[styles.sectionTitle, { color: textColor }]}>Income</Text>
@@ -621,6 +627,10 @@ const styles = StyleSheet.create({
         borderRadius: 10,
     },
     buttonText: {
+        fontWeight: 'bold',
+    },
+    overviewValue: {
+        fontSize: 20,
         fontWeight: 'bold',
     },
     sectionTitle: {
