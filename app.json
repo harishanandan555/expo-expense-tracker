@@ -2,6 +2,7 @@
   "expo": {
     "name": "expense-tracker",
     "slug": "expense-tracker",
+   
     "version": "1.0.0",
     "plugins": [
       "@react-native-firebase/app",
@@ -32,6 +33,7 @@
     "android": {
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
+        "googleServicesFile": "./google-services.json",
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
@@ -42,7 +44,7 @@
     },
     "extra": {
       "eas": {
-        "projectId": "b4eae2be-aa03-42c5-bdae-cb49258843b2"
+        "projectId": "ace26c91-e480-483f-a7a5-3ca9330bdabb"
       }
     },
     "jsEngine": "hermes", 

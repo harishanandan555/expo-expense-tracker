@@ -59,6 +59,93 @@ const NewIncomeScreen = ({ navigation }) => {
         }
     };
 
+    const getData = async () => {
+        try {
+            const result = await db.getAllAsync('SELECT * FROM incomes');
+            console.log(result);
+        } catch (error) {
+            console.error('Error fetching data:', error);
+        }
+    };
+
+    const initializeDatabase = async () => {
+        try {
+            await db.runAsync(`
+                CREATE TABLE IF NOT EXISTS incomes (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    description TEXT,
+                    amount REAL,
+                    category TEXT,
+                    icon TEXT,
+                    date TEXT
+                )`
+            );
+            setDbLoaded(true);
+            console.log('Table created or already exists');
+        } catch (error) {
+            console.error('Error creating table:', error);
+        }
+    };
+
+
+
+    useEffect(() => {
+        const initializeAndCheckSchema = async () => {
+            await initializeDatabase();
+
+            await getData();
+
+        };
+
+        initializeAndCheckSchema();
+    }, [db]);
+
+    if (!dbLoaded) {
+        return <Text>Loading database...</Text>;
+    }
+
+
+
+    const handleSaveIncome = async () => {
+        if (!transactionAmount || !selectedCategory || !transactionDate) {
+            Alert.alert('Error', 'Please fill out all required fields: amount, category, and date.');
+            return;
+        }
+    
+        try {
+            const result = await db.runAsync(
+                'INSERT INTO incomes (description, amount, category, icon, date) VALUES (?, ?, ?, ?, ?)',
+                [
+                    transactionDescription,
+                    parseFloat(transactionAmount),
+                    selectedCategory,
+                    selectedIcon,
+                    transactionDate.toISOString(),
+                ]
+            );
+    
+            if (result && result.rowsAffected > 0) {
+                Alert.alert('Success', 'Income transaction saved successfully!');
+                setTransactionDescription('');
+                setTransactionAmount('');
+                setSelectedCategory(null);
+                setSelectedIcon(null);
+    
+                // Navigate back to DashboardScreen with a refresh flag
+                navigation.navigate('dashboard', { refresh: true });
+            } else {
+                Alert.alert('Error', 'No rows were affected. Please try again.');
+            }
+        } catch (error) {
+            console.error('Error saving income transaction:', error);
+            Alert.alert('Error', `Could not save income transaction: ${error.message}`);
+        }
+    };
+    
+    
+    
+
+
     return (
         <View style={[styles.container, { backgroundColor }]}>
             {/* Header with Dark/Light Mode Toggle */}

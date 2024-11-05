@@ -1,8 +1,8 @@
 {
   "project_info": {
-    "project_number": "622095554406",
-    "project_id": "expenseapp-cdcfe",
-    "storage_bucket": "expenseapp-cdcfe.appspot.com"
+    "project_number": "460628319637",
+    "project_id": "expo-59800",
+    "storage_bucket": "expo-59800.appspot.com"
   },
   "client": [
     {
@@ -26,17 +26,23 @@
           "client_type": 1,
           "android_info": {
             "package_name": "com.expenseapp.app",
+          "client_id": "460628319637-ko8a3ctu7346c0qurr55j1eu9lli6qdd.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.anjali_b.GoogleExpo",
             "certificate_hash": "b870bd53fa515584cb09c4825556467ad66b66c7"
           }
+        }
         },
+        
         {
-          "client_id": "622095554406-32i6saoa7sn60bu32n33f4um21ep2i65.apps.googleusercontent.com",
+          "client_id": "460628319637-dntmu7vjb3r6bfehrtdp38h1152qcsob.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyA6kVfG09SlEvFMfhhGC4NHFOk1nI49Qs0"
+          "current_key": "AIzaSyBkE1phfcI14KCqmotEQUbXXrZ58QC47rE"
         }
       ],
       "services": {
