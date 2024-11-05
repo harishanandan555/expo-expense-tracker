@@ -1,6 +1,6 @@
     import React, { useState, useEffect } from "react";
     import { StyleSheet } from "react-native";
-    import { View, TextInput, Button, Alert, Image, TouchableOpacity } from 'react-native';
+    import { View, TextInput, Text, Alert, Image, TouchableOpacity } from 'react-native';
     import { useRoute } from '@react-navigation/native';
     import { auth } from '../../config/firebaseConfig'; 
     import { signInWithPhoneNumber } from "firebase/auth";
@@ -8,8 +8,6 @@
     // import { getAuth, signInWithPhoneNumber, signInWithCredential, PhoneAuthProvider } from 'firebase/auth';
     // import 'firebase/auth';
     // import { PhoneAuthProvider,signInWithCredential } from 'firebase/auth';
-
-
 
     export default function PhoneAuth() {
     const [phoneNumber, setPhoneNumber] = useState('');
@@ -92,15 +90,22 @@
     };
 
     return (
-        <View style={{ padding: 20 }}>
+        <View style={styles.container}>
+             <Image
+                source={require('../../assets/wallet_logo.png')}
+                style={styles.logo}
+            />
+            <Text style={styles.title}>Confirm Your Mobile Number</Text>
         <TextInput
             placeholder="Enter phone number"
             value={phoneNumber}
             onChangeText={setPhoneNumber}
             keyboardType="phone-pad"
-            style={{ borderBottomWidth: 1, marginBottom: 15 }}
+            style={styles.input}
         />
-        <Button title="Send OTP" onPress={sendOTP} />
+    <TouchableOpacity onPress={sendOTP} style={styles.button}>
+                <Text style={styles.buttonText}>Send OTP</Text>
+            </TouchableOpacity>
 
         {confirmResult && (
             <>
@@ -109,9 +114,11 @@
                 value={verificationCode}
                 onChangeText={setVerificationCode}
                 keyboardType="number-pad"
-                style={{ borderBottomWidth: 1, marginTop: 15, marginBottom: 15 }}
+                style={styles.input}
             />
-            <Button title="Confirm Code" onPress={confirmCode} />
+           <TouchableOpacity onPress={confirmCode} style={styles.button}>
+                        <Text style={styles.buttonText}>Confirm Code</Text>
+                    </TouchableOpacity>
             </>
         )}
         </View>
@@ -145,44 +152,51 @@
 //     );
 // }
 
-    const styles = StyleSheet.create({
-        container: {
+const styles = StyleSheet.create({
+    container: {
         flex: 1,
-        justifyContent: 'center',
+        backgroundColor: "#000",
+        justifyContent: "center",
+        alignItems: "center",
         padding: 20,
-        backgroundColor: '#f9f9f9', // Light background color
-        },
-        logo: {
-        width: 100, // Adjust as needed
-        height: 100, // Adjust as needed
-        alignSelf: 'center',
-        marginBottom: 20, // Space between logo and inputs
-        },
-        labelText: {
-        fontSize: 18,
-        marginBottom: 10,
-        color: '#333', // Dark color for text
-        },
-        input: {
-        height: 50,
-        borderColor: '#ccc', // Light gray border
+    },
+    logo: {
+        width: 150, 
+        height: 150, 
+        marginBottom: 20,
+    },
+    title: {
+        fontSize: 25,
+        fontWeight: "bold",
+        textAlign: "center",
+        marginBottom: 20,
+        color: "#fff",
+        fontFamily: "Poppins, Arial",
+      },
+    input: {
+        backgroundColor: "#000",
+        borderColor: "#808080",
         borderWidth: 1,
-        borderRadius: 5,
-        paddingHorizontal: 10,
-        marginBottom: 15,
-        fontSize: 16,
-        backgroundColor: '#fff', // White background for input
-        },
-        button: {
-        backgroundColor: '#007bff', // Bootstrap primary color
+        color: "#fff",
+        padding: 10,
+        borderRadius: 9,
+        width: 250,
+        height: 60,
+        marginBottom: 10,
+        fontFamily: "Poppins, Arial",
+        justifyContent: "center"
+    },
+    button: {
+        backgroundColor: 'orange',
         paddingVertical: 12,
         borderRadius: 5,
         alignItems: 'center',
+        width: 100,
         marginTop: 10,
-        },
-        buttonText: {
-        color: '#fff', // White text for button
+    },
+    buttonText: {
+        color: '#fff',
         fontSize: 16,
         fontWeight: 'bold',
-        },
-    });
+    },
+});

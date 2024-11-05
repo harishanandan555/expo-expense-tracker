@@ -544,7 +544,7 @@ const styles = StyleSheet.create({
         right: 10,
     },
     avatar: {
-        backgroundColor: '#6200ee', // Customize avatar color
+        backgroundColor: '#6200ee',
     },
     upgradeBar: {
         width: '100%',

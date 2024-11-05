@@ -1,15 +1,16 @@
-import React, { useState } from "react";
-import { StyleSheet } from "react-native";
+import React, { useState, useEffect  } from "react";
+import { StyleSheet, Modal } from "react-native";
 import {
   View,
   Text,
   TextInput,
   Button,
-  Alert,
   TouchableOpacity,
   Image,
 } from "react-native";
 import * as WebBrowser from "expo-web-browser";
+import { auth } from "../../config/firebaseConfig";
+import { signInWithEmailAndPassword, sendPasswordResetEmail, fetchSignInMethodsForEmail  } from "firebase/auth";
 
 // Complete any pending authentication sessions
 WebBrowser.maybeCompleteAuthSession();
@@ -17,7 +18,11 @@ WebBrowser.maybeCompleteAuthSession();
 export default function SignInPage({ navigation }) {
   const [input, setInput] = useState(""); 
   const [userInfo, setUserInfo] = useState(null);
- 
+  const [password, setPassword] = useState("");
+  const [emailEntered, setEmailEntered] = useState("");
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertMessage, setAlertMessage] = useState("");
+
   // // Google OAuth configuration
   // const [request, response, promptAsync] = Google.useAuthRequest({
   //   androidClientId: "382896848352-664l10kdn3j8f880srb1f83t6leg67db.apps.googleusercontent.com",
@@ -52,7 +57,6 @@ export default function SignInPage({ navigation }) {
   //     setUserInfo(user);
   //     navigation.navigate("Dashboard"); // Navigate to the dashboard after login
   //   } catch (error) {
-  //     Alert.alert("Error", "Failed to fetch user info");
   //   }
   // };
   
@@ -66,34 +70,125 @@ export default function SignInPage({ navigation }) {
     return phoneRegex.test(input);
   };
 
-  const handleContinue = () => {
-    if (input) {
-      // Check if input is email or phone number and navigate accordingly
-      if (isEmail(input)) {
-        navigation.navigate("EmailAuthentication", { email: input });
-      } else if (isValidPhoneNumber(input)) {
-        navigation.navigate("PhoneAuthentication", { phone: input });
-      } else {
-        alert("Please enter a valid email address or a phone number starting with '+', followed by the country code.");
+   // Function to show alert with a custom message
+   const showAlertMessage = (message) => {
+    setAlertMessage(message);
+    setShowAlert(true);
+  };
+
+  const handleContinue = async () => {
+    const cleanedInput = input.trim();
+    if (cleanedInput) {
+
+      if (isEmail(cleanedInput)) {
+        console.log("Valid email entered:", cleanedInput);
+        setEmailEntered(cleanedInput);
+        try {
+          console.log("Checking if email exists in Firebase...");
+          const signInMethods = await fetchSignInMethodsForEmail(auth, cleanedInput);
+          console.log("Fetched sign-in methods:", signInMethods);
+          
+          if (signInMethods.length > 0) {
+            // Email exists, show password input only
+            console.log("Email exists in Firebase, showing password input.");
+            setPassword("");
+          } else {
+            // Email not found, navigate to signup
+            console.log("Email not found, navigating to sign up.");
+            navigation.navigate("EmailAuthentication", { email: cleanedInput });
+          }
+        } catch (error) {
+          console.error("Error fetching sign-in methods:", error);
+          if (error.code === 'auth/invalid-email') {
+            showAlertMessage("The email address is not valid. Please check and try again.");
+          } 
+          else if (error.code === 'auth/network-request-failed') {
+            showAlertMessage("Network error. Please check your connection and try again.");
+          }
+          else {
+            showAlertMessage("An error occurred while checking the email.");
+          }
+        }
+      } else if (isValidPhoneNumber(cleanedInput)) {
+        // navigation.navigate("PhoneAuthentication", { phone: cleanedInput });
+      } 
+      else {
+        showAlertMessage("Please enter a valid email address or a phone number starting with '+'.");
       }
     } else {
-      alert("Please enter your email or phone number.");
+      showAlertMessage("Please enter your email or phone number.");
+    }
+  };
+  
+  
+  const handleSignIn = async () => {
+    if (!emailEntered) {
+      showAlertMessage("Please enter a valid email address.");
+      return; 
+    }
+    
+    console.log("Attempting to sign in with:", emailEntered, password); 
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, emailEntered, password);
+      console.log("Sign-in successful", userCredential.user);
+      navigation.navigate("main"); 
+    } catch (error) {
+      console.error("Sign-in error:", error);
+      showAlertMessage("Sign-in error Please Check your User ID and password.",error.message);
     }
   };
 
+ const handlePasswordReset = async () =>{
+ if(!isEmail(emailEntered)){
+  showAlertMessage("Please enter a valid email address.");
+  return;
+}
+console.log("Sending password reset email to:", emailEntered);  
+try{
+  await sendPasswordResetEmail(auth, emailEntered);
+  showAlertMessage("A password reset email has been sent to your email address.");
+}catch(error){
+  console.error("Password reset error:", error);
+  showAlertMessage("Password reset error:",error.message);
+}
+};
+
   return (
     <View style={styles.container}>
+       <Modal
+        visible={showAlert}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowAlert(false)}
+      >
+          <View style={styles.alertBackground}>
+          <View style={styles.alertContainer}>
+             {/* Heading for Alert */}
+             <Text style={styles.alertHeading}>Alert</Text>
+             
+             {/* Alert message */}
+            <Text style={styles.alertText}>{alertMessage}</Text>
+            
+            <TouchableOpacity
+              onPress={() => setShowAlert(false)}
+              style={styles.alertButton}
+            >
+              <Text style={styles.alertButtonText}>OK</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       {!userInfo ? (
         <View style={styles.authContainer}>
-
           {/* Logo */}
-          <Image source={require("../../assets/wallet_logo.png")} style={styles.logo}>
-
-          </Image>
+          <Image
+            source={require("../../assets/wallet_logo.png")}
+            style={styles.logo}
+          ></Image>
 
           {/* Title */}
           <Text style={styles.title}>Welcome!</Text>
-
            {/* Email Input */}
            <TextInput
             style={styles.input}
@@ -104,12 +199,40 @@ export default function SignInPage({ navigation }) {
             keyboardType="default"
             autoCapitalize="none"
             autoCorrect={false}
+            onBlur={handleContinue}
           />
 
-          {/* Continue Button */}
-          <TouchableOpacity style={styles.phoneButton} onPress={handleContinue}>
-            <Text style={styles.buttonText}>Continue</Text>
-          </TouchableOpacity>
+           {/* Password Input - shown only if email is entered */}
+          {emailEntered && (
+            <TextInput
+              style={styles.input}
+              placeholder="Enter password*"
+              placeholderTextColor={"white"}
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+          )}
+
+            <TouchableOpacity onPress={handlePasswordReset}>
+            <Text style={styles.resetPasswordText}>Forgot Password?</Text>
+            </TouchableOpacity>
+         
+          {/* Sign In Button - shown only after entering password */}
+          {emailEntered && (
+            <TouchableOpacity style={styles.phoneButton} onPress={handleSignIn}>
+              <Text style={styles.buttonText}>Sign In</Text>
+            </TouchableOpacity>
+          )}
+  
+          <Text style={styles.infoText}>
+            Don't have an account?{" "}
+            <Text style={styles.linkText} onPress={handleContinue}>
+              Continue
+            </Text>
+          </Text>
 
           {/* Sign In with Google Button */}
           <TouchableOpacity
@@ -121,9 +244,7 @@ export default function SignInPage({ navigation }) {
               style={styles.googleIcon}
             />
           </TouchableOpacity>
-
         </View>
-
       ) : (
         <View style={styles.card}>
           {userInfo?.picture && (
@@ -150,6 +271,7 @@ export default function SignInPage({ navigation }) {
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -157,6 +279,48 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     padding: 20,
+  },
+  authContainer: {
+    alignItems: "center",
+  },
+  alertBackground: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  alertContainer: {
+    backgroundColor: "#000",
+    padding: 20,
+    borderRadius: 10,
+    width: "80%",
+    alignItems: "center",
+  },
+  alertHeading: {
+    color: "#FFA500", 
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 10,
+    fontFamily: "Poppins, Arial",
+    textAlign: "center",
+  },
+  alertText: {
+    color: "#fff",
+    fontSize: 16,
+    textAlign: "center",
+    fontFamily: "Poppins, Arial",
+    marginBottom: 10,
+  },
+  alertButton: {
+    backgroundColor: "#FFA500",
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    borderRadius: 5,
+  },
+  alertButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontFamily: "Poppins, Arial",
   },
   authContainer: {
     alignItems: "center",
@@ -198,6 +362,22 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginTop: 10,
     width: "80%",
+  },
+  linkText: {
+    color: '#007BFF', // Link color
+    textDecorationLine: 'underline', // Underline for link
+    fontSize: 16,
+    marginTop: 5,
+  },
+  infoText: {
+    color: 'white', 
+    fontSize: 16, 
+    marginTop: 5,
+  },
+  resetPasswordText: {
+    color: 'orange',
+    marginTop: 1,
+    marginLeft:180,
   },
   googleIcon: {
     width: 200,

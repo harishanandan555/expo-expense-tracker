@@ -1,18 +1,25 @@
 import React, { useEffect, useState } from 'react';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { Alert, Image, Pressable, StyleSheet, TextInput, Text, View } from 'react-native';
-import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
+import { getAuth, createUserWithEmailAndPassword, updateProfile, sendEmailVerification  } from "firebase/auth";
+import { getFirestore, doc, setDoc, getDoc} from "firebase/firestore"; 
 
 const auth = getAuth();
+const db = getFirestore();  
 
 export default function EmailAuth({ navigation, route }) {
   const [value, setValue] = useState({
     email: route.params?.email || '',
     password: '',
     confirmPassword: '',
+    displayName: '',
+    phoneNumber: '',
     error: ''
   });
 
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
+
+  
   // Password validation regex
   const passwordRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
   const validatePassword = (password) => {
@@ -21,7 +28,7 @@ export default function EmailAuth({ navigation, route }) {
 
   const signUp = async () => {
     console.log("SignUp function started");
-    if (!value.email || !value.password || !value.confirmPassword) {
+    if (!value.email || !value.password || !value.confirmPassword || !value.displayName) {
       setValue({ ...value, error: 'All fields are mandatory.' });
       console.log("Missing fields");
       return;
@@ -40,10 +47,27 @@ export default function EmailAuth({ navigation, route }) {
       return;
     }
     try {
+      const userCredential = await createUserWithEmailAndPassword(auth, value.email, value.password);
+      const user = userCredential.user;
+      console.log("User created successfully:", user);
 
-      await createUserWithEmailAndPassword(auth, value.email, value.password);
-      console.log("User created successfully");
-      Alert.alert("Success", "Account created successfully! Please sign in.");
+      // Update user profile with display name
+      await updateProfile(user, { displayName: value.displayName });
+      console.log("User profile updated successfully");
+
+      // Send email verification after user creation
+      await sendEmailVerification(user);
+      Alert.alert("Verification Sent", "A verification email has been sent to your email address.");
+
+      // Store user details in Firestore
+      await setDoc(doc(db, "users", user.uid), {
+        displayName: value.displayName,
+        email: value.email,
+        phoneNumber: value.phoneNumber,
+        emailVerified: user.emailVerified
+      });
+      console.log("User details saved successfully");
+
       navigation.navigate("signin");
     } catch (error) {
       console.log("Error creating account:", error);
@@ -54,14 +78,144 @@ export default function EmailAuth({ navigation, route }) {
     }
   };
 
+  const verifyEmail = async () => {
+    try {
+      const user = auth.currentUser;
+      if (user && !user.emailVerified) {
+        await sendEmailVerification(user);
+        Alert.alert("Verification Sent", "A verification email has been sent to your email address.");
+      } else if (user && user.emailVerified) {
+        Alert.alert("Info", "Your email is already verified.");
+      }
+    } catch (error) {
+      console.log("Error sending verification email:", error);
+      Alert.alert("Error", error.message);
+    }
+  };
+
+  const checkEmailVerification = async () => {
+    const user = auth.currentUser;
+    if (user) {
+      await user.reload(); // Ensure we have the latest user info
+      if (user.emailVerified) {
+        setIsEmailVerified(true);
+        Alert.alert("Email Verified", "Your email has been successfully verified.");
+      } else {
+        setIsEmailVerified(false);
+      }
+    }
+  };
+
+  // const getPhoneNumber = async (uid) => {
+  //   try {
+  //     const userDoc = await getDoc(doc(db, "users", uid));
+  //     if (userDoc.exists()) {
+  //       const phoneNumber = userDoc.data().phoneNumber;
+  //       console.log("Retrieved phone number:", phoneNumber);
+  //       return phoneNumber;
+  //     } else {
+  //       console.log("No phone number found for this user.");
+  //       return null;
+  //     }
+  //   } catch (error) {
+  //     console.error("Error retrieving phone number:", error);
+  //   }
+  // };
+
+  // const sendOtp = async () => {
+  //   const phoneProvider = new PhoneAuthProvider();
+  //   try {
+  //     const verifier = new RecaptchaVerifier('recaptcha-container', {
+  //       'size': 'invisible', // or 'normal'
+  //       'callback': () => {
+  //           // reCAPTCHA solved, allow signInWithPhoneNumber.
+  //       },
+  //       'expired-callback': () => {
+  //           // Response expired. Ask user to re-enter.
+  //       }
+  //   }, auth);
+
+  //     const verificationId = await phoneProvider.verifyPhoneNumber({
+  //       phoneNumber,
+  //       verifier
+  //       // Include recaptcha verification here if needed
+  //     });
+  //     setVerificationId(verificationId);
+  //     Alert.alert("OTP Sent", "An OTP has been sent to your phone number.");
+  //   } catch (error) {
+  //     console.log("Error sending OTP:", error);
+  //     Alert.alert("Error", error.message);
+  //   }
+  // };
+
+  // const sendOtp = async () => {
+  //   setRecaptchaVisible(true); // Show reCAPTCHA
+  //   const appVerifier = new FirebaseRecaptchaVerifierModal(); // Create recaptcha verifier
+
+  //   try {
+  //     const verificationId = await PhoneAuthProvider.verifyPhoneNumber(auth, {
+  //       phoneNumber,
+  //       appVerifier, // Use the reCAPTCHA verifier
+  //     });
+  //     setVerificationId(verificationId);
+  //     Alert.alert("OTP Sent", "An OTP has been sent to your phone number.");
+  //   } catch (error) {
+  //     console.log("Error sending OTP:", error);
+  //     Alert.alert("Error", error.message);
+  //   }
+  // };
+
+  // const verifyOtp = async () => {
+  //   if (!verificationId) {
+  //     Alert.alert("Error", "Verification ID is not set. Please send OTP first.");
+  //     return;
+  //   }
+
+  //   const credential = PhoneAuthProvider.credential(verificationId, otp);
+  //   try {
+  //     const userCredential = await auth.currentUser.linkWithCredential(credential);
+  //     Alert.alert("Phone Verified", "Your phone number has been verified successfully.");
+      
+  //     // Store phone number
+  //     await updateProfile(userCredential.user, { phoneNumber });
+  //     console.log("User's phone number linked:", userCredential.user.phoneNumber);
+  //   } catch (error) {
+  //     console.log("Error verifying OTP:", error);
+  //     Alert.alert("Error", error.message);
+  //   }
+  // };
+
+  useEffect(() => {
+    const intervalId = setInterval(async () => {
+      const user = auth.currentUser;
+      if (user) {
+        await user.reload(); // Ensure we have the latest user info
+        if (user.emailVerified) {
+          setIsEmailVerified(true);
+          Alert.alert("Email Verified", "Your email has been successfully verified.");
+        }
+      }
+    }, 3000);
+    return () => clearInterval(intervalId);
+  }, []);
+
   return (
     <View style={styles.container}>
       <View style={styles.innerContainer}>
-       <Image source={require("../../assets/wallet_logo.png")} style={styles.logo} />
+        <Image source={require("../../assets/wallet_logo.png")} style={styles.logo} />
 
         <Text style={styles.title}>Sign Up</Text>
 
         <View style={styles.inputContainer}>
+          <View style={styles.inputWrapper}>
+            <Icon style={styles.icon} name="person" size={18} color="gray" />
+            <TextInput
+              placeholder="Display Name"
+              placeholderTextColor="#fff"
+              style={styles.input}
+              onChangeText={(text) => setValue({ ...value, displayName: text })}
+            />
+          </View>
           <View style={styles.inputWrapper}>
             <Icon style={styles.icon} name="email" size={18} color="gray" />
             <TextInput
@@ -71,7 +225,48 @@ export default function EmailAuth({ navigation, route }) {
               style={styles.input}
               onChangeText={(text) => setValue({ ...value, email: text })}
             />
+            <Pressable style={styles.verifyButton} onPress={verifyEmail()}>
+              <Text style={styles.verifyButtonText}>Verify</Text>
+            </Pressable>
           </View>
+
+          <View style={styles.inputWrapper}>
+            <Icon style={styles.icon} name="phone" size={18} color="gray" />
+            <TextInput
+              placeholder="Phone Number"
+              placeholderTextColor="#fff"
+              style={styles.input}
+              onChangeText={(text) => setValue({ ...value, phoneNumber: text })}
+            />
+          </View>
+
+          {/* <View style={styles.inputWrapper}>
+            <Icon style={styles.icon} name="phone" size={18} color="gray" />
+            <TextInput
+              placeholder="Phone Number"
+              placeholderTextColor="#fff"
+              style={styles.input}
+              onChangeText={setPhoneNumber}
+              keyboardType="phone-pad"
+            />
+            <Pressable style={styles.verifyButton} onPress={sendOtp}>
+              <Text style={styles.verifyButtonText}>Send OTP</Text>
+            </Pressable>
+          </View>
+
+          <View style={styles.inputWrapper}>
+            <Icon style={styles.icon} name="lock" size={18} color="gray" />
+            <TextInput
+              placeholder="Enter OTP"
+              placeholderTextColor="#fff"
+              style={styles.input}
+              onChangeText={setOtp}
+              keyboardType="number-pad"
+            />
+            <Pressable style={styles.verifyButton} onPress={verifyOtp}>
+              <Text style={styles.verifyButtonText}>Verify OTP</Text>
+            </Pressable>
+          </View> */}
 
           <View style={styles.inputWrapper}>
             <Icon style={styles.icon} name="lock" size={18} color="gray" />
@@ -94,6 +289,11 @@ export default function EmailAuth({ navigation, route }) {
               onChangeText={(text) => setValue({ ...value, confirmPassword: text })}
             />
           </View>
+          {/* <FirebaseRecaptchaVerifierModal
+            ref={ref => setRecaptchaVerifier(ref)}
+            firebaseConfig={auth.app.options}
+            attemptInvisibleVerification={true}
+          /> */}
         </View>
 
         {value.error ? <Text style={styles.errorText}>{value.error}</Text> : null}
@@ -110,7 +310,6 @@ export default function EmailAuth({ navigation, route }) {
   );
 }
 
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -126,15 +325,15 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     alignSelf: "center",
-    marginBottom: 10, 
+    marginBottom: 10,
   },
   title: {
     fontSize: 29,
     fontWeight: 'bold',
     color: 'white',
     marginVertical: 20,
-    padding: 10, 
-    borderRadius: 5, 
+    padding: 10,
+    borderRadius: 5,
     fontFamily: 'Poppins'
   },
   inputContainer: {
@@ -148,7 +347,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 10,
     marginBottom: 10,
-    borderColor: 'grey', 
+    borderColor: 'grey',
     borderWidth: 1,
   },
   input: {
@@ -160,14 +359,25 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   button: {
-    backgroundColor: 'orange', 
-    borderRadius: 5, 
+    backgroundColor: 'orange',
+    borderRadius: 5,
     paddingVertical: 10,
     paddingHorizontal: 20,
     alignSelf: 'center',
   },
   buttonText: {
     color: 'white',
+    fontWeight: 'bold',
+  },
+  verifyButton: {
+    marginLeft: 10,
+    backgroundColor: '#28a745',
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 5,
+  },
+  verifyButtonText: {
+    color: '#fff',
     fontWeight: 'bold',
   },
   footerText: {

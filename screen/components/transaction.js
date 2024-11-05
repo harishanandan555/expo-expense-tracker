@@ -6,14 +6,18 @@ import {
   FlatList,
   TouchableOpacity,
   Alert,
+  Image,
 } from "react-native";
-import { Avatar, Menu, Provider } from "react-native-paper";
+import { Avatar, Menu, Divider, Provider } from 'react-native-paper';
 import { Picker } from "@react-native-picker/picker";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { format } from "date-fns";
 // import * as MediaLibrary from "expo-media-library";
 import * as FileSystem from "expo-file-system";
 import Icon from "react-native-vector-icons/MaterialIcons";
+import { useNavigation } from '@react-navigation/native';
+import { auth } from "../../config/firebaseConfig";
+
 
 const initialTransactionsData = [
   {
@@ -46,6 +50,7 @@ const categories = ["Category", "Salary", "Grocery"];
 const transactionTypes = ["Type", "Income", "Expense"];
 
 const TransactionScreen = () => {
+  const [theme, setTheme] = useState('dark');
   const [menuVisible, setMenuVisible] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("Category");
   const [selectedType, setSelectedType] = useState("Type");
@@ -60,6 +65,13 @@ const TransactionScreen = () => {
   const openMenu = () => setMenuVisible(true);
   const closeMenu = () => setMenuVisible(false);
 
+  const navigation = useNavigation();
+
+   // Determine colors based on the theme
+   const isDarkMode = theme === 'dark';
+   const backgroundColor = isDarkMode ? '#000' : '#fff';
+   const textColor = isDarkMode ? '#fff' : '#000';
+
   const showDatePicker = () => {
     setDatePickerVisibility(true);
   };
@@ -67,6 +79,10 @@ const TransactionScreen = () => {
   const hideDatePicker = () => {
     setDatePickerVisibility(false);
   };
+
+  const handleThemeSwitch = (mode) => {
+    setTheme(mode);
+};
 
   const handleConfirm = (date) => {
     const formattedDate = format(date, "dd-MM-yyyy");
@@ -173,44 +189,66 @@ const TransactionScreen = () => {
     );
   };
 
+  const handleLogout = async () => {
+    try {
+      await auth.signOut();
+      Alert.alert("Logged Out", "You have successfully logged out.");
+      navigation.navigate("signin")
+      // Optionally, navigate back to the login screen
+    } catch (error) {
+      console.log(error)
+      Alert.alert("Logout Error", error.message);
+    }
+  };
+
   return (
     <Provider>
       <View style={styles.container}>
         {/* Header Section */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Transactions History</Text>
+        <Image
+            source={require("../../assets/wallet_logo.png")}
+            style={styles.logo}
+          ></Image>
+          {/* <Text style={styles.headerTitle}>Transactions History</Text> */}
           <Menu
             visible={menuVisible}
             onDismiss={closeMenu}
+            style={{size:50}}
             anchor={
               <TouchableOpacity onPress={openMenu}>
-                <Avatar.Text size={30} label="A" />
+                <Avatar.Text size={45} label="R" />
               </TouchableOpacity>
             }
           >
             <Menu.Item
               onPress={() => {
-                setSelectedCategory("Category");
+                handleThemeSwitch("light");
                 closeMenu();
               }}
-              title="All Categories"
+              title="Light"
+              icon="weather-sunny"
             />
             <Menu.Item
               onPress={() => {
-                setSelectedCategory("Salary");
+                handleThemeSwitch("dark");
                 closeMenu();
               }}
-              title="Salary"
+              title="Dark"
+              icon="weather-night"
             />
+            <Divider />
             <Menu.Item
               onPress={() => {
-                setSelectedCategory("Grocery");
+                handleLogout(); // Call the logout method here
                 closeMenu();
               }}
-              title="Grocery"
+              title="Logout"
+              icon="logout"
             />
           </Menu>
         </View>
+        <Text style={styles.headerTitle}>Transactions History</Text>
 
         {/* Filter Section */}
         <View style={styles.filterContainer}>
@@ -218,7 +256,7 @@ const TransactionScreen = () => {
             <Picker
               selectedValue={selectedCategory}
               onValueChange={(itemValue) => setSelectedCategory(itemValue)}
-              style={styles.picker}
+              style={[styles.picker, { backgroundColor: isDarkMode ? '#121212' : '#fff', color: textColor }]}
             >
               {categories.map((category) => (
                 <Picker.Item key={category} label={category} value={category} />
@@ -230,7 +268,7 @@ const TransactionScreen = () => {
             <Picker
               selectedValue={selectedType}
               onValueChange={(itemValue) => setSelectedType(itemValue)}
-              style={styles.picker}
+              style={[styles.picker, { backgroundColor: isDarkMode ? '#121212' : '#fff', color: textColor }]}
             >
               {transactionTypes.map((type) => (
                 <Picker.Item key={type} label={type} value={type} />
@@ -302,6 +340,7 @@ const TransactionScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    marginTop: 10,
     padding: 20,
     backgroundColor: "#000",
   },
@@ -309,12 +348,26 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 20,
+    marginBottom: 10,
   },
   headerTitle: {
     fontSize: 24,
     color: "#fff",
+    marginBottom:10,
   },
+  avatarRight: {
+    position: 'absolute',
+    right: 10,
+},
+avatar: {
+  backgroundColor: '#6200ee', // Customize avatar color
+},
+logo: {
+  marginTop:10,
+  width: 50, 
+  height: 50, 
+  marginBottom: 10,
+},
   filterContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
