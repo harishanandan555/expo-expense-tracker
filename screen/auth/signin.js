@@ -162,7 +162,7 @@ const handleContinueToSignup = () => {
 
       
       setUserInfo(userInfo);
-      navigation.navigate("dashboard");
+      navigation.navigate("main");
     } catch (error) {
       console.error(error);
     }
@@ -297,41 +297,6 @@ const handleContinueToSignup = () => {
               style={styles.googleIcon}
             />
           </TouchableOpacity>
-
-          {/* Input Card for Email/Password Login */}
-          {/* <View style={styles.inputCard}> */}
-            {/* <TextInput
-              style={styles.input}
-              placeholder="Email"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-            /> */}
-
-            {/* <TouchableOpacity onPress={() => setIsNewUser(!isNewUser)}>
-              <Text style={styles.switchText}>
-                {isNewUser
-                  ? "Already have an account? Log in"
-                  : "Don't have an account? Sign up"}
-              </Text>
-            </TouchableOpacity> */}
-
-            {/* <TouchableOpacity
-              style={styles.loginButton}
-              onPress={handleEmailLoginOrSignUp}
-            >
-              <Text style={styles.buttonText}>
-                {isNewUser ? "Sign Up" : "Log In"}
-              </Text>
-            </TouchableOpacity> */}
-          {/* </View> */}
         </View>
       ) : (
         <View style={styles.card}>

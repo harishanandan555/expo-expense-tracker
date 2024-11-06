@@ -47,7 +47,7 @@ const DashboardScreen = () => {
     const [balance, setBalance] = useState(0); // State for balance
 
     const navigation = useNavigation();
-    // const db = useSQLiteContext(); // Your SQLite context
+    const db = useSQLiteContext(); // Your SQLite context
 
     // Function to handle theme switching
     const handleThemeSwitch = (mode) => {

@@ -43,7 +43,7 @@ const NewExpenseScreen = ({ navigation }) => {
     const cancelButtonColor = isDarkMode ? '#444' : '#ddd';
 
 
-    // const db = useSQLiteContext();
+    const db = useSQLiteContext();
 
     const handleDateConfirm = (date) => {
         setTransactionDate(date);

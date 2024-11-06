@@ -2,9 +2,9 @@
   "expo": {
     "name": "expense-tracker",
     "slug": "expense-tracker",
-   
     "version": "1.0.0",
     "plugins": [
+      "@react-native-google-signin/google-signin",
       "@react-native-firebase/app",
       "@react-native-firebase/auth",
       [
@@ -20,34 +20,30 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "entryPoint": "./App.js",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.expenseapp.app"
+      "supportsTablet": true
     },
     "android": {
-      "googleServicesFile": "./google-services.json",
+      "googleServicesFile":"./google-services.json",
       "adaptiveIcon": {
-        "googleServicesFile": "./google-services.json",
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.expenseapp.app"
+      "package": "com.mangoleeftechlabspvtltd.expensetracker"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "extra": {
       "eas": {
-        "projectId": "ace26c91-e480-483f-a7a5-3ca9330bdabb"
+        "projectId": "b4eae2be-aa03-42c5-bdae-cb49258843b2"
       }
     },
-    "jsEngine": "hermes", 
-    "owner":"mango-leef-tech-labs-pvt-ltd"
+    "owner": "mango-leef-tech-labs-pvt-ltd"
   }
 }
