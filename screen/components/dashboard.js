@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -7,8 +7,9 @@ import {
     TouchableOpacity,
     Modal,
     TextInput,
-    Button
-} from 'react-native'; 
+
+} from 'react-native';
+import { useRoute } from '@react-navigation/native';
 
 import { MaterialIcons } from '@expo/vector-icons';
 import { Avatar, Menu, Divider, Provider } from 'react-native-paper';
@@ -17,6 +18,7 @@ import { format } from 'date-fns'; // Use date-fns for formatting dates
 import { Picker } from '@react-native-picker/picker'; // Import Picker from @react-native-picker/picker
 import EmojiSelector from 'react-native-emoji-selector'; // For emoji picking
 import { useNavigation } from '@react-navigation/native'; // Import useNavigation hook
+import { useSQLiteContext } from 'expo-sqlite/next'; // Assuming you're using expo-sqlite context
 
 const DashboardScreen = () => {
     const [theme, setTheme] = useState('dark'); // Set default theme to dark
@@ -35,19 +37,27 @@ const DashboardScreen = () => {
     const [selectedIcon, setSelectedIcon] = useState(null);
     const [newCategory, setNewCategory] = useState('');
     const [selectedCategory, setSelectedCategory] = useState(null);
-
+    const [totalIncome, setTotalIncome] = useState(0); // State to store total income
+     const[totalExpense,settotalExpense] =useState(0);
     const [newExpenseCategory, setNewExpenseCategory] = useState('');
     const [selectedExpenseIcon, setSelectedExpenseIcon] = useState(null);
     const [isExpenseEmojiPickerVisible, setExpenseEmojiPickerVisible] = useState(false);
     const [expenseCategories, setExpenseCategories] = useState([]);
     const [selectedExpenseCategory, setSelectedExpenseCategory] = useState(null);
+    const [balance, setBalance] = useState(0); // State for balance
 
     const navigation = useNavigation();
+    const db = useSQLiteContext(); // Your SQLite context
 
     // Function to handle theme switching
     const handleThemeSwitch = (mode) => {
         setTheme(mode);
     };
+
+    useEffect(() => {
+        setBalance(totalIncome - totalExpense);
+    }, [totalIncome, totalExpense]);
+
     const toggleIncomeModal = () => {
         setIncomeModalVisible(true);
         setExpenseModalVisible(false);
@@ -83,6 +93,7 @@ const DashboardScreen = () => {
 
     const handleSaveCategory = () => {
         if (newCategory && selectedIcon) {
+            // Save the new category (this is for demonstration; you may save it in a state)
             setCreateCategoryModalVisible(false);
         }
     };
@@ -106,6 +117,51 @@ const DashboardScreen = () => {
         setDatePickerVisible(false);
     };
 
+    const fetchTotalIncome = async () => {
+        try {
+            const result = await db.getAllAsync('SELECT SUM(amount) as totalIncome FROM incomes');
+            console.log('Query Result:', result);
+
+            if (result && result.length > 0) {
+                const totalIncome = result[0]?.totalIncome || 0;
+                console.log('Total Income:', totalIncome);
+                setTotalIncome(totalIncome);
+            } else {
+                console.log('No data found in the incomes table.');
+                setTotalIncome(0);
+            }
+        } catch (error) {
+            console.error('Error fetching total income:', error);
+        }
+    };
+
+
+    const fetchTotalExpense = async () => {
+        try {
+            const result = await db.getAllAsync('SELECT SUM(amount) as totalExpense FROM expense');
+            console.log('Query Result:', result);
+
+            if (result && result.length > 0) {
+                const totalExpense = result[0]?.totalExpense || 0;
+                console.log('Total Expense:', totalExpense);
+                settotalExpense(totalExpense);
+            } else {
+                console.log('No data found in the expense table.');
+                settotalExpense(0);
+            }
+        } catch (error) {
+            console.error('Error fetching total expense:', error);
+        }
+    };
+
+
+    useEffect(() => {
+        fetchTotalIncome(); 
+        fetchTotalExpense();// Fetch total income when the component mounts
+    }, []);
+
+    const route = useRoute();
+    const { userInfo } = route.params || {};
 
     const openMenu = () => setMenuVisible(true);
     const closeMenu = () => setMenuVisible(false);
@@ -127,8 +183,7 @@ const DashboardScreen = () => {
     };
 
     return (
-        
-        <Provider>   
+        <Provider>
             <ScrollView
                 contentContainerStyle={[
                     styles.container,
@@ -143,10 +198,18 @@ const DashboardScreen = () => {
                         onDismiss={closeMenu}
                         anchor={
                             <TouchableOpacity onPress={openMenu}>
-                                <Avatar.Text size={40} label={initials} />
+                                {userInfo?.data?.user?.photo ? (
+                                    <Avatar.Image
+                                        size={40}
+                                        source={{ uri: userInfo.data.user.photo }}
+                                    />
+                                ) : (
+                                    <Avatar.Text size={40} label={initials} />
+                                )}
                             </TouchableOpacity>
                         }
                     >
+
                         <Menu.Item
                             onPress={() => {
                                 handleThemeSwitch('light');
@@ -172,17 +235,6 @@ const DashboardScreen = () => {
                 <View style={[styles.upgradeBar, { backgroundColor: isDarkMode ? '#FF6A00' : '#FFD580' }]}>
                     <Text style={[styles.upgradeText, { color: textColor }]}>Upgrade to premium user</Text>
                 </View>
-
-                {/* <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <Button
-        title="Go to Transactions"
-        onPress={() => navigation.navigate('Transaction')} // Navigates to TransactionScreen
-      />
-    </View> */}
-               
-                {/* <View>
-              <Text style={[{color: textColor}]}>Hello Dashboard</Text>
-              </View> */}
 
                 {/* New Income and New Expense Buttons */}
                 <View style={styles.buttonsContainer}>
@@ -266,7 +318,9 @@ const DashboardScreen = () => {
                     <MaterialIcons name="trending-up" size={32} color="green" />
                     <View>
                         <Text style={[styles.overviewLabel, { color: textColor }]}>Income</Text>
-                        <Text style={[styles.overviewValue, { color: textColor }]}>$0.00</Text>
+                        <Text style={[styles.overviewValue, { color: theme === 'dark' ? '#fff' : '#000' }]}>
+                            ${totalIncome.toFixed(2)}
+                        </Text>
                     </View>
                 </View>
 
@@ -274,7 +328,9 @@ const DashboardScreen = () => {
                     <MaterialIcons name="trending-down" size={32} color="red" />
                     <View>
                         <Text style={[styles.overviewLabel, { color: textColor }]}>Expense</Text>
-                        <Text style={[styles.overviewValue, { color: textColor }]}>$0.00</Text>
+                        <Text style={[styles.overviewValue, { color: theme === 'dark' ? '#fff' : '#000' }]}>
+                            ${totalExpense.toFixed(2)}
+                        </Text>
                     </View>
                 </View>
 
@@ -282,9 +338,9 @@ const DashboardScreen = () => {
                     <MaterialIcons name="account-balance-wallet" size={32} color="blue" />
                     <View>
                         <Text style={[styles.overviewLabel, { color: textColor }]}>Balance</Text>
-                        <Text style={[styles.overviewValue, { color: textColor }]}>$0.00</Text>
+                        <Text style={[styles.overviewValue, { color: textColor }]}>${balance.toFixed(2)}</Text>
                     </View>
-                </View>
+                    </View>
 
                 {/* Income and Expense Section */}
                 <Text style={[styles.sectionTitle, { color: textColor }]}>Income</Text>
@@ -510,33 +566,32 @@ const DashboardScreen = () => {
                 </Modal>
 
                 <Modal visible={isExpenseEmojiPickerVisible} animationType="slide" transparent={true}>
-    <View style={styles.emojiPickerContainer}>
-        <TouchableOpacity onPress={() => { setSelectedExpenseIcon('😎'); setExpenseEmojiPickerVisible(false); }} style={styles.emoji}>
-            <Text style={{ fontSize: 30 }}>😎</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => setExpenseEmojiPickerVisible(false)} style={styles.cancelButton}>
-            <Text style={styles.buttonText}>Close</Text>
-        </TouchableOpacity>
-    </View>
-</Modal>
+                    <View style={styles.emojiPickerContainer}>
+                        <TouchableOpacity onPress={() => { setSelectedExpenseIcon('😎'); setExpenseEmojiPickerVisible(false); }} style={styles.emoji}>
+                            <Text style={{ fontSize: 30 }}>😎</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={() => setExpenseEmojiPickerVisible(false)} style={styles.cancelButton}>
+                            <Text style={styles.buttonText}>Close</Text>
+                        </TouchableOpacity>
+                    </View>
+                </Modal>
 
 
 
 
             </ScrollView>
-       
         </Provider>
     );
 };
 
 const styles = StyleSheet.create({
-    container: {  
-        marginTop: 10,
+    container: {
+        marginTop: 30,
         padding: 20,
     },
     header: {
         flexDirection: 'row',
-        justifyContent: 'flex-end',
+        justifyContent: 'flex-end', // Align Avatar to the right
         alignItems: 'center',
     },
     avatarRight: {
@@ -572,6 +627,10 @@ const styles = StyleSheet.create({
         borderRadius: 10,
     },
     buttonText: {
+        fontWeight: 'bold',
+    },
+    overviewValue: {
+        fontSize: 20,
         fontWeight: 'bold',
     },
     sectionTitle: {

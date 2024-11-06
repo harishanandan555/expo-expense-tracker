@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -7,22 +7,32 @@ import {
     StyleSheet,
     Switch,
     Modal,
+    Alert,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons'; // For icons
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { format } from 'date-fns'; // For date formatting
 import EmojiSelector from 'react-native-emoji-selector'; // For emoji picking
+import { useSQLiteContext } from 'expo-sqlite/next'; // Import SQLite context
+
+
+
 
 const NewIncomeScreen = ({ navigation }) => {
     const [transactionDate, setTransactionDate] = useState(new Date());
     const [isDatePickerVisible, setDatePickerVisible] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [newCategory, setNewCategory] = useState('');
+    const [transactionAmount, setTransactionAmount] = useState('');
+    const [transactionDescription, setTransactionDescription] = useState('');
     const [isDarkMode, setIsDarkMode] = useState(true); // Dark mode as default
     const [selectedIcon, setSelectedIcon] = useState(null);
     const [isEmojiPickerVisible, setEmojiPickerVisible] = useState(false);
     const [isCategoryModalVisible, setCategoryModalVisible] = useState(false);
+    const modalBackgroundColor = isDarkMode ? '#2C2C2E' : '#fff';
     const [isCreateCategoryModalVisible, setCreateCategoryModalVisible] = useState(false);
+    const inputBackgroundColor = isDarkMode ? '#333' : '#f4f4f4';
+    const [dbLoaded, setDbLoaded] = useState(false);
 
     const backgroundColor = isDarkMode ? '#1C1C1E' : '#fff';
     const textColor = isDarkMode ? '#fff' : '#000';
@@ -32,6 +42,9 @@ const NewIncomeScreen = ({ navigation }) => {
     const buttonTextColor = '#fff';
     const cancelButtonColor = isDarkMode ? '#444' : '#ddd';
 
+
+    const db = useSQLiteContext();
+
     const handleDateConfirm = (date) => {
         setTransactionDate(date);
         setDatePickerVisible(false);
@@ -39,17 +52,11 @@ const NewIncomeScreen = ({ navigation }) => {
 
     const toggleDarkMode = () => setIsDarkMode(!isDarkMode);
 
-    const openCategoryModal = () => {
-        setCategoryModalVisible(true);
-    };
-
-    const closeCategoryModal = () => {
-        setCategoryModalVisible(false);
-    };
-
+    const openCategoryModal = () => setCategoryModalVisible(true);
+    const closeCategoryModal = () => setCategoryModalVisible(false);
     const openCreateCategoryModal = () => {
-        setCategoryModalVisible(false); // Close the category modal
-        setCreateCategoryModalVisible(true); // Open the create category modal
+        setCategoryModalVisible(false);
+        setCreateCategoryModalVisible(true);
     };
 
     const handleSaveCategory = () => {
@@ -58,6 +65,93 @@ const NewIncomeScreen = ({ navigation }) => {
             setCreateCategoryModalVisible(false);
         }
     };
+
+    const getData = async () => {
+        try {
+            const result = await db.getAllAsync('SELECT * FROM incomes');
+            console.log(result);
+        } catch (error) {
+            console.error('Error fetching data:', error);
+        }
+    };
+
+    const initializeDatabase = async () => {
+        try {
+            await db.runAsync(`
+                CREATE TABLE IF NOT EXISTS incomes (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    description TEXT,
+                    amount REAL,
+                    category TEXT,
+                    icon TEXT,
+                    date TEXT
+                )`
+            );
+            setDbLoaded(true);
+            console.log('Table created or already exists');
+        } catch (error) {
+            console.error('Error creating table:', error);
+        }
+    };
+
+
+
+    useEffect(() => {
+        const initializeAndCheckSchema = async () => {
+            await initializeDatabase();
+
+            await getData();
+
+        };
+
+        initializeAndCheckSchema();
+    }, [db]);
+
+    if (!dbLoaded) {
+        return <Text>Loading database...</Text>;
+    }
+
+
+
+    const handleSaveIncome = async () => {
+        if (!transactionAmount || !selectedCategory || !transactionDate) {
+            Alert.alert('Error', 'Please fill out all required fields: amount, category, and date.');
+            return;
+        }
+    
+        try {
+            const result = await db.runAsync(
+                'INSERT INTO incomes (description, amount, category, icon, date) VALUES (?, ?, ?, ?, ?)',
+                [
+                    transactionDescription,
+                    parseFloat(transactionAmount),
+                    selectedCategory,
+                    selectedIcon,
+                    transactionDate.toISOString(),
+                ]
+            );
+    
+            if (result && result.rowsAffected > 0) {
+                Alert.alert('Success', 'Income transaction saved successfully!');
+                setTransactionDescription('');
+                setTransactionAmount('');
+                setSelectedCategory(null);
+                setSelectedIcon(null);
+    
+                // Navigate back to DashboardScreen with a refresh flag
+                navigation.navigate('dashboard', { refresh: true });
+            } else {
+                Alert.alert('Error', 'No rows were affected. Please try again.');
+            }
+        } catch (error) {
+            console.error('Error saving income transaction:', error);
+            Alert.alert('Error', `Could not save income transaction: ${error.message}`);
+        }
+    };
+    
+    
+    
+
 
     return (
         <View style={[styles.container, { backgroundColor }]}>
@@ -84,6 +178,8 @@ const NewIncomeScreen = ({ navigation }) => {
                 style={[styles.input, { borderColor: inputBorderColor, color: textColor }]}
                 placeholder="Your description..."
                 placeholderTextColor={placeholderTextColor}
+                value={transactionDescription}
+                onChangeText={setTransactionDescription}
             />
             <Text style={[styles.optionalText, { color: placeholderTextColor }]}>Transaction Description (Optional)</Text>
 
@@ -93,10 +189,16 @@ const NewIncomeScreen = ({ navigation }) => {
                 placeholder="Put the price"
                 placeholderTextColor={placeholderTextColor}
                 keyboardType="numeric"
+                value={transactionAmount}
+                onChangeText={setTransactionAmount}
             />
             <Text style={[styles.requiredText, { color: placeholderTextColor }]}>Transaction Amount (Required)</Text>
 
-            {/* Category and Date Picker */}
+            {/* Category and Date Picker */
+            }<Text style={[styles.categoryText, { color: textColor }]}>
+                {selectedCategory ? `Category: ${selectedCategory}` : 'Select a category.'}
+            </Text>
+
             <View style={styles.row}>
                 <View style={styles.column}>
                     <TouchableOpacity
@@ -134,8 +236,8 @@ const NewIncomeScreen = ({ navigation }) => {
             />
 
             {/* Save and Cancel Buttons */}
-            <TouchableOpacity style={[styles.saveButton, { backgroundColor: buttonBackgroundColor }]}>
-                <Text style={[styles.saveButtonText, { color: buttonTextColor }]}>Save</Text>
+            <TouchableOpacity style={[styles.saveButton, { backgroundColor: buttonBackgroundColor }]} onPress={handleSaveIncome}>
+                <Text style={styles.saveButtonText}>Save</Text>
             </TouchableOpacity>
             <TouchableOpacity style={[styles.cancelButton, { backgroundColor: cancelButtonColor }]}>
                 <Text style={styles.cancelButtonText}>Cancel</Text>
@@ -144,20 +246,20 @@ const NewIncomeScreen = ({ navigation }) => {
             {/* Modal for Category Selection */}
             <Modal visible={isCategoryModalVisible} animationType="slide" transparent={true}>
                 <View style={styles.modalContainer}>
-                    <View style={styles.modalContent}>
+                    <View style={[styles.modalContent, { backgroundColor: modalBackgroundColor }]}>
                         <TextInput
-                            style={styles.searchInput}
+                            style={[styles.searchInput, { borderColor: inputBorderColor, color: textColor, backgroundColor: inputBackgroundColor }]}
                             placeholder="Search category..."
-                            placeholderTextColor="#999"
-                            value=""
+                            placeholderTextColor={placeholderTextColor}
                         />
                         {/* Create New Button */}
                         <TouchableOpacity style={styles.createNewButton} onPress={openCreateCategoryModal}>
-                            <MaterialIcons name="add" size={24} color="#fff" />
-                            <Text style={styles.createNewText}>Create New</Text>
+                            <MaterialIcons name="add" size={24} color={textColor} />
+                            <Text style={[styles.createNewText, { color: textColor }]}>Create New</Text>
                         </TouchableOpacity>
+
                         {/* Cancel Button */}
-                        <TouchableOpacity onPress={closeCategoryModal} style={styles.smallCancelButton}>
+                        <TouchableOpacity onPress={closeCategoryModal} style={[styles.smallCancelButton, { backgroundColor: cancelButtonColor }]}>
                             <Text style={styles.smallCancelText}>Cancel</Text>
                         </TouchableOpacity>
                     </View>
@@ -167,31 +269,31 @@ const NewIncomeScreen = ({ navigation }) => {
             {/* Modal for Creating New Category */}
             <Modal visible={isCreateCategoryModalVisible} animationType="slide" transparent={true}>
                 <View style={styles.modalContainer}>
-                    <View style={styles.modalContent}>
-                        <Text style={styles.modalTitle}>Create Income category</Text>
-                        <Text style={styles.subText}>Categories are used to group your transactions.</Text>
+                    <View style={[styles.modalContent, { backgroundColor: modalBackgroundColor }]}>
+                        <Text style={[styles.modalTitle, { color: textColor }]}>Create Income category</Text>
+                        <Text style={[styles.subText, { color: placeholderTextColor }]}>Categories are used to group your transactions.</Text>
 
                         {/* Category Name Input */}
                         <TextInput
-                            style={styles.input}
+                            style={[styles.input, { borderColor: inputBorderColor, color: textColor, backgroundColor: inputBackgroundColor }]}
                             placeholder="Category"
                             value={newCategory}
                             onChangeText={setNewCategory}
-                            placeholderTextColor="#999"
+                            placeholderTextColor={placeholderTextColor}
                         />
-                        <Text style={styles.subText}>This is how your category will appear</Text>
+                        <Text style={[styles.subText, { color: placeholderTextColor }]}>This is how your category will appear</Text>
 
                         {/* Icon Selection */}
-                        <TouchableOpacity style={styles.iconSelector} onPress={() => setEmojiPickerVisible(true)}>
-                            <Text style={styles.iconText}>{selectedIcon ? selectedIcon : 'Click To Select Icon'}</Text>
+                        <TouchableOpacity style={[styles.iconSelector, { borderColor: inputBorderColor, backgroundColor: inputBackgroundColor }]} onPress={() => setEmojiPickerVisible(true)}>
+                            <Text style={[styles.iconText, { color: textColor }]}>{selectedIcon ? selectedIcon : 'Click To Select Icon'}</Text>
                         </TouchableOpacity>
-                        <Text style={styles.subText}>This Icon will appear in the category.</Text>
+                        <Text style={[styles.subText, { color: placeholderTextColor }]}>This Icon will appear in the category.</Text>
 
                         {/* Save and Cancel Buttons */}
-                        <TouchableOpacity style={styles.saveButton} onPress={handleSaveCategory}>
-                            <Text style={styles.saveButtonText}>Save</Text>
+                        <TouchableOpacity style={[styles.saveButton, { backgroundColor: buttonBackgroundColor }]} onPress={handleSaveCategory}>
+                            <Text style={[styles.saveButtonText, { color: buttonTextColor }]}>Save</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity style={styles.cancelButton} onPress={() => setCreateCategoryModalVisible(false)}>
+                        <TouchableOpacity style={[styles.cancelButton, { backgroundColor: cancelButtonColor }]} onPress={() => setCreateCategoryModalVisible(false)}>
                             <Text style={styles.cancelButtonText}>Cancel</Text>
                         </TouchableOpacity>
                     </View>
@@ -209,7 +311,7 @@ const NewIncomeScreen = ({ navigation }) => {
                         showSearchBar={true}
                         columns={8}
                     />
-                    <TouchableOpacity onPress={() => setEmojiPickerVisible(false)} style={styles.closeEmojiPicker}>
+                    <TouchableOpacity onPress={() => setEmojiPickerVisible(false)} style={[styles.closeEmojiPicker, { backgroundColor: buttonBackgroundColor }]}>
                         <Text style={styles.buttonText}>Close</Text>
                     </TouchableOpacity>
                 </View>
@@ -298,6 +400,7 @@ const styles = StyleSheet.create({
     saveButtonText: {
         fontSize: 16,
         fontWeight: 'bold',
+        color: "white"
     },
     cancelButton: {
         marginTop: 10,
