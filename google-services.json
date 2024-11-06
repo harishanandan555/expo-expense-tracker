@@ -1,48 +1,79 @@
 {
   "project_info": {
-    "project_number": "460628319637",
-    "project_id": "expo-59800",
-    "storage_bucket": "expo-59800.appspot.com"
+    "project_number": "622095554406",
+    "project_id": "expenseapp-cdcfe",
+    "storage_bucket": "expenseapp-cdcfe.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:622095554406:android:f63bc632f6a86b117d9aa7",
+        "mobilesdk_app_id": "1:622095554406:android:865e0a6d44c290847d9aa7",
         "android_client_info": {
-          "package_name": "com.expenseapp.app"
+          "package_name": "com.mangoleef.tenxgen"
         }
       },
       "oauth_client": [
         {
-          "client_id": "622095554406-obptgsiroup1tromeqbnik6ca5mk9obo.apps.googleusercontent.com",
+          "client_id": "622095554406-b79lv8bndbuqbpv3egr212ljfrd3aua6.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.expenseapp.app",
-            "certificate_hash": "74b0cc6e475197e0983cf7cefc07cb30929ed0be"
-          }
-        },
-        {
-          "client_id": "622095554406-vv27h7411g41hpkqhkern86iuqia98je.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.expenseapp.app",
-          "client_id": "460628319637-ko8a3ctu7346c0qurr55j1eu9lli6qdd.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.anjali_b.GoogleExpo",
+            "package_name": "com.mangoleef.tenxgen",
             "certificate_hash": "b870bd53fa515584cb09c4825556467ad66b66c7"
           }
-        }
         },
-        
         {
-          "client_id": "460628319637-dntmu7vjb3r6bfehrtdp38h1152qcsob.apps.googleusercontent.com",
+          "client_id": "622095554406-32i6saoa7sn60bu32n33f4um21ep2i65.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyBkE1phfcI14KCqmotEQUbXXrZ58QC47rE"
+          "current_key": "AIzaSyA6kVfG09SlEvFMfhhGC4NHFOk1nI49Qs0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "622095554406-32i6saoa7sn60bu32n33f4um21ep2i65.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:622095554406:android:ea99d1e1513c732e7d9aa7",
+        "android_client_info": {
+          "package_name": "com.mangoleeftechlabspvtltd.expensetracker"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "622095554406-4v09svpofflskhc4vl4kkrao8bevopfo.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.mangoleeftechlabspvtltd.expensetracker",
+            "certificate_hash": "ed2ed20711fa7953a368ee7e38d0dc01920a7f66"
+          }
+        },
+        {
+          "client_id": "622095554406-vkqs7ecd72s5a0tjecppd5sooumf6e0n.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.mangoleeftechlabspvtltd.expensetracker",
+            "certificate_hash": "99e53c96e879af55d3633112393c003b0a413365"
+          }
+        },
+        {
+          "client_id": "622095554406-32i6saoa7sn60bu32n33f4um21ep2i65.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA6kVfG09SlEvFMfhhGC4NHFOk1nI49Qs0"
         }
       ],
       "services": {

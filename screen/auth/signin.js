@@ -1,4 +1,4 @@
-import React, { useState, useEffect  } from "react";
+import React, { useState,useEffect  } from "react";
 import { StyleSheet, Modal } from "react-native";
 import {
   View,
@@ -8,11 +8,14 @@ import {
   TouchableOpacity,
   Image,
 } from "react-native";
-import auth from '@react-native-firebase/auth';
+// import auth from '@react-native-firebase/auth';
 import * as WebBrowser from "expo-web-browser";
 import { auth } from "../../config/firebaseConfig";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
+import "expo-dev-client";
 import { signInWithEmailAndPassword, sendPasswordResetEmail, fetchSignInMethodsForEmail  } from "firebase/auth";
-
+//---------------------------------------------------------------------------------------------------------------------------
 // Complete any pending authentication sessions
 WebBrowser.maybeCompleteAuthSession();
 
@@ -23,39 +26,6 @@ export default function SignInPage({ navigation }) {
   const [emailEntered, setEmailEntered] = useState("");
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
-
-  // // Google OAuth configuration
-  // const [request, response, promptAsync] = Google.useAuthRequest({
-  //   androidClientId: "382896848352-664l10kdn3j8f880srb1f83t6leg67db.apps.googleusercontent.com",
-  //   iosClientId: "382896848352-664l10kdn3j8f880srb1f83t6leg67db.apps.googleusercontent.com",
-  //   webClientId: "",
-  // });
-
-  // const onGoogleButtonPress = async () => {
-  //   try {
-  //     // Check if your device supports Google Play
-  //     await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
-      
-  //     // Get the user's ID token
-  //     const response = await GoogleSignin.signIn();
-
-  //     // Create a Google credential with the token
-  //     const googleCredential = auth.GoogleAuthProvider.credential(response.idToken);
-
-  // const getUserInfo = async (token) => {
-  //   if (!token) return;
-  //   try {
-  //     const res = await fetch("https://www.googleapis.com/userinfo/v2/me", {
-  //       headers: { Authorization: `Bearer ${token}` },
-  //     });
-  //     const user = await res.json();
-  //     await AsyncStorage.setItem("@user", JSON.stringify(user));
-  //     setUserInfo(user);
-  //     navigation.navigate("Dashboard"); // Navigate to the dashboard after login
-  //   } catch (error) {
-  //   }
-  // };
-
   
   const isEmail = (input) => {
     const emailRegex = /\S+@\S+\.\S+/;
@@ -80,6 +50,7 @@ export default function SignInPage({ navigation }) {
       if (isEmail(cleanedInput)) {
         console.log("Valid email entered:", cleanedInput);
         setEmailEntered(cleanedInput);
+
         try {
           console.log("Checking if email exists in Firebase...");
           const signInMethods = await fetchSignInMethodsForEmail(auth, cleanedInput);
@@ -92,7 +63,7 @@ export default function SignInPage({ navigation }) {
           } else {
             // Email not found, navigate to signup
             console.log("Email not found, navigating to sign up.");
-            navigation.navigate("EmailAuthentication", { email: cleanedInput });
+            // navigation.navigate("EmailAuthentication", { email: cleanedInput });
           }
         } catch (error) {
           console.error("Error fetching sign-in methods:", error);
@@ -106,14 +77,16 @@ export default function SignInPage({ navigation }) {
             showAlertMessage("An error occurred while checking the email.");
           }
         }
-      } else if (isValidPhoneNumber(cleanedInput)) {
-        // navigation.navigate("PhoneAuthentication", { phone: cleanedInput });
-      } 
-      else {
-        showAlertMessage("Please enter a valid email address or a phone number starting with '+'.");
       }
-    } else {
-      showAlertMessage("Please enter your email or phone number.");
+      //  else if (isValidPhoneNumber(cleanedInput)) {
+      //   // navigation.navigate("PhoneAuthentication", { phone: cleanedInput });
+      // } 
+      else {
+        showAlertMessage("Please enter a valid email address.");
+      }
+    }
+     else {
+      showAlertMessage("Please enter your email.");
     }
   };
   
@@ -149,15 +122,27 @@ try{
   showAlertMessage("Password reset error:",error.message);
 }
 };
-  const [email, setEmail] = useState("");
-  // const [password, setPassword] = useState("");
-  const [isNewUser, setIsNewUser] = useState(false);
+
+const handleContinueToSignup = () => {
+  if (isEmail(input.trim())) {
+    const cleanedInput = input.trim();
+    navigation.navigate("EmailAuthentication", { email: cleanedInput });
+  } else {
+    showAlertMessage("Please enter a valid email address before continuing to sign up.");
+  }
+};
+//-----------------------------------------------------------------------------------------------------------
+
+
+  // const [email, setEmail] = useState("");
+  // // const [password, setPassword] = useState("");
+  // const [isNewUser, setIsNewUser] = useState(false);
 
   // Configure Google Sign-In
   useEffect(() => {
     GoogleSignin.configure({
       webClientId:
-        "460628319637-dntmu7vjb3r6bfehrtdp38h1152qcsob.apps.googleusercontent.com",
+        "622095554406-32i6saoa7sn60bu32n33f4um21ep2i65.apps.googleusercontent.com",
     });
   }, []);
 
@@ -184,36 +169,36 @@ try{
   };
 
   // Email Login or Signup
-  const handleEmailLoginOrSignUp = async () => {
-    if (isNewUser) {
-      // Sign-up Flow
-      auth()
-        .createUserWithEmailAndPassword(email, password)
-        .then((userCredential) => {
-          console.log("User signed up: ", userCredential.user);
-          generateAuthToken(userCredential.user);
-        })
-        .catch((error) => {
-          console.error("Error signing up: ", error);
-        });
-    } else {
-      // Login Flow
-      auth()
-        .signInWithEmailAndPassword(email, password)
-        .then((userCredential) => {
-          console.log("Logged in with email");
-          generateAuthToken(userCredential.user);
-        })
-        .catch((error) => console.error("Error logging in: ", error));
-    }
-  };
+  // const handleEmailLoginOrSignUp = async () => {
+  //   if (isNewUser) {
+  //     // Sign-up Flow
+  //     auth()
+  //       .createUserWithEmailAndPassword(email, password)
+  //       .then((userCredential) => {
+  //         console.log("User signed up: ", userCredential.user);
+  //         generateAuthToken(userCredential.user);
+  //       })
+  //       .catch((error) => {
+  //         console.error("Error signing up: ", error);
+  //       });
+  //   } else {
+  //     // Login Flow
+  //     auth()
+  //       .signInWithEmailAndPassword(email, password)
+  //       .then((userCredential) => {
+  //         console.log("Logged in with email");
+  //         generateAuthToken(userCredential.user);
+  //       })
+  //       .catch((error) => console.error("Error logging in: ", error));
+  //   }
+  // };
 
   // Generate Token After Login/SignUp
-  const generateAuthToken = async (user) => {
-    const token = await user.getIdToken(); // Get Firebase ID Token
-    console.log("Generated Token: ", token);
-    await AsyncStorage.setItem("@token", token);
-  };
+  // const generateAuthToken = async (user) => {
+  //   const token = await user.getIdToken(); // Get Firebase ID Token
+  //   console.log("Generated Token: ", token);
+  //   await AsyncStorage.setItem("@token", token);
+  // };
 
   const user = userInfo?.data?.user;
 
@@ -256,7 +241,7 @@ try{
            {/* Email Input */}
            <TextInput
             style={styles.input}
-            placeholder="Enter email or phone number*"
+            placeholder="Enter email"
             placeholderTextColor={"white"}
             value={input}
             onChangeText={setInput}
@@ -293,20 +278,10 @@ try{
   
           <Text style={styles.infoText}>
             Don't have an account?{" "}
-            <Text style={styles.linkText} onPress={handleContinue}>
+            <Text style={styles.linkText} onPress={handleContinueToSignup}>
               Continue
             </Text>
           </Text>
-
-          {/* Sign In with Google Button */}
-          {/* <TouchableOpacity
-            style={styles.signInButton}
-            onPress={() => navigation.navigate("main")}
-          <Text style={styles.title}>Plan and Track {"\n"} Your Budget!</Text> */}
-<TouchableOpacity  style={styles.signInButton}
-            onPress={() => navigation.navigate("main")}>
-<Text style={styles.title}>Plan and Track {"\n"} Your Budget!</Text> 
-</TouchableOpacity>
         
         {/* Google Sign-In Button */}
           <TouchableOpacity
@@ -324,8 +299,8 @@ try{
           </TouchableOpacity>
 
           {/* Input Card for Email/Password Login */}
-          <View style={styles.inputCard}>
-            <TextInput
+          {/* <View style={styles.inputCard}> */}
+            {/* <TextInput
               style={styles.input}
               placeholder="Email"
               value={email}
@@ -338,25 +313,25 @@ try{
               value={password}
               onChangeText={setPassword}
               secureTextEntry
-            />
+            /> */}
 
-            <TouchableOpacity onPress={() => setIsNewUser(!isNewUser)}>
+            {/* <TouchableOpacity onPress={() => setIsNewUser(!isNewUser)}>
               <Text style={styles.switchText}>
                 {isNewUser
                   ? "Already have an account? Log in"
                   : "Don't have an account? Sign up"}
               </Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
 
-            <TouchableOpacity
+            {/* <TouchableOpacity
               style={styles.loginButton}
               onPress={handleEmailLoginOrSignUp}
             >
               <Text style={styles.buttonText}>
                 {isNewUser ? "Sign Up" : "Log In"}
               </Text>
-            </TouchableOpacity>
-          </View>
+            </TouchableOpacity> */}
+          {/* </View> */}
         </View>
       ) : (
         <View style={styles.card}>
@@ -507,22 +482,22 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 15,
     backgroundColor: "#fff",
-    shadowColor: "#000",
+    // shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 5,
     marginVertical: 20,
   },
-  input: {
-    width: "100%",
-    padding: 12,
-    marginVertical: 10,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    backgroundColor: "#f9f9f9",
-  },
+  // input: {
+  //   width: "100%",
+  //   padding: 12,
+  //   marginVertical: 10,
+  //   borderWidth: 1,
+  //   borderColor: "#ddd",
+  //   borderRadius: 8,
+  //   backgroundColor: "#f9f9f9",
+  // },
   loginButton: {
     backgroundColor: "#0A74DA",
     width: "100%",

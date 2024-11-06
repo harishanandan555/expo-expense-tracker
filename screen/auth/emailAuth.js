@@ -4,94 +4,94 @@ import { Alert, Image, Pressable, StyleSheet, TextInput, Text, View } from 'reac
 import { getAuth, createUserWithEmailAndPassword, updateProfile, sendEmailVerification  } from "firebase/auth";
 import { getFirestore, doc, setDoc, getDoc} from "firebase/firestore"; 
 
-const auth = getAuth();
-const db = getFirestore();  
+  const auth = getAuth();
+  const db = getFirestore();  
 
-export default function EmailAuth({ navigation, route }) {
-  const [value, setValue] = useState({
-    email: route.params?.email || '',
-    password: '',
-    confirmPassword: '',
-    displayName: '',
-    phoneNumber: '',
-    error: ''
-  });
+  export default function EmailAuth({ navigation, route }) {
+    const [value, setValue] = useState({
+      email: route.params?.email || '',
+      password: '',
+      confirmPassword: '',
+      displayName: '',
+      // phoneNumber: '',
+      error: ''
+    });
 
-  const [isEmailVerified, setIsEmailVerified] = useState(false);
+    const [isEmailVerified, setIsEmailVerified] = useState(false);
 
-  
-  // Password validation regex
-  const passwordRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-  const validatePassword = (password) => {
-    return passwordRegex.test(password);
-  };
+    
+    // Password validation regex
+    const passwordRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    const validatePassword = (password) => {
+      return passwordRegex.test(password);
+    };
 
-  const signUp = async () => {
-    console.log("SignUp function started");
-    if (!value.email || !value.password || !value.confirmPassword || !value.displayName) {
-      setValue({ ...value, error: 'All fields are mandatory.' });
-      console.log("Missing fields");
-      return;
-    }
-    if (!validatePassword(value.password)) {
-      setValue({
-        ...value,
-        error: 'Password must be at least 8 characters long, with uppercase, lowercase, a number, and a special character.'
-      });
-      console.log("Password validation failed");
-      return;
-    }
-    if (value.password !== value.confirmPassword) {
-      setValue({ ...value, error: 'Passwords do not match.' });
-      console.log("Passwords do not match");
-      return;
-    }
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, value.email, value.password);
-      const user = userCredential.user;
-      console.log("User created successfully:", user);
+    const signUp = async () => {
+      console.log("SignUp function started");
+      if (!value.email || !value.password || !value.confirmPassword || !value.displayName) {
+        setValue({ ...value, error: 'All fields are mandatory.' });
+        console.log("Missing fields");
+        return;
+      }
+      if (!validatePassword(value.password)) {
+        setValue({
+          ...value,
+          error: 'Password must be at least 8 characters long, with uppercase, lowercase, a number, and a special character.'
+        });
+        console.log("Password validation failed");
+        return;
+      }
+      if (value.password !== value.confirmPassword) {
+        setValue({ ...value, error: 'Passwords do not match.' });
+        console.log("Passwords do not match");
+        return;
+      }
+      try {
+        const userCredential = await createUserWithEmailAndPassword(auth, value.email, value.password);
+        const user = userCredential.user;
+        console.log("User created successfully:", user);
 
-      // Update user profile with display name
-      await updateProfile(user, { displayName: value.displayName });
-      console.log("User profile updated successfully");
+        // Update user profile with display name
+        await updateProfile(user, { displayName: value.displayName });
+        console.log("User profile updated successfully");
 
-      // Send email verification after user creation
-      await sendEmailVerification(user);
-      Alert.alert("Verification Sent", "A verification email has been sent to your email address.");
-
-      // Store user details in Firestore
-      await setDoc(doc(db, "users", user.uid), {
-        displayName: value.displayName,
-        email: value.email,
-        phoneNumber: value.phoneNumber,
-        emailVerified: user.emailVerified
-      });
-      console.log("User details saved successfully");
-
-      navigation.navigate("signin");
-    } catch (error) {
-      console.log("Error creating account:", error);
-      setValue({
-        ...value,
-        error: error.message,
-      });
-    }
-  };
-
-  const verifyEmail = async () => {
-    try {
-      const user = auth.currentUser;
-      if (user && !user.emailVerified) {
+        // Send email verification after user creation
         await sendEmailVerification(user);
         Alert.alert("Verification Sent", "A verification email has been sent to your email address.");
-      } else if (user && user.emailVerified) {
-        Alert.alert("Info", "Your email is already verified.");
+
+        // Store user details in Firestore
+        await setDoc(doc(db, "users", user.uid), {
+          displayName: value.displayName,
+          email: value.email,
+          phoneNumber: value.phoneNumber,
+          emailVerified: user.emailVerified
+        });
+        console.log("User details saved successfully");
+
+        navigation.navigate("signin");
+      } catch (error) {
+        console.log("Error creating account:", error);
+        setValue({
+          ...value,
+          error: error.message,
+        });
       }
-    } catch (error) {
-      console.log("Error sending verification email:", error);
-      Alert.alert("Error", error.message);
-    }
-  };
+    };
+
+    const verifyEmail = async () => {
+      try {
+        const user = auth.currentUser;
+        if (user && !user.emailVerified) {
+          await sendEmailVerification(user);
+          Alert.alert("Verification Sent", "A verification email has been sent to your email address.");
+        } else if (user && user.emailVerified) {
+          Alert.alert("Info", "Your email is already verified.");
+        }
+      } catch (error) {
+        console.log("Error sending verification email:", error);
+        Alert.alert("Error", error.message);
+      }
+    };
 
   const checkEmailVerification = async () => {
     const user = auth.currentUser;
@@ -189,9 +189,12 @@ export default function EmailAuth({ navigation, route }) {
     const intervalId = setInterval(async () => {
       const user = auth.currentUser;
       if (user) {
-        await user.reload(); // Ensure we have the latest user info
+        await user.reload(); 
+        console.log("user:", user)// Ensure we have the latest user info
         if (user.emailVerified) {
           setIsEmailVerified(true);
+          console.log("Email verified,",user.emailVerified);
+          clearInterval(intervalId);
           Alert.alert("Email Verified", "Your email has been successfully verified.");
         }
       }
@@ -230,7 +233,7 @@ export default function EmailAuth({ navigation, route }) {
             </Pressable>
           </View>
 
-          <View style={styles.inputWrapper}>
+          {/* <View style={styles.inputWrapper}>
             <Icon style={styles.icon} name="phone" size={18} color="gray" />
             <TextInput
               placeholder="Phone Number"
@@ -238,7 +241,7 @@ export default function EmailAuth({ navigation, route }) {
               style={styles.input}
               onChangeText={(text) => setValue({ ...value, phoneNumber: text })}
             />
-          </View>
+          </View> */}
 
           {/* <View style={styles.inputWrapper}>
             <Icon style={styles.icon} name="phone" size={18} color="gray" />

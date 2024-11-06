@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -18,6 +18,7 @@ import { format } from 'date-fns'; // Use date-fns for formatting dates
 import { Picker } from '@react-native-picker/picker'; // Import Picker from @react-native-picker/picker
 import EmojiSelector from 'react-native-emoji-selector'; // For emoji picking
 import { useNavigation } from '@react-navigation/native'; // Import useNavigation hook
+import { useSQLiteContext } from 'expo-sqlite/next'; // Assuming you're using expo-sqlite context
 
 const DashboardScreen = () => {
     const [theme, setTheme] = useState('dark'); // Set default theme to dark
@@ -43,13 +44,20 @@ const DashboardScreen = () => {
     const [isExpenseEmojiPickerVisible, setExpenseEmojiPickerVisible] = useState(false);
     const [expenseCategories, setExpenseCategories] = useState([]);
     const [selectedExpenseCategory, setSelectedExpenseCategory] = useState(null);
+    const [balance, setBalance] = useState(0); // State for balance
 
     const navigation = useNavigation();
+    // const db = useSQLiteContext(); // Your SQLite context
 
     // Function to handle theme switching
     const handleThemeSwitch = (mode) => {
         setTheme(mode);
     };
+
+    useEffect(() => {
+        setBalance(totalIncome - totalExpense);
+    }, [totalIncome, totalExpense]);
+
     const toggleIncomeModal = () => {
         setIncomeModalVisible(true);
         setExpenseModalVisible(false);
@@ -85,6 +93,7 @@ const DashboardScreen = () => {
 
     const handleSaveCategory = () => {
         if (newCategory && selectedIcon) {
+            // Save the new category (this is for demonstration; you may save it in a state)
             setCreateCategoryModalVisible(false);
         }
     };
@@ -174,8 +183,7 @@ const DashboardScreen = () => {
     };
 
     return (
-        
-        <Provider>   
+        <Provider>
             <ScrollView
                 contentContainerStyle={[
                     styles.container,
@@ -227,17 +235,6 @@ const DashboardScreen = () => {
                 <View style={[styles.upgradeBar, { backgroundColor: isDarkMode ? '#FF6A00' : '#FFD580' }]}>
                     <Text style={[styles.upgradeText, { color: textColor }]}>Upgrade to premium user</Text>
                 </View>
-
-                {/* <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <Button
-        title="Go to Transactions"
-        onPress={() => navigation.navigate('Transaction')} // Navigates to TransactionScreen
-      />
-    </View> */}
-               
-                {/* <View>
-              <Text style={[{color: textColor}]}>Hello Dashboard</Text>
-              </View> */}
 
                 {/* New Income and New Expense Buttons */}
                 <View style={styles.buttonsContainer}>
@@ -321,7 +318,9 @@ const DashboardScreen = () => {
                     <MaterialIcons name="trending-up" size={32} color="green" />
                     <View>
                         <Text style={[styles.overviewLabel, { color: textColor }]}>Income</Text>
-                        <Text style={[styles.overviewValue, { color: textColor }]}>$0.00</Text>
+                        <Text style={[styles.overviewValue, { color: theme === 'dark' ? '#fff' : '#000' }]}>
+                            ${totalIncome.toFixed(2)}
+                        </Text>
                     </View>
                 </View>
 
@@ -339,9 +338,9 @@ const DashboardScreen = () => {
                     <MaterialIcons name="account-balance-wallet" size={32} color="blue" />
                     <View>
                         <Text style={[styles.overviewLabel, { color: textColor }]}>Balance</Text>
-                        <Text style={[styles.overviewValue, { color: textColor }]}>$0.00</Text>
+                        <Text style={[styles.overviewValue, { color: textColor }]}>${balance.toFixed(2)}</Text>
                     </View>
-                </View>
+                    </View>
 
                 {/* Income and Expense Section */}
                 <Text style={[styles.sectionTitle, { color: textColor }]}>Income</Text>
@@ -581,19 +580,18 @@ const DashboardScreen = () => {
 
 
             </ScrollView>
-       
         </Provider>
     );
 };
 
 const styles = StyleSheet.create({
-    container: {  
-        marginTop: 10,
+    container: {
+        marginTop: 30,
         padding: 20,
     },
     header: {
         flexDirection: 'row',
-        justifyContent: 'flex-end',
+        justifyContent: 'flex-end', // Align Avatar to the right
         alignItems: 'center',
     },
     avatarRight: {
@@ -601,7 +599,7 @@ const styles = StyleSheet.create({
         right: 10,
     },
     avatar: {
-        backgroundColor: '#6200ee',
+        backgroundColor: '#6200ee', // Customize avatar color
     },
     upgradeBar: {
         width: '100%',
@@ -629,6 +627,10 @@ const styles = StyleSheet.create({
         borderRadius: 10,
     },
     buttonText: {
+        fontWeight: 'bold',
+    },
+    overviewValue: {
+        fontSize: 20,
         fontWeight: 'bold',
     },
     sectionTitle: {
