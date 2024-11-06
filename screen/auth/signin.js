@@ -23,7 +23,7 @@ export default function SignInPage({ navigation }) {
   useEffect(() => {
     GoogleSignin.configure({
       webClientId:
-        "460628319637-dntmu7vjb3r6bfehrtdp38h1152qcsob.apps.googleusercontent.com",
+        "622095554406-32i6saoa7sn60bu32n33f4um21ep2i65.apps.googleusercontent.com",
     });
   }, []);
 

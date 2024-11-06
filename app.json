@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "GoogleExpo",
-    "slug": "GoogleExpo",
+    "name": "expense-tracker",
+    "slug": "expense-tracker",
     "plugins": [
       "@react-native-google-signin/google-signin"
     ],
@@ -23,16 +23,16 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.anjali_b.GoogleExpo"
+      "package": "com.mangoleeftechlabspvtltd.expensetracker"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "extra": {
       "eas": {
-        "projectId": "ace26c91-e480-483f-a7a5-3ca9330bdabb"
+        "projectId": "b4eae2be-aa03-42c5-bdae-cb49258843b2"
       }
     },
-    "owner": "anjali_b"
+    "owner": "mango-leef-tech-labs-pvt-ltd"
   }
 }

@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "622095554406",
+    "project_id": "expenseapp-cdcfe",
+    "storage_bucket": "expenseapp-cdcfe.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:622095554406:android:865e0a6d44c290847d9aa7",
+        "android_client_info": {
+          "package_name": "com.mangoleef.tenxgen"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "622095554406-b79lv8bndbuqbpv3egr212ljfrd3aua6.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.mangoleef.tenxgen",
+            "certificate_hash": "b870bd53fa515584cb09c4825556467ad66b66c7"
+          }
+        },
+        {
+          "client_id": "622095554406-32i6saoa7sn60bu32n33f4um21ep2i65.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA6kVfG09SlEvFMfhhGC4NHFOk1nI49Qs0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "622095554406-32i6saoa7sn60bu32n33f4um21ep2i65.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
