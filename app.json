@@ -2,10 +2,21 @@
   "expo": {
     "name": "expense-tracker",
     "slug": "expense-tracker",
-    "plugins": [
-      "@react-native-google-signin/google-signin"
-    ],
     "version": "1.0.0",
+    "plugins": [
+      "@react-native-google-signin/google-signin",
+      "@react-native-firebase/app",
+      "@react-native-firebase/auth",
+      [
+        "expo-file-system",
+        {
+          "android": {
+            "minSdkVersion": 21
+          }
+        }
+      ],
+      "expo-media-library"
+    ],
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -18,8 +29,8 @@
       "supportsTablet": true
     },
     "android": {
+      "googleServicesFile":"./google-services.json",
       "adaptiveIcon": {
-        "googleServicesFile": "./google-services.json",
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
