@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     View,
     Text,
@@ -10,6 +10,7 @@ import {
 
 } from 'react-native';
 import { useRoute } from '@react-navigation/native';
+import { useFocusEffect } from '@react-navigation/native';
 
 import { MaterialIcons } from '@expo/vector-icons';
 import { Avatar, Menu, Divider, Provider } from 'react-native-paper';
@@ -160,15 +161,29 @@ const DashboardScreen = () => {
         fetchTotalExpense();// Fetch total income when the component mounts
     }, []);
 
+
     const route = useRoute();
-    const { userInfo } = route.params || {};
+    const userInfo = route.params?.userInfo || { data: { user: { photo: null, firstName: 'User', lastName: '' } } };
+
+    // Set user initials
+    const initials = `${userInfo.data.user.firstName[0] || 'U'}${userInfo.data.user.lastName[0] || ''}`;
+
+    // Fetch income and expense data
+    useFocusEffect(
+        useCallback(() => {
+            fetchTotalIncome();
+            fetchTotalExpense();
+        }, [route.params?.refresh || false])
+    );
+
+
+   
 
     const openMenu = () => setMenuVisible(true);
     const closeMenu = () => setMenuVisible(false);
 
     // Extracting user initials
-    const user = { firstName: 'Anjali', lastName: 'Bettan' };
-    const initials = `${user.firstName[0]}${user.lastName[0]}`;
+   
 
     // Determine colors based on the theme
     const isDarkMode = theme === 'dark';

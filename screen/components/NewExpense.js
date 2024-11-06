@@ -141,7 +141,8 @@ const NewExpenseScreen = ({ navigation }) => {
                 // Navigate back to DashboardScreen with a refresh flag
                 navigation.navigate('dashboard', { refresh: true });
             } else {
-                Alert.alert('Error', 'No rows were affected. Please try again.');
+                
+                navigation.navigate('dashboard', { refresh: true });
             }
         } catch (error) {
             console.error('Error saving expense transaction:', error);
