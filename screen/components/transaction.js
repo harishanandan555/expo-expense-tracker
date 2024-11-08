@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,12 +12,15 @@ import { Avatar, Menu, Divider, Provider } from 'react-native-paper';
 import { Picker } from "@react-native-picker/picker";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { format } from "date-fns";
-// import * as MediaLibrary from "expo-media-library";
-import * as FileSystem from "expo-file-system";
+import * as MediaLibrary from "expo-media-library";
+// import * as Print from 'expo-print';
+import { shareAsync } from 'expo-sharing';
+import * as FileSystem from 'expo-file-system';
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { useNavigation } from '@react-navigation/native';
 import { auth } from "../../config/firebaseConfig";
-
+import { onAuthStateChanged } from 'firebase/auth';
+import Header from './header';
 
 const initialTransactionsData = [
   {
@@ -46,6 +49,70 @@ const initialTransactionsData = [
   },
 ];
 
+const themes = {
+  light: {
+    background: '#ffffff',
+    text: '#000000',
+    buttonBackground: '#ffffff', // Button background in light mode
+    buttonBorder: '#333', // Border color for buttons
+    buttonText: '#000000', // Text color for buttons in light mode
+    tableHeaderBackground: '#ffffff', // Table header background in light mode
+    tableHeaderText: '#000000', // Table header text color in light mode
+    transactionBackground: '#ffffff', // Transaction background in light mode
+    transactionText: '#000000', // Transaction text color in light mode
+  
+  },
+  dark: {
+    background: '#000000',
+    text: '#ffffff',
+    buttonBackground: '#333', // Button background in dark mode
+    buttonText: '#ffffff', // Text color for buttons in dark mode
+    tableHeaderBackground: '#333', // Table header background in dark mode
+    tableHeaderText: '#ffffff', // Table header text color in dark mode
+    transactionBackground: '#121212', // Transaction background in dark mode
+    transactionText: '#ffffff', // Transaction text color in dark mode
+  },
+};
+
+const generateHtml = (initialTransactionsData) =>{
+  let transactionHtml = initialTransactionsData.map((initialTransactionsData) =>
+ 
+ <tr>
+  <td style="padding: 10px;">${initialTransactionsData.date}</td>
+  <td style="padding: 10px;">${initialTransactionsData.type}</td>
+  <td style="padding: 10px;">${initialTransactionsData.description}</td>
+  <td style="padding: 10px;">${initialTransactionsData.amount}</td>
+  <td style="padding: 10px;">${initialTransactionsData.category}</td>
+  </tr>
+
+  ).join('');
+
+  return `
+  <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
+    </head>
+    <body style="text-align: center; font-family: Helvetica Neue;">
+      <h1 style="font-size: 40px; font-weight: normal;">Transaction Report</h1>
+      <table style="width: 80%; margin: 0 auto; border-collapse: collapse;">
+        <thead>
+          <tr>
+            <th style="padding: 10px;">Date</th>
+             <th style="padding: 10px;">Type</th>
+            <th style="padding: 10px;">Description</th>
+            <th style="padding: 10px;">Amount</th>
+            <th style="padding: 10px;">Category</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${transactionHtml}
+        </tbody>
+      </table>
+    </body>
+  </html>
+`;
+}
+
 const categories = ["Category", "Salary", "Grocery"];
 const transactionTypes = ["Type", "Income", "Expense"];
 
@@ -54,13 +121,12 @@ const TransactionScreen = () => {
   const [menuVisible, setMenuVisible] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("Category");
   const [selectedType, setSelectedType] = useState("Type");
-  const [transactionsData, setTransactionsData] = useState(
-    initialTransactionsData
-  );
+  const [transactionsData, setTransactionsData] = useState(initialTransactionsData);
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
   const [noTransactionsMessage, setNoTransactionsMessage] = useState("");
   const [transactionsFound, setTransactionsFound] = useState(true);
+  const [selectedPrinter, setSelectedPrinter] = useState(null);
 
   const openMenu = () => setMenuVisible(true);
   const closeMenu = () => setMenuVisible(false);
@@ -72,17 +138,15 @@ const TransactionScreen = () => {
    const backgroundColor = isDarkMode ? '#000' : '#fff';
    const textColor = isDarkMode ? '#fff' : '#000';
 
-  const showDatePicker = () => {
-    setDatePickerVisibility(true);
-  };
+  const showDatePicker = () => {setDatePickerVisibility(true);};
 
-  const hideDatePicker = () => {
-    setDatePickerVisibility(false);
-  };
+  const hideDatePicker = () => {setDatePickerVisibility(false); };
 
-  const handleThemeSwitch = (mode) => {
-    setTheme(mode);
-};
+  const handleThemeSwitch = (mode) => {setTheme(mode);};
+
+  const toggleTheme = () => {
+    setTheme((prevTheme) => (prevTheme === 'light' ? 'dark' : 'light'));
+  };
 
   const handleConfirm = (date) => {
     const formattedDate = format(date, "dd-MM-yyyy");
@@ -189,66 +253,168 @@ const TransactionScreen = () => {
     );
   };
 
-  const handleLogout = async () => {
+  // const generateHtml = () => {
+  //   const filteredTransactions = filterTransactions();
+  //   let htmlContent = `
+  //     <html>
+  //       <head>
+  //         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  //       </head>
+  //       <body style="text-align: center;">
+  //         <h1 style="font-size: 30px;">Transaction Report</h1>
+  //         <table style="width: 100%; border-collapse: collapse;">
+  //           <thead>
+  //             <tr>
+  //               <th style="border: 1px solid #000; padding: 8px;">Category</th>
+  //               <th style="border: 1px solid #000; padding: 8px;">Description</th>
+  //               <th style="border: 1px solid #000; padding: 8px;">Date</th>
+  //               <th style="border: 1px solid #000; padding: 8px;">Type</th>
+  //               <th style="border: 1px solid #000; padding: 8px;">Amount</th>
+  //             </tr>
+  //           </thead>
+  //           <tbody>
+  //   `;
+
+  //   filteredTransactions.forEach(transaction => {
+  //     htmlContent += `
+  //       <tr>
+  //         <td style="border: 1px solid #000; padding: 8px;">${transaction.category}</td>
+  //         <td style="border: 1px solid #000; padding: 8px;">${transaction.description}</td>
+  //         <td style="border: 1px solid #000; padding: 8px;">${transaction.date}</td>
+  //         <td style="border: 1px solid #000; padding: 8px;">${transaction.type}</td>
+  //         <td style="border: 1px solid #000; padding: 8px;">${transaction.amount}</td>
+  //       </tr>
+  //     `;
+  //   });
+
+  //   htmlContent += `
+  //           </tbody>
+  //         </table>
+  //       </body>
+  //     </html>
+  //   `;
+
+  //   return htmlContent;
+  // };
+
+  // const print = async () => {
+  //   const html = generateHtml();
+  //   await Print.printAsync({ html });
+  // };
+
+  // const printToFile = async () => {
+  //   const html = generateHtml();
+  //   const { uri } = await Print.printToFileAsync({ html });
+  //   console.log('File has been saved to:', uri);
+  //   await shareAsync(uri, { UTI: '.pdf', mimeType: 'application/pdf' });
+  // };
+  
+  // const exportToPDF = async () =>{
+  //   const filteredTransactions = filterTransactions();
+
+  //   if (filteredTransactions.length === 0) {
+  //     Alert.alert("No Data", "No transactions found to export.");
+  //     return;
+  //   }
+
+  //   let htmlContent = `
+  //   <h1>Transaction Report</h1>
+  //   <table style="width: 100%; border-collapse: collapse;">
+  //     <thead>
+  //       <tr>
+  //         <th style="border: 1px solid #000; padding: 8px;">Category</th>
+  //         <th style="border: 1px solid #000; padding: 8px;">Description</th>
+  //         <th style="border: 1px solid #000; padding: 8px;">Date</th>
+  //         <th style="border: 1px solid #000; padding: 8px;">Type</th>
+  //         <th style="border: 1px solid #000; padding: 8px;">Amount</th>
+  //       </tr>
+  //     </thead>
+  //     <tbody>
+  // `;
+
+  // filteredTransactions.forEach(transaction => {
+  //   htmlContent += `
+  //     <tr>
+  //       <td style="border: 1px solid #000; padding: 8px;">${transaction.category}</td>
+  //       <td style="border: 1px solid #000; padding: 8px;">${transaction.description}</td>
+  //       <td style="border: 1px solid #000; padding: 8px;">${transaction.date}</td>
+  //       <td style="border: 1px solid #000; padding: 8px;">${transaction.type}</td>
+  //       <td style="border: 1px solid #000; padding: 8px;">${transaction.amount}</td>
+  //     </tr>
+  //   `;
+  // });
+
+  // htmlContent += `
+  //     </tbody>
+  //   </table>
+  // `;
+
+  // // Generate PDF
+  // const options = {
+  //   html: htmlContent,
+  //   fileName: 'transactions',
+  //   directory: 'Documents',
+  // };
+
+  // let file = await RNHTMLtoPDF.convert(options);
+  // Alert.alert("PDF Created", `Your transactions have been exported to PDF: ${file.filePath}`);
+  // }
+
+  const print = async ()=> {
+    const html = generateHtml(initialTransactionsData);
     try {
-      await auth.signOut();
-      Alert.alert("Logged Out", "You have successfully logged out.");
-      navigation.navigate("signin")
-      // Optionally, navigate back to the login screen
+      await Print.printAsync({
+        html,
+        printerUrl: selectedPrinter?.url, 
+      });
     } catch (error) {
-      console.log(error)
-      Alert.alert("Logout Error", error.message);
+      console.error('Error while printing:', error);
+    }
+  }
+
+  const printToFile = async () => {
+    const html = generateHtml(initialTransactionsData);
+    try {
+      const { uri } = await Print.printToFileAsync({ html });
+      console.log('File has been saved to:', uri);
+      await shareAsync(uri, { UTI: '.pdf', mimeType: 'application/pdf' });
+    } catch (error) {
+      console.error('Error while creating PDF:', error);
+      Alert.alert("Error", "There was an issue creating the PDF.");
     }
   };
 
+   // Function to select a printer (only for iOS)
+   const selectPrinter = async () => {
+    try {
+      const printer = await Print.selectPrinterAsync();
+      setSelectedPrinter(printer);
+    } catch (error) {
+      console.error('Error while selecting printer:', error);
+    }
+  };
+
+  // const handleLogout = async () => {
+  //   try {
+  //     await auth.signOut();
+  //     Alert.alert("Logged Out", "You have successfully logged out.");
+  //     navigation.navigate("signin")
+  //     // Optionally, navigate back to the login screen
+  //   } catch (error) {
+  //     console.log(error)
+  //     Alert.alert("Logout Error", error.message);
+  //   }
+  // };
+
   return (
+
     <Provider>
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: themes[theme].background }]}>
         {/* Header Section */}
-        <View style={styles.header}>
-        <Image
-            source={require("../../assets/wallet_logo.png")}
-            style={styles.logo}
-          ></Image>
-          {/* <Text style={styles.headerTitle}>Transactions History</Text> */}
-          <Menu
-            visible={menuVisible}
-            onDismiss={closeMenu}
-            style={{size:50}}
-            anchor={
-              <TouchableOpacity onPress={openMenu}>
-                <Avatar.Text size={45} label="R" />
-              </TouchableOpacity>
-            }
-          >
-            <Menu.Item
-              onPress={() => {
-                handleThemeSwitch("light");
-                closeMenu();
-              }}
-              title="Light"
-              icon="weather-sunny"
-            />
-            <Menu.Item
-              onPress={() => {
-                handleThemeSwitch("dark");
-                closeMenu();
-              }}
-              title="Dark"
-              icon="weather-night"
-            />
-            <Divider />
-            <Menu.Item
-              onPress={() => {
-                handleLogout(); // Call the logout method here
-                closeMenu();
-              }}
-              title="Logout"
-              icon="logout"
-            />
-          </Menu>
-        </View>
-        <Text style={styles.headerTitle}>Transactions History</Text>
+
+        <Header isDarkMode={theme === 'dark'} toggleTheme={toggleTheme} navigation={navigation} />
+        
+        <Text style={[styles.headerTitle, { color: themes[theme].text }]}>Transactions History</Text>
 
         {/* Filter Section */}
         <View style={styles.filterContainer}>
@@ -256,7 +422,7 @@ const TransactionScreen = () => {
             <Picker
               selectedValue={selectedCategory}
               onValueChange={(itemValue) => setSelectedCategory(itemValue)}
-              style={[styles.picker, { backgroundColor: isDarkMode ? '#121212' : '#fff', color: textColor }]}
+              style={[styles.picker, { backgroundColor: themes[theme].buttonBackground, borderColor: themes[theme].buttonBorder, color: themes[theme].text }]}
             >
               {categories.map((category) => (
                 <Picker.Item key={category} label={category} value={category} />
@@ -268,20 +434,34 @@ const TransactionScreen = () => {
             <Picker
               selectedValue={selectedType}
               onValueChange={(itemValue) => setSelectedType(itemValue)}
-              style={[styles.picker, { backgroundColor: isDarkMode ? '#121212' : '#fff', color: textColor }]}
+              style={[styles.picker, { backgroundColor: themes[theme].buttonBackground, borderColor: themes[theme].buttonBorder, color: themes[theme].text }]}
             >
               {transactionTypes.map((type) => (
-                <Picker.Item key={type} label={type} value={type} />
+                <Picker.Item key={type} label={type} value={type}  />
               ))}
             </Picker>
           </View>
+        </View>
+
+        <View style={styles.filterContainer}>
+          {/* Export CSV Button */}
+          <TouchableOpacity style={[styles.exportButton, { backgroundColor: themes[theme].buttonBackground, borderColor: themes[theme].buttonBorder }]}
+           onPress={exportToCSV}>
+            <Text style={[styles.exportButtonText, { color: themes[theme].buttonText }]}>Export CSV</Text>
+          </TouchableOpacity>
+
+           {/* Export PDF Button */}
+        <TouchableOpacity style={[styles.exportButton, { backgroundColor: themes[theme].buttonBackground, borderColor: themes[theme].buttonBorder }]}
+         onPress={printToFile}>
+          <Text style={[styles.exportButtonText, { color: themes[theme].buttonText }]}>Export PDF</Text>
+        </TouchableOpacity>
 
           {/* Date Picker Button */}
           <TouchableOpacity
-            style={styles.datePickerButton}
+            style={[styles.datePickerButton, { backgroundColor: themes[theme].buttonBackground, borderColor: themes[theme].buttonBorder }]}
             onPress={showDatePicker}
           >
-            <Text style={styles.datePickerText}>
+            <Text style={[styles.datePickerText, { color: themes[theme].buttonText }]}  >
               {selectedDate ? `Selected Date: ${selectedDate}` : "Select Date"}
             </Text>
           </TouchableOpacity>
@@ -293,15 +473,10 @@ const TransactionScreen = () => {
           />
         </View>
 
-        {/* Export CSV Button */}
-        <TouchableOpacity style={styles.exportButton} onPress={exportToCSV}>
-          <Text style={styles.exportButtonText}>Export CSV</Text>
-        </TouchableOpacity>
-
         {/* No Transactions Message */}
         {noTransactionsMessage && !transactionsFound ? (
           <View>
-            <Text style={styles.noTransactionsText}>
+            <Text style={[styles.noTransactionsText, { color: themes[theme].text }]}>
               {noTransactionsMessage}
             </Text>
             <TouchableOpacity
@@ -314,14 +489,14 @@ const TransactionScreen = () => {
         ) : null}
 
         {/* Transactions Table Header */}
-        <View style={styles.tableHeader}>
-          <Text style={styles.headerText}>Category</Text>
-          <Text style={styles.headerText}>Description</Text>
-          <Text style={styles.headerText}>Date</Text>
-          <Text style={styles.headerText}>Type</Text>
-          <Text style={styles.headerText}>Amount</Text>
+        <View style={[styles.tableHeader, { backgroundColor: themes[theme].tableHeaderBackground }]}>
+          <Text style={[styles.headerText, { color: themes[theme].tableHeaderText }]}>Category</Text>
+          <Text style={[styles.headerText, { color: themes[theme].tableHeaderText }]}>Description</Text>
+          <Text style={[styles.headerText, { color: themes[theme].tableHeaderText }]}>Date</Text>
+          <Text style={[styles.headerText, { color: themes[theme].tableHeaderText }]}>Type</Text>
+          <Text style={[styles.headerText, { color: themes[theme].tableHeaderText }]}>Amount</Text>
           <TouchableOpacity>
-            <Icon name="more-horiz" size={24} color="#fff" />
+            <Icon name="more-horiz" size={24} color={themes[theme].tableHeaderText} />
           </TouchableOpacity>
         </View>
 
@@ -329,7 +504,18 @@ const TransactionScreen = () => {
         <FlatList
           data={filterTransactions()}
           keyExtractor={(item) => item.id}
-          renderItem={renderTransactionItem}
+          renderItem={({ item }) => (
+            <View style={[styles.transactionItem, { backgroundColor: themes[theme].transactionBackground }]}>
+              <Text style={[styles.transactionCategory, { color: themes[theme].transactionText }]}>{item.category}</Text>
+              <Text style={[styles.transactionDescription, { color: themes[theme].transactionText }]}>{item.description}</Text>
+              <Text style={[styles.transactionDate, { color: themes[theme].transactionText }]}>{item.date}</Text>
+              <Text style={[styles.transactionType, { color: themes[theme].transactionText }]}>{item.type}</Text>
+              <Text style={[styles.transactionAmount, { color: themes[theme].transactionText }]}>{item.amount}</Text>
+              <TouchableOpacity onPress={() => deleteTransaction(item.id)}>
+                <Icon name="delete" size={24} color="#FF0000" />
+              </TouchableOpacity>
+            </View>
+          )}
           contentContainerStyle={styles.listContainer}
         />
       </View>
@@ -342,7 +528,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginTop: 10,
     padding: 20,
-    backgroundColor: "#000",
+    // backgroundColor: "#000",
   },
   header: {
     flexDirection: "row",
@@ -372,27 +558,35 @@ logo: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 20,
+    marginBottom: 10,
   },
   pickerContainer: {
     flex: 1,
-    marginHorizontal: 5,
+    marginHorizontal: 3,
+    borderRadius: 5,
+    borderWidth: 1, 
   },
   picker: {
     height: 50,
-    backgroundColor: "#121212",
-    color: "#fff",
+    backgroundColor: "#333",
+    borderRadius: 5,
+    borderWidth: 1, 
   },
   datePickerButton: {
     flex: 1,
-    backgroundColor: "#121212",
+    height: 50,
+    marginLeft:5,
+    backgroundColor: "#333",
     padding: 10,
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 5,
+    borderWidth: 1, 
+    marginBottom: 10,
   },
   datePickerText: {
     color: "#fff",
+    fontSize: 16,
   },
   noTransactionsText: {
     color: "#FF0000",
@@ -406,6 +600,7 @@ logo: {
     backgroundColor: "#333",
     padding: 10,
     borderRadius: 5,
+    borderWidth: 1, 
     marginBottom: 10,
   },
   headerText: {
@@ -468,6 +663,7 @@ logo: {
     padding: 15,
     borderRadius: 5,
     marginTop: 20,
+    borderWidth: 1, 
   },
   refreshButtonText: {
     color: "#fff",
@@ -476,11 +672,14 @@ logo: {
     width:150,
   },
   exportButton: {
+    height: 50,
     backgroundColor: "#333",
     padding: 10,
     borderRadius: 5,
-    marginBottom: 15,
+    marginBottom: 10,
+    marginLeft:5,
     width: 100,
+    borderWidth: 1, 
   },
   exportButtonText: {
     color: "#fff",
