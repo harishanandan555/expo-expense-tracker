@@ -8,6 +8,7 @@ import {
     Switch,
     Modal,
     Alert,
+    ScrollView
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons'; // For icons
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
@@ -33,7 +34,7 @@ const NewExpenseScreen = ({ navigation }) => {
     const [isCreateCategoryModalVisible, setCreateCategoryModalVisible] = useState(false);
     const inputBackgroundColor = isDarkMode ? '#333' : '#f4f4f4';
     const [dbLoaded, setDbLoaded] = useState(false);
-
+    const [expenses, setExpenses] = useState([]);
     const backgroundColor = isDarkMode ? '#1C1C1E' : '#fff';
     const textColor = isDarkMode ? '#fff' : '#000';
     const inputBorderColor = isDarkMode ? '#FF6A00' : '#ccc';
@@ -48,6 +49,26 @@ const NewExpenseScreen = ({ navigation }) => {
     const handleDateConfirm = (date) => {
         setTransactionDate(date);
         setDatePickerVisible(false);
+    };
+    const fetchExpenses = async () => {
+        try {
+            const result = await db.getAllAsync('SELECT * FROM expense');
+            setExpenses(result);
+            console.log("expense in table", result)
+        } catch (error) {
+            console.error('Error fetching data:', error);
+        }
+    };
+    const deleteExpense = async (id) => {
+        try {
+            await db.runAsync('DELETE FROM expense WHERE id = ?', [id]);
+            Alert.alert('Success', 'Expense deleted successfully');
+            fetchExpenses();
+            navigation.navigate('main', { refresh: true }); // Refresh the list after deleting
+        } catch (error) {
+            console.error('Error deleting expense:', error);
+            Alert.alert('Error', 'Could not delete expense');
+        }
     };
 
     const toggleDarkMode = () => setIsDarkMode(!isDarkMode);
@@ -105,6 +126,7 @@ const NewExpenseScreen = ({ navigation }) => {
         };
 
         initializeAndCheckSchema();
+        fetchExpenses();
     }, [db]);
 
     if (!dbLoaded) {
@@ -131,6 +153,8 @@ const NewExpenseScreen = ({ navigation }) => {
                 ]
             );
     
+            console.log('Database result:', result); // Log the result here
+    
             if (result && result.rowsAffected > 0) {
                 Alert.alert('Success', 'Expense transaction saved successfully!');
                 setTransactionDescription('');
@@ -139,10 +163,9 @@ const NewExpenseScreen = ({ navigation }) => {
                 setSelectedIcon(null);
     
                 // Navigate back to DashboardScreen with a refresh flag
-                navigation.navigate('dashboard', { refresh: true });
+                navigation.navigate('main', { refresh: true });
             } else {
-                
-                navigation.navigate('dashboard', { refresh: true });
+                navigation.navigate('main', { refresh: true });
             }
         } catch (error) {
             console.error('Error saving expense transaction:', error);
@@ -155,6 +178,10 @@ const NewExpenseScreen = ({ navigation }) => {
 
 
     return (
+        <ScrollView 
+            style={[styles.container1, { backgroundColor }]}
+            contentContainerStyle={{ padding: 20,  justifyContent: 'center'  }}  // Applying padding through contentContainerStyle
+        >
         <View style={[styles.container, { backgroundColor }]}>
             {/* Header with Dark/Light Mode Toggle */}
             <View style={styles.header}>
@@ -317,11 +344,28 @@ const NewExpenseScreen = ({ navigation }) => {
                     </TouchableOpacity>
                 </View>
             </Modal>
+
+
+            <Text style={[styles.sectionTitle, { color: textColor }]}>Expenses</Text>
+            {expenses.map((expense) => (
+                <View key={expense.id} style={styles.expenseItem}>
+                    <Text style={[styles.expenseText, { color: textColor }]}>
+                        {expense.description} - ${expense.amount}
+                    </Text>
+                    <TouchableOpacity onPress={() => deleteExpense(expense.id)}>
+                        <MaterialIcons name="delete" size={24} color="red" />
+                    </TouchableOpacity>
+                </View>
+            ))}
         </View>
+        </ScrollView>
     );
 };
 
 const styles = StyleSheet.create({
+    container1: {
+        flex: 1,
+    },
     container: {
         flex: 1,
         padding: 20,
@@ -403,6 +447,24 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: "white"
     },
+    sectionTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginTop: 20,
+    },
+    expenseItem: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: 10,
+        marginVertical: 5,
+        backgroundColor: '#f9f9f9',
+        borderRadius: 5,
+    },
+    expenseText: {
+        fontSize: 16,
+    },
+   
     cancelButton: {
         marginTop: 10,
         borderRadius: 10,

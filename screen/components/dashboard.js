@@ -7,6 +7,7 @@ import {
     TouchableOpacity,
     Modal,
     TextInput,
+    Dimensions
 
 } from 'react-native';
 import { useRoute } from '@react-navigation/native';
@@ -20,6 +21,8 @@ import { Picker } from '@react-native-picker/picker'; // Import Picker from @rea
 import EmojiSelector from 'react-native-emoji-selector'; // For emoji picking
 import { useNavigation } from '@react-navigation/native'; // Import useNavigation hook
 import { useSQLiteContext } from 'expo-sqlite/next'; // Assuming you're using expo-sqlite context
+import * as Progress from 'react-native-progress';
+import { BarChart } from 'react-native-chart-kit';
 
 const DashboardScreen = () => {
     const [theme, setTheme] = useState('dark'); // Set default theme to dark
@@ -39,20 +42,29 @@ const DashboardScreen = () => {
     const [newCategory, setNewCategory] = useState('');
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [totalIncome, setTotalIncome] = useState(0); // State to store total income
-     const[totalExpense,settotalExpense] =useState(0);
+    const [totalExpense, settotalExpense] = useState(0);
     const [newExpenseCategory, setNewExpenseCategory] = useState('');
     const [selectedExpenseIcon, setSelectedExpenseIcon] = useState(null);
     const [isExpenseEmojiPickerVisible, setExpenseEmojiPickerVisible] = useState(false);
     const [expenseCategories, setExpenseCategories] = useState([]);
     const [selectedExpenseCategory, setSelectedExpenseCategory] = useState(null);
     const [balance, setBalance] = useState(0); // State for balance
-
+    const [expensesByCategory, setExpensesByCategory] = useState([]);
+    const [expenses, setExpenses] = useState([]);
+    const barFillColor = isDarkMode ? '#FF6A00' : '#FF8C00';
     const navigation = useNavigation();
     const db = useSQLiteContext(); // Your SQLite context
-
+    const barBackgroundColor = isDarkMode ? '#333' : '#e0e0e0';
     // Function to handle theme switching
     const handleThemeSwitch = (mode) => {
         setTheme(mode);
+    };
+    const colors = {
+        background: isDarkMode ? '#000' : '#fff',
+        cardBackground: isDarkMode ? '#121212' : '#f4f4f4',
+        text: isDarkMode ? '#fff' : '#000',
+        progressBarBackground: isDarkMode ? '#333' : '#e0e0e0',
+        progressBarFill: isDarkMode ? '#FF6A00' : '#FF8C00',
     };
 
     useEffect(() => {
@@ -63,6 +75,15 @@ const DashboardScreen = () => {
         setIncomeModalVisible(true);
         setExpenseModalVisible(false);
         setActiveButton('income');
+    };
+
+    const chartData = {
+        labels: expensesByCategory.map(item => item.category), // Categories as labels
+        datasets: [
+            {
+                data: expensesByCategory.map(item => item.totalAmount), // Total amounts as data
+            },
+        ],
     };
     const handleSaveExpenseCategory = () => {
         if (newExpenseCategory && selectedExpenseIcon) {
@@ -91,6 +112,15 @@ const DashboardScreen = () => {
         setCreateCategoryModalVisible(true);
     };
 
+
+    const fetchExpensesByCategory = async () => {
+        try {
+            const result = await fetchTotalExpenseByCategory(); // Fetch grouped expenses
+            setExpensesByCategory(result); // Update state with grouped expenses
+        } catch (error) {
+            console.error('Error fetching expenses by category:', error);
+        }
+    };
 
     const handleSaveCategory = () => {
         if (newCategory && selectedIcon) {
@@ -155,11 +185,51 @@ const DashboardScreen = () => {
         }
     };
 
+    const fetchTotalExpenseByCategory = async () => {
+        try {
+            const query = `
+                SELECT category, icon, SUM(amount) as totalAmount
+                FROM expense
+                GROUP BY category, icon
+            `;
+            const result = await db.getAllAsync(query);
+            console.log('Expense:', result);
+            return result;
+        } catch (error) {
+            console.error('Error fetching expenses by category:', error);
+            return [];
+        }
+    };
+
 
     useEffect(() => {
-        fetchTotalIncome(); 
-        fetchTotalExpense();// Fetch total income when the component mounts
+        fetchTotalIncome();
+        fetchTotalExpense();
+        fetchExpensesByCategory(); // Fetch total income when the component mounts
     }, []);
+
+    const formatDate = (date) => format(date, 'yyyy-MM-dd');
+
+    const fetchExpensesForDate = async () => {
+        const formattedStartDate = formatDate(startDate);
+        const formattedEndDate = formatDate(endDate);
+
+        try {
+            const result = await db.getAllAsync(
+                `SELECT * FROM expense WHERE date BETWEEN ? AND ?`,
+                [formattedStartDate, formattedEndDate]
+            );
+            setExpenses(result || []);
+            console.log('Filtered Expenses:', result);
+        } catch (error) {
+            console.error('Error fetching expenses for date:', error);
+            Alert.alert('Error', 'Could not fetch expenses for the selected date range.');
+        }
+    };
+
+    useEffect(() => {
+        fetchExpensesForDate();
+    }, [startDate, endDate]);
 
 
     const route = useRoute();
@@ -169,21 +239,39 @@ const DashboardScreen = () => {
     const initials = `${userInfo.data.user.firstName[0] || 'U'}${userInfo.data.user.lastName[0] || ''}`;
 
     // Fetch income and expense data
-    useFocusEffect(
-        useCallback(() => {
-            fetchTotalIncome();
-            fetchTotalExpense();
-        }, [route.params?.refresh || false])
-    );
+    
+    useEffect(() => {
+        // Set up the focus listener
+        const unsubscribe = navigation.addListener('focus', () => {
+            if (route.params?.refresh) {
+                fetchData();
+                // Reset the refresh flag after fetching data
+                navigation.setParams({ refresh: false });
+            }
+        });
+
+        // Clean up the listener on component unmount
+        return unsubscribe;
+    }, [navigation, route.params?.refresh]);
 
 
-   
+    useEffect(() => {
+        const loadExpensesByCategory = async () => {
+            const result = await fetchTotalExpenseByCategory();
+            setExpensesByCategory(result); // Store the result in the state
+        };
+
+        loadExpensesByCategory();
+    }, []);
+
+
+
 
     const openMenu = () => setMenuVisible(true);
     const closeMenu = () => setMenuVisible(false);
 
     // Extracting user initials
-   
+
 
     // Determine colors based on the theme
     const isDarkMode = theme === 'dark';
@@ -193,9 +281,7 @@ const DashboardScreen = () => {
     const inputBackgroundColor = isDarkMode ? '#333' : '#fff';
     const modalTextColor = isDarkMode ? '#fff' : '#000';
     // Function to format the date
-    const formatDate = (date) => {
-        return format(date, 'MMM d, yyyy');
-    };
+
 
     return (
         <Provider>
@@ -309,6 +395,7 @@ const DashboardScreen = () => {
                 </View>
 
                 {/* Date Picker Modal */}
+
                 <DateTimePickerModal
                     isVisible={isDatePickerVisible}
                     mode="date"
@@ -318,6 +405,8 @@ const DashboardScreen = () => {
                     }}
                     onCancel={() => setDatePickerVisible(false)}
                 />
+
+
                 <DateTimePickerModal
                     isVisible={isEndDatePickerVisible}
                     mode="date"
@@ -327,7 +416,6 @@ const DashboardScreen = () => {
                     }}
                     onCancel={() => setEndDatePickerVisible(false)}
                 />
-
                 {/* Income, Expense, Balance Cards */}
                 <View style={[styles.overviewCard, { backgroundColor: cardBackgroundColor }]}>
                     <MaterialIcons name="trending-up" size={32} color="green" />
@@ -355,7 +443,7 @@ const DashboardScreen = () => {
                         <Text style={[styles.overviewLabel, { color: textColor }]}>Balance</Text>
                         <Text style={[styles.overviewValue, { color: textColor }]}>${balance.toFixed(2)}</Text>
                     </View>
-                    </View>
+                </View>
 
                 {/* Income and Expense Section */}
                 <Text style={[styles.sectionTitle, { color: textColor }]}>Income</Text>
@@ -366,9 +454,38 @@ const DashboardScreen = () => {
 
                 <Text style={[styles.sectionTitle, { color: textColor }]}>Expense</Text>
                 <View style={[styles.noDataCard, { backgroundColor: cardBackgroundColor }]}>
-                    <Text style={[styles.noDataText, { color: textColor }]}>No data for the selected period.</Text>
-                    <Text style={styles.noDataSubtext}>Try to select a different period or add expenses.</Text>
+                    {expensesByCategory.length === 0 ? (
+                        // Display this message if there is no data
+                        <>
+                            <Text style={[styles.noDataText, { color: textColor }]}>No data for the selected period.</Text>
+                            <Text style={styles.noDataSubtext}>Try to select a different period or add expenses.</Text>
+                        </>
+                    ) : (
+                        // Display the expense items if there is data
+                        expensesByCategory.map((item, index) => {
+                            const percentage = totalExpense ? (item.totalAmount / totalExpense) * 100 : 0;
+                            return (
+                                <View key={index} style={styles.expenseItem}>
+                                    <View style={styles.iconAndLabel}>
+                                        <Text style={[styles.categoryEmoji, { color: isDarkMode ? '#fff' : '#000' }]}>{item.icon}</Text>
+                                        <Text style={[styles.categoryLabel, { color: isDarkMode ? '#fff' : '#000' }]}>
+                                            {item.category} ({percentage.toFixed(0)}%)
+                                        </Text>
+                                    </View>
+                                    <View style={[styles.progressBarContainer, { backgroundColor: isDarkMode ? '#333' : '#e0e0e0' }]}>
+                                        <View style={[
+                                            styles.progressBarFill,
+                                            { width: `${percentage}%`, backgroundColor: isDarkMode ? '#FF6A00' : '#FF8C00' }
+                                        ]} />
+                                    </View>
+                                    <Text style={[styles.amountText, { color: isDarkMode ? '#fff' : '#000' }]}>${item.totalAmount.toFixed(2)}</Text>
+                                </View>
+                            );
+                        })
+                    )}
                 </View>
+
+
 
                 {/* History Section */}
                 <Text style={[styles.sectionTitle, { color: textColor }]}>History</Text>
@@ -653,6 +770,43 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         marginBottom: 10,
     },
+    expenseItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginVertical: 5, // Reduce vertical margin for compact layout
+    },
+    iconAndLabel: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    categoryEmoji: {
+        fontSize: 18, // Adjust size for a minimal look
+        marginRight: 5,
+    },
+    categoryLabel: {
+        fontSize: 16,
+        color: '#FFF',
+        fontWeight: '600', // Make the font bold for better readability
+    },
+    progressBarContainer: {
+        flex: 1,
+        height: 8,
+        backgroundColor: '#333', // Dark background for unfilled part
+        borderRadius: 4, // Rounded edges
+        overflow: 'hidden',
+        marginHorizontal: 10, // Add spacing between text and bar
+    },
+    progressBarFill: {
+        height: '100%',
+        backgroundColor: '#FF6A00', // Custom fill color
+        borderRadius: 4,
+    },
+    amountText: {
+        fontSize: 16,
+        color: '#FFF',
+        fontWeight: '600',
+    },
     dateRange: {
         padding: 10,
         borderRadius: 5,
@@ -761,6 +915,9 @@ const styles = StyleSheet.create({
     },
     noDataText: {
         fontSize: 16,
+    },
+    progressBar: {
+        marginTop: 5,
     },
     noDataSubtext: {
         color: '#888',
@@ -877,6 +1034,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginHorizontal: 5,
     },
+
     toggleText: {
         color: '#fff',
         fontWeight: 'bold',
@@ -890,6 +1048,36 @@ const styles = StyleSheet.create({
         padding: 10,
         backgroundColor: '#f0f0f0',
         marginTop: 10,
+    },
+    container: {
+        padding: 20,
+    },
+    sectionTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginBottom: 10,
+    },
+    categoryContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 15,
+    },
+
+    barContainer: {
+        flex: 4,
+        height: 10,
+        backgroundColor: '#e0e0e0',
+        borderRadius: 5,
+        marginHorizontal: 10,
+    },
+    bar: {
+        height: '100%',
+        backgroundColor: '#FF6A00', // Customize the color of the filled part
+        borderRadius: 5,
+    },
+    amountText: {
+        fontSize: 16,
+        fontWeight: 'bold',
     },
 });
 
