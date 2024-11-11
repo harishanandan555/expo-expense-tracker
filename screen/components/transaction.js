@@ -13,7 +13,7 @@ import { Picker } from "@react-native-picker/picker";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { format } from "date-fns";
 import * as MediaLibrary from "expo-media-library";
-// import * as Print from 'expo-print';
+import * as Print from 'expo-print';
 import { shareAsync } from 'expo-sharing';
 import * as FileSystem from 'expo-file-system';
 import Icon from "react-native-vector-icons/MaterialIcons";
