@@ -126,7 +126,6 @@ const mockCurrencies = [
 	{ value: "USD", label: "$ Dollar", locale: "en-US" },
 	{ value: "VND", label: "₫ Vietnamese Dong", locale: "vi-VN" },
 	{ value: "ZAR", label: "R South African Rand", locale: "en-ZA" }
-	
 ];
 
 // Simulate fetching user settings
