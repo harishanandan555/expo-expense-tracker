@@ -50,6 +50,8 @@ const DashboardScreen = () => {
     const [selectedExpenseCategory, setSelectedExpenseCategory] = useState(null);
     const [balance, setBalance] = useState(0); // State for balance
     const [expensesByCategory, setExpensesByCategory] = useState([]);
+    const [incomeByCategory, setIncomeByCategory] = useState([]);
+
     const [expenses, setExpenses] = useState([]);
     const barFillColor = isDarkMode ? '#FF6A00' : '#FF8C00';
     const navigation = useNavigation();
@@ -77,6 +79,20 @@ const DashboardScreen = () => {
         setActiveButton('income');
     };
 
+
+    useEffect(() => {
+        const loadIncomeByCategory = async () => {
+            try {
+                const result = await fetchTotalIncomeByCategory(); // Fetch income by category
+                console.log("Fetched income by category:", result); // Debug: Log fetched data
+                setIncomeByCategory(result || []); // Ensure data is set or an empty array
+            } catch (error) {
+                console.error("Error loading income by category:", error);
+            }
+        };
+    
+        loadIncomeByCategory();
+    }, []);
     const chartData = {
         labels: expensesByCategory.map(item => item.category), // Categories as labels
         datasets: [
@@ -85,6 +101,15 @@ const DashboardScreen = () => {
             },
         ],
     };
+    const incomeChartData = {
+        labels: incomeByCategory.map(item => item.category), // Categories as labels
+        datasets: [
+            {
+                data: incomeByCategory.map(item => item.totalAmount), // Total amounts as data
+            },
+        ],
+    };
+    
     const handleSaveExpenseCategory = () => {
         if (newExpenseCategory && selectedExpenseIcon) {
             setExpenseCategories([...expenseCategories, { id: expenseCategories.length + 1, name: newExpenseCategory, icon: selectedExpenseIcon }]);
@@ -202,10 +227,28 @@ const DashboardScreen = () => {
     };
 
 
+    const fetchTotalIncomeByCategory = async () => {
+        try {
+            const query = `
+                SELECT category, icon, SUM(amount) as totalAmount
+                FROM incomes
+                GROUP BY category, icon
+            `;
+            const result = await db.getAllAsync(query);
+            console.log('income:', result);
+            return result;
+        } catch (error) {
+            console.error('Error fetching income by category:', error);
+            return [];
+        }
+    };
+
     useEffect(() => {
         fetchTotalIncome();
         fetchTotalExpense();
-        fetchExpensesByCategory(); // Fetch total income when the component mounts
+        fetchExpensesByCategory(); 
+       fetchTotalIncomeByCategory();
+        // Fetch total income when the component mounts
     }, []);
 
     const formatDate = (date) => format(date, 'yyyy-MM-dd');
@@ -446,11 +489,39 @@ const DashboardScreen = () => {
                 </View>
 
                 {/* Income and Expense Section */}
+              
                 <Text style={[styles.sectionTitle, { color: textColor }]}>Income</Text>
-                <View style={[styles.noDataCard, { backgroundColor: cardBackgroundColor }]}>
-                    <Text style={[styles.noDataText, { color: textColor }]}>No data for the selected period.</Text>
-                    <Text style={styles.noDataSubtext}>Try to select a different period or add incomes.</Text>
-                </View>
+            <View style={[styles.noDataCard, { backgroundColor: cardBackgroundColor }]}>
+                {incomeByCategory.length === 0 ? (
+                    // Display this message if there is no data
+                    <>
+                        <Text style={[styles.noDataText, { color: textColor }]}>No data for the selected period.</Text>
+                        <Text style={styles.noDataSubtext}>Try to select a different period or add income.</Text>
+                    </>
+                ) : (
+                    // Display the income items if there is data
+                    incomeByCategory.map((item, index) => {
+                        const percentage = totalIncome ? (item.totalAmount / totalIncome) * 100 : 0;
+                        return (
+                            <View key={index} style={styles.expenseItem}>
+                                <View style={styles.iconAndLabel}>
+                                    <Text style={[styles.categoryEmoji, { color: isDarkMode ? '#fff' : '#000' }]}>{item.icon}</Text>
+                                    <Text style={[styles.categoryLabel, { color: isDarkMode ? '#fff' : '#000' }]}>
+                                        {item.category} ({percentage.toFixed(0)}%)
+                                    </Text>
+                                </View>
+                                <View style={[styles.progressBarContainer, { backgroundColor: isDarkMode ? '#333' : '#e0e0e0' }]}>
+                                    <View style={[
+                                        styles.progressBarFill,
+                                        { width: `${percentage}%`, backgroundColor: isDarkMode ? '#FF6A00' : '#FF8C00' }
+                                    ]} />
+                                </View>
+                                <Text style={[styles.amountText, { color: isDarkMode ? '#fff' : '#000' }]}>${item.totalAmount.toFixed(2)}</Text>
+                            </View>
+                        );
+                    })
+                )}
+            </View>
 
                 <Text style={[styles.sectionTitle, { color: textColor }]}>Expense</Text>
                 <View style={[styles.noDataCard, { backgroundColor: cardBackgroundColor }]}>

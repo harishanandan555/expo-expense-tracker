@@ -139,10 +139,10 @@ const NewIncomeScreen = ({ navigation }) => {
                 setSelectedIcon(null);
     
                 // Navigate back to DashboardScreen with a refresh flag
-                navigation.navigate('dashboard', { refresh: true });
+                navigation.navigate('main', { refresh: true });
             } else {
                
-                navigation.navigate('dashboard', { refresh: true });
+                navigation.navigate('main', { refresh: true });
             }
         } catch (error) {
             console.error('Error saving income transaction:', error);
