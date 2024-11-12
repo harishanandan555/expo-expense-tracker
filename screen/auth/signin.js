@@ -168,37 +168,7 @@ const handleContinueToSignup = () => {
     }
   };
 
-  // Email Login or Signup
-  // const handleEmailLoginOrSignUp = async () => {
-  //   if (isNewUser) {
-  //     // Sign-up Flow
-  //     auth()
-  //       .createUserWithEmailAndPassword(email, password)
-  //       .then((userCredential) => {
-  //         console.log("User signed up: ", userCredential.user);
-  //         generateAuthToken(userCredential.user);
-  //       })
-  //       .catch((error) => {
-  //         console.error("Error signing up: ", error);
-  //       });
-  //   } else {
-  //     // Login Flow
-  //     auth()
-  //       .signInWithEmailAndPassword(email, password)
-  //       .then((userCredential) => {
-  //         console.log("Logged in with email");
-  //         generateAuthToken(userCredential.user);
-  //       })
-  //       .catch((error) => console.error("Error logging in: ", error));
-  //   }
-  // };
-
-  // Generate Token After Login/SignUp
-  // const generateAuthToken = async (user) => {
-  //   const token = await user.getIdToken(); // Get Firebase ID Token
-  //   console.log("Generated Token: ", token);
-  //   await AsyncStorage.setItem("@token", token);
-  // };
+ 
 
   const user = userInfo?.data?.user;
 
