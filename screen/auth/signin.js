@@ -270,7 +270,7 @@ const handleContinueToSignup = () => {
         </View>
       ) : (
         <View style={styles.card}>
-          <Text>Welcome, {user.name}</Text>
+          {/* <Text>Welcome, {user.name}</Text> */}
           <Text>Email: {user.email}</Text>
         </View>
       )}
