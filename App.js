@@ -19,8 +19,8 @@ import PhoneAuth from './screen/auth/phoneAuth';
 import EmailAuth from './screen/auth/emailAuth';
 
 const loadDatabase = async () => {
-  const dbName = 'myExpenseDB.db';
-  const dbAsset = require("./assets/myExpenseDB.db");
+  const dbName = 'Expense.db';
+  const dbAsset = require("./assets/Expense.db");
   const dbUri = Asset.fromModule(dbAsset).uri;
   const dbFilePath = `${FileSystem.documentDirectory}SQLite/${dbName}`;
 
@@ -54,7 +54,7 @@ export default function App() {
   
   return (
     <React.Suspense fallback={<LoadingScreen />}>
-      <SQLiteProvider databaseName="myExpenseDB.db" useSuspense>
+      <SQLiteProvider databaseName="Expense.db" useSuspense>
         <NavigationContainer>
           <Stack.Navigator initialRouteName="landing">
             <Stack.Screen name="landing" options={{ headerShown: false }} component={Landing} />

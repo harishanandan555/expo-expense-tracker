@@ -33,6 +33,7 @@ const NewIncomeScreen = ({ navigation }) => {
     const [isCreateCategoryModalVisible, setCreateCategoryModalVisible] = useState(false);
     const inputBackgroundColor = isDarkMode ? '#333' : '#f4f4f4';
     const [dbLoaded, setDbLoaded] = useState(false);
+    const [userEmail, setUserEmail] = useState(null);
 
     const backgroundColor = isDarkMode ? '#1C1C1E' : '#fff';
     const textColor = isDarkMode ? '#fff' : '#000';
@@ -49,6 +50,7 @@ const NewIncomeScreen = ({ navigation }) => {
         setTransactionDate(date);
         setDatePickerVisible(false);
     };
+
 
     const toggleDarkMode = () => setIsDarkMode(!isDarkMode);
 
@@ -68,7 +70,7 @@ const NewIncomeScreen = ({ navigation }) => {
 
     const getData = async () => {
         try {
-            const result = await db.getAllAsync('SELECT * FROM income');
+            const result = await db.getAllAsync('SELECT * FROM incomes');
             console.log("Query Result Structure:", result);
             console.log("Fetched income data:", result.rows ? result.rows._array : result); // Check if result.rows exists and has _array
         } catch (error) {
@@ -77,27 +79,34 @@ const NewIncomeScreen = ({ navigation }) => {
     };
     
     
-    
+    useEffect(() => {
+        const fetchUserEmail = async () => {
+            const email = await AsyncStorage.getItem("userEmail");
+            setUserEmail(email); // Set email for later use in database
+        };
 
-    const initializeDatabase = async () => {
-        try {
-            await db.runAsync(`DROP TABLE IF EXISTS income`);
-            await db.runAsync(`
-                CREATE TABLE IF NOT EXISTS income (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    description TEXT,
-                    amount REAL,
-                    category TEXT,
-                    icon TEXT,
-                    date TEXT
-                )
-            `);
-            setDbLoaded(true);
-            console.log('Table recreated successfully');
-        } catch (error) {
-            console.error('Error recreating table:', error);
-        }
-    };
+        const initializeDatabase = async () => {
+            try {
+                await db.runAsync(`
+                    CREATE TABLE IF NOT EXISTS incomes (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        email TEXT,
+                        description TEXT,
+                        amount REAL,
+                        category TEXT,
+                        date TEXT
+                    )
+                `);
+                setDbLoaded(true);
+            } catch (error) {
+                console.error('Error initializing database:', error);
+            }
+        };
+
+        fetchUserEmail();
+        initializeDatabase();
+    }, [db]);
+  
     
 
 
@@ -120,41 +129,28 @@ const NewIncomeScreen = ({ navigation }) => {
 
 
     const handleSaveIncome = async () => {
-        if (!transactionAmount || !selectedCategory || !transactionDate) {
-            Alert.alert('Error', 'Please fill out all required fields: amount, category, and date.');
+        if (!transactionAmount || !selectedCategory || !transactionDate || !userEmail) {
+            Alert.alert('Error', 'Please fill out all required fields.');
             return;
         }
-    
+
         try {
             const result = await db.runAsync(
-                'INSERT INTO income (description, amount, category, icon, date) VALUES (?, ?, ?, ?, ?)',
+                'INSERT INTO incomes (email, description, amount, category, date) VALUES (?, ?, ?, ?, ?)',
                 [
+                    userEmail, // Insert the retrieved email directly into the table
                     transactionDescription,
                     parseFloat(transactionAmount),
                     selectedCategory,
-                    selectedIcon,
                     transactionDate.toISOString(),
                 ]
             );
-    
+
             if (result && result.rowsAffected > 0) {
                 Alert.alert('Success', 'Income transaction saved successfully!');
-                console.log("Transaction saved:", {
-                    description: transactionDescription,
-                    amount: transactionAmount,
-                    category: selectedCategory,
-                    icon: selectedIcon,
-                    date: transactionDate.toISOString(),
-                });
                 setTransactionDescription('');
                 setTransactionAmount('');
                 setSelectedCategory(null);
-                setSelectedIcon(null);
-                
-                // Fetch and log all income data to verify
-                await getData(); // Call getData to fetch and log all saved income
-                navigation.navigate('main', { refresh: true });
-            } else {
                 navigation.navigate('main', { refresh: true });
             }
         } catch (error) {
@@ -162,7 +158,7 @@ const NewIncomeScreen = ({ navigation }) => {
             Alert.alert('Error', `Could not save income transaction: ${error.message}`);
         }
     };
-    
+
     
     
 
