@@ -13,7 +13,7 @@ import { Picker } from "@react-native-picker/picker";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { format } from "date-fns";
 import * as MediaLibrary from "expo-media-library";
-import * as Print from 'expo-print';
+// import * as Print from 'expo-print';
 import { shareAsync } from 'expo-sharing';
 import * as FileSystem from 'expo-file-system';
 import Icon from "react-native-vector-icons/MaterialIcons";
@@ -53,24 +53,24 @@ const themes = {
   light: {
     background: '#ffffff',
     text: '#000000',
-    buttonBackground: '#ffffff', // Button background in light mode
-    buttonBorder: '#333', // Border color for buttons
-    buttonText: '#000000', // Text color for buttons in light mode
-    tableHeaderBackground: '#ffffff', // Table header background in light mode
-    tableHeaderText: '#000000', // Table header text color in light mode
-    transactionBackground: '#ffffff', // Transaction background in light mode
-    transactionText: '#000000', // Transaction text color in light mode
+    buttonBackground: '#ffffff', 
+    buttonBorder: '#333',
+    buttonText: '#000000',
+    tableHeaderBackground: '#ffffff',
+    tableHeaderText: '#000000',
+    transactionBackground: '#ffffff',
+    transactionText: '#000000',
   
   },
   dark: {
     background: '#000000',
     text: '#ffffff',
-    buttonBackground: '#333', // Button background in dark mode
-    buttonText: '#ffffff', // Text color for buttons in dark mode
-    tableHeaderBackground: '#333', // Table header background in dark mode
-    tableHeaderText: '#ffffff', // Table header text color in dark mode
-    transactionBackground: '#121212', // Transaction background in dark mode
-    transactionText: '#ffffff', // Transaction text color in dark mode
+    buttonBackground: '#333',
+    buttonText: '#ffffff',
+    tableHeaderBackground: '#333',
+    tableHeaderText: '#ffffff',
+    transactionBackground: '#121212',
+    transactionText: '#ffffff',
   },
 };
 
@@ -127,6 +127,7 @@ const TransactionScreen = () => {
   const [noTransactionsMessage, setNoTransactionsMessage] = useState("");
   const [transactionsFound, setTransactionsFound] = useState(true);
   const [selectedPrinter, setSelectedPrinter] = useState(null);
+  const [selectedExportOption, setSelectedExportOption] = useState("");
 
   const openMenu = () => setMenuVisible(true);
   const closeMenu = () => setMenuVisible(false);
@@ -394,27 +395,29 @@ const TransactionScreen = () => {
     }
   };
 
-  // const handleLogout = async () => {
-  //   try {
-  //     await auth.signOut();
-  //     Alert.alert("Logged Out", "You have successfully logged out.");
-  //     navigation.navigate("signin")
-  //     // Optionally, navigate back to the login screen
-  //   } catch (error) {
-  //     console.log(error)
-  //     Alert.alert("Logout Error", error.message);
-  //   }
-  // };
+  const handleExportOption = (option) => {
+    setSelectedExportOption(option);
+    if (option === "CSV") {
+      exportToCSV();
+    } else if (option === "PDF") {
+      printToFile();
+    }
+  };
 
   return (
-
     <Provider>
-      <View style={[styles.container, { backgroundColor: themes[theme].background }]}>
-        {/* Header Section */}
-
-        <Header isDarkMode={theme === 'dark'} toggleTheme={toggleTheme} navigation={navigation} />
+      <View style={[ styles.container,  { backgroundColor: themes[theme].background },]}>
         
-        <Text style={[styles.headerTitle, { color: themes[theme].text }]}>Transactions History</Text>
+        {/* Header Section */}
+        <Header
+          isDarkMode={theme === "dark"}
+          toggleTheme={toggleTheme}
+          navigation={navigation}
+        />
+
+        <Text style={[styles.headerTitle, { color: themes[theme].text }]}>
+          Transactions History
+        </Text>
 
         {/* Filter Section */}
         <View style={styles.filterContainer}>
@@ -422,7 +425,14 @@ const TransactionScreen = () => {
             <Picker
               selectedValue={selectedCategory}
               onValueChange={(itemValue) => setSelectedCategory(itemValue)}
-              style={[styles.picker, { backgroundColor: themes[theme].buttonBackground, borderColor: themes[theme].buttonBorder, color: themes[theme].text }]}
+              style={[
+                styles.picker,
+                {
+                  backgroundColor: themes[theme].buttonBackground,
+                  borderColor: themes[theme].buttonBorder,
+                  color: themes[theme].text,
+                },
+              ]}
             >
               {categories.map((category) => (
                 <Picker.Item key={category} label={category} value={category} />
@@ -434,34 +444,70 @@ const TransactionScreen = () => {
             <Picker
               selectedValue={selectedType}
               onValueChange={(itemValue) => setSelectedType(itemValue)}
-              style={[styles.picker, { backgroundColor: themes[theme].buttonBackground, borderColor: themes[theme].buttonBorder, color: themes[theme].text }]}
+              style={[
+                styles.picker,
+                {
+                  backgroundColor: themes[theme].buttonBackground,
+                  borderColor: themes[theme].buttonBorder,
+                  color: themes[theme].text,
+                },
+              ]}
             >
               {transactionTypes.map((type) => (
-                <Picker.Item key={type} label={type} value={type}  />
+                <Picker.Item key={type} label={type} value={type} />
               ))}
             </Picker>
           </View>
         </View>
 
         <View style={styles.filterContainer}>
-          {/* Export CSV Button */}
-          <TouchableOpacity style={[styles.exportButton, { backgroundColor: themes[theme].buttonBackground, borderColor: themes[theme].buttonBorder }]}
+          {/* Export Options Picker */}
+          <View style={styles.pickerContainer}>
+            <Picker
+              selectedValue={selectedExportOption}
+              onValueChange={handleExportOption}
+              style={[
+                styles.picker,
+                {
+                  backgroundColor: themes[theme].buttonBackground,
+                  borderColor: themes[theme].buttonBorder,
+                  color: themes[theme].text,
+                },
+              ]}
+            >
+              <Picker.Item label="Export" value="" />
+              <Picker.Item label="CSV" value="CSV" />
+              <Picker.Item label="PDF" value="PDF" />
+            </Picker>
+          </View>
+         
+          {/* <TouchableOpacity style={[styles.exportButton, { backgroundColor: themes[theme].buttonBackground, borderColor: themes[theme].buttonBorder }]}
            onPress={exportToCSV}>
             <Text style={[styles.exportButtonText, { color: themes[theme].buttonText }]}>Export CSV</Text>
           </TouchableOpacity>
 
-           {/* Export PDF Button */}
         <TouchableOpacity style={[styles.exportButton, { backgroundColor: themes[theme].buttonBackground, borderColor: themes[theme].buttonBorder }]}
          onPress={printToFile}>
           <Text style={[styles.exportButtonText, { color: themes[theme].buttonText }]}>Export PDF</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
           {/* Date Picker Button */}
           <TouchableOpacity
-            style={[styles.datePickerButton, { backgroundColor: themes[theme].buttonBackground, borderColor: themes[theme].buttonBorder }]}
+            style={[
+              styles.datePickerButton,
+              {
+                backgroundColor: themes[theme].buttonBackground,
+                borderColor: themes[theme].buttonBorder,
+              },
+            ]}
             onPress={showDatePicker}
           >
-            <Text style={[styles.datePickerText, { color: themes[theme].buttonText }]}  >
+            <Text
+              style={[
+                styles.datePickerText,
+                { color: themes[theme].buttonText },
+              ]}
+            >
               {selectedDate ? `Selected Date: ${selectedDate}` : "Select Date"}
             </Text>
           </TouchableOpacity>
@@ -476,7 +522,9 @@ const TransactionScreen = () => {
         {/* No Transactions Message */}
         {noTransactionsMessage && !transactionsFound ? (
           <View>
-            <Text style={[styles.noTransactionsText, { color: themes[theme].text }]}>
+            <Text
+              style={[styles.noTransactionsText, { color: themes[theme].text }]}
+            >
               {noTransactionsMessage}
             </Text>
             <TouchableOpacity
@@ -489,14 +537,58 @@ const TransactionScreen = () => {
         ) : null}
 
         {/* Transactions Table Header */}
-        <View style={[styles.tableHeader, { backgroundColor: themes[theme].tableHeaderBackground }]}>
-          <Text style={[styles.headerText, { color: themes[theme].tableHeaderText }]}>Category</Text>
-          <Text style={[styles.headerText, { color: themes[theme].tableHeaderText }]}>Description</Text>
-          <Text style={[styles.headerText, { color: themes[theme].tableHeaderText }]}>Date</Text>
-          <Text style={[styles.headerText, { color: themes[theme].tableHeaderText }]}>Type</Text>
-          <Text style={[styles.headerText, { color: themes[theme].tableHeaderText }]}>Amount</Text>
+        <View
+          style={[
+            styles.tableHeader,
+            { backgroundColor: themes[theme].tableHeaderBackground },
+          ]}
+        >
+          <Text
+            style={[
+              styles.headerText,
+              { color: themes[theme].tableHeaderText },
+            ]}
+          >
+            Category
+          </Text>
+          <Text
+            style={[
+              styles.headerText,
+              { color: themes[theme].tableHeaderText },
+            ]}
+          >
+            Description
+          </Text>
+          <Text
+            style={[
+              styles.headerText,
+              { color: themes[theme].tableHeaderText },
+            ]}
+          >
+            Date
+          </Text>
+          <Text
+            style={[
+              styles.headerText,
+              { color: themes[theme].tableHeaderText },
+            ]}
+          >
+            Type
+          </Text>
+          <Text
+            style={[
+              styles.headerText,
+              { color: themes[theme].tableHeaderText },
+            ]}
+          >
+            Amount
+          </Text>
           <TouchableOpacity>
-            <Icon name="more-horiz" size={24} color={themes[theme].tableHeaderText} />
+            <Icon
+              name="more-horiz"
+              size={24}
+              color={themes[theme].tableHeaderText}
+            />
           </TouchableOpacity>
         </View>
 
@@ -505,12 +597,52 @@ const TransactionScreen = () => {
           data={filterTransactions()}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <View style={[styles.transactionItem, { backgroundColor: themes[theme].transactionBackground }]}>
-              <Text style={[styles.transactionCategory, { color: themes[theme].transactionText }]}>{item.category}</Text>
-              <Text style={[styles.transactionDescription, { color: themes[theme].transactionText }]}>{item.description}</Text>
-              <Text style={[styles.transactionDate, { color: themes[theme].transactionText }]}>{item.date}</Text>
-              <Text style={[styles.transactionType, { color: themes[theme].transactionText }]}>{item.type}</Text>
-              <Text style={[styles.transactionAmount, { color: themes[theme].transactionText }]}>{item.amount}</Text>
+            <View
+              style={[
+                styles.transactionItem,
+                { backgroundColor: themes[theme].transactionBackground },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.transactionCategory,
+                  { color: themes[theme].transactionText },
+                ]}
+              >
+                {item.category}
+              </Text>
+              <Text
+                style={[
+                  styles.transactionDescription,
+                  { color: themes[theme].transactionText },
+                ]}
+              >
+                {item.description}
+              </Text>
+              <Text
+                style={[
+                  styles.transactionDate,
+                  { color: themes[theme].transactionText },
+                ]}
+              >
+                {item.date}
+              </Text>
+              <Text
+                style={[
+                  styles.transactionType,
+                  { color: themes[theme].transactionText },
+                ]}
+              >
+                {item.type}
+              </Text>
+              <Text
+                style={[
+                  styles.transactionAmount,
+                  { color: themes[theme].transactionText },
+                ]}
+              >
+                {item.amount}
+              </Text>
               <TouchableOpacity onPress={() => deleteTransaction(item.id)}>
                 <Icon name="delete" size={24} color="#FF0000" />
               </TouchableOpacity>
@@ -526,7 +658,6 @@ const TransactionScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    marginTop: 10,
     padding: 20,
     // backgroundColor: "#000",
   },
@@ -559,30 +690,30 @@ logo: {
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 10,
+    zIndex: 1,
   },
   pickerContainer: {
     flex: 1,
     marginHorizontal: 3,
-    borderRadius: 5,
+    // borderRadius: 5,
     borderWidth: 1, 
-  },
+  },  
   picker: {
     height: 50,
     backgroundColor: "#333",
-    borderRadius: 5,
     borderWidth: 1, 
   },
   datePickerButton: {
     flex: 1,
-    height: 50,
+    height: 52,
     marginLeft:5,
     backgroundColor: "#333",
-    padding: 10,
+    // padding: 10,
     justifyContent: "center",
     alignItems: "center",
-    borderRadius: 5,
+    // borderRadius: 5,
     borderWidth: 1, 
-    marginBottom: 10,
+    // marginBottom: 10,
   },
   datePickerText: {
     color: "#fff",
@@ -678,7 +809,7 @@ logo: {
     borderRadius: 5,
     marginBottom: 10,
     marginLeft:5,
-    width: 100,
+    width: 50,
     borderWidth: 1, 
   },
   exportButtonText: {

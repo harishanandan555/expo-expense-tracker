@@ -8,13 +8,15 @@ import {
   TouchableOpacity,
   Image,
 } from "react-native";
-// import auth from '@react-native-firebase/auth';
 import * as WebBrowser from "expo-web-browser";
-import { auth } from "../../config/firebaseConfig";
+import { auth,db } from "../../config/firebaseConfig";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import "expo-dev-client";
-import { signInWithEmailAndPassword, sendPasswordResetEmail, fetchSignInMethodsForEmail  } from "firebase/auth";
+// import { signInWithEmailAndPassword, sendPasswordResetEmail, fetchSignInMethodsForEmail  } from "firebase/auth";
+import { signInWithEmailAndPassword, sendPasswordResetEmail} from "firebase/auth";
+import {GoogleAuthProvider, signInWithCredential } from "firebase/auth";
+import {collection, getDocs, query, where,doc, setDoc } from "firebase/firestore";
 //---------------------------------------------------------------------------------------------------------------------------
 // Complete any pending authentication sessions
 WebBrowser.maybeCompleteAuthSession();
@@ -26,11 +28,14 @@ export default function SignInPage({ navigation }) {
   const [emailEntered, setEmailEntered] = useState("");
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
+  const [loading, setLoading] = useState(false);
   
   const isEmail = (input) => {
-    const emailRegex = /\S+@\S+\.\S+/;
+    // A robust regex pattern for email validation
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     return emailRegex.test(input);
   };
+  
 
   const isValidPhoneNumber = (input) => {
     const phoneRegex = /^\+(\d{1,3})(\d{6,14})$/; 
@@ -43,68 +48,149 @@ export default function SignInPage({ navigation }) {
     setShowAlert(true);
   };
 
+  // const handleContinue = async () => {
+  //   const cleanedInput = input.trim();
+  //   if (cleanedInput) {
+
+  //     if (isEmail(cleanedInput)) {
+  //       console.log("Valid email entered:", cleanedInput);
+  //       setEmailEntered(cleanedInput);
+
+  //       try {
+  //         setLoading(true);
+  //         console.log("Checking if email exists in Firebase...");
+  //         const signInMethods = await fetchSignInMethodsForEmail(auth, cleanedInput);
+  //         console.log("Fetched sign-in methods:", signInMethods);
+          
+  //         if (signInMethods.length > 0) {
+
+
+  //           // Email exists, show password input only
+  //           console.log("Email exists in Firebase, showing password input.");
+  //           setPassword("");
+  //         } else {
+  //           // Email not found, navigate to signup
+  //           console.log("Email not found, navigating to sign up.");
+  //           // navigation.navigate("EmailAuthentication", { email: cleanedInput });
+  //         }
+  //       } catch (error) {
+  //         console.error("Error fetching sign-in methods:", error);
+  //         if (error.code === 'auth/invalid-email') {
+  //           showAlertMessage("The email address is not valid. Please check and try again.");
+  //         } 
+  //         else if (error.code === 'auth/network-request-failed') {
+  //           showAlertMessage("Network error. Please check your connection and try again.");
+  //         }
+  //         else {
+  //           showAlertMessage("An error occurred while checking the email.");
+  //         }
+  //       }
+  //     }
+  //     //  else if (isValidPhoneNumber(cleanedInput)) {
+  //     //   // navigation.navigate("PhoneAuthentication", { phone: cleanedInput });
+  //     // } 
+  //     else {
+  //       showAlertMessage("Please enter a valid email address.");
+  //     }
+  //   }
+  //    else {
+  //     showAlertMessage("Please enter your email.");
+  //   }
+  // };
+  
   const handleContinue = async () => {
     const cleanedInput = input.trim();
-    if (cleanedInput) {
-
-      if (isEmail(cleanedInput)) {
-        console.log("Valid email entered:", cleanedInput);
-        setEmailEntered(cleanedInput);
-
-        try {
-          console.log("Checking if email exists in Firebase...");
-          const signInMethods = await fetchSignInMethodsForEmail(auth, cleanedInput);
-          console.log("Fetched sign-in methods:", signInMethods);
-          
-          if (signInMethods.length > 0) {
-            // Email exists, show password input only
-            console.log("Email exists in Firebase, showing password input.");
-            setPassword("");
-          } else {
-            // Email not found, navigate to signup
-            console.log("Email not found, navigating to sign up.");
-            // navigation.navigate("EmailAuthentication", { email: cleanedInput });
-          }
-        } catch (error) {
-          console.error("Error fetching sign-in methods:", error);
-          if (error.code === 'auth/invalid-email') {
-            showAlertMessage("The email address is not valid. Please check and try again.");
-          } 
-          else if (error.code === 'auth/network-request-failed') {
-            showAlertMessage("Network error. Please check your connection and try again.");
-          }
-          else {
-            showAlertMessage("An error occurred while checking the email.");
-          }
-        }
-      }
-      //  else if (isValidPhoneNumber(cleanedInput)) {
-      //   // navigation.navigate("PhoneAuthentication", { phone: cleanedInput });
-      // } 
-      else {
-        showAlertMessage("Please enter a valid email address.");
-      }
-    }
-     else {
+  
+    // Check if input is empty
+    if (!cleanedInput) {
       showAlertMessage("Please enter your email.");
+      return;
+    }
+  
+    // Validate email format
+    if (!isEmail(cleanedInput)) {
+      showAlertMessage("Please enter a valid email address.");
+      return;
+    }
+  
+    console.log("Valid email entered:", cleanedInput);
+    setEmailEntered(cleanedInput);
+  
+    // Show loading alert
+    showAlertMessage("Checking your email id...", true);
+  
+    try {
+      setLoading(true);
+      console.log("Checking Firestore for the email...");
+  
+      const usersRef = collection(db, "users");
+      const q = query(usersRef, where("email", "==", cleanedInput));
+      const querySnapshot = await getDocs(q);
+  
+      if (!querySnapshot.empty) {
+        console.log("Email found in Firestore, checking Firebase Authentication...");
+  
+        try {
+          await signInWithEmailAndPassword(auth, cleanedInput, "dummyPassword");
+          console.log("Email exists in Firebase Authentication, showing password input.");
+          setPassword("");
+        } catch (signInError) {
+          console.log("Email exists, showing password input.");
+          setPassword("");
+        }
+      } else {
+        console.log("Email not found in Firestore, navigating to sign up.");
+          navigation.navigate("EmailAuthentication", { email: cleanedInput });
+        
+      }
+    } catch (error) {
+      console.error("Error during email check:", error);
+      showAlertMessage("An error occurred while checking the email.");
+    } finally {
+      setLoading(false);
     }
   };
   
-  
+   
   const handleSignIn = async () => {
     if (!emailEntered) {
       showAlertMessage("Please enter a valid email address.");
-      return; 
+      return;
     }
     
-    console.log("Attempting to sign in with:", emailEntered, password); 
+    console.log("Attempting to sign in with:", emailEntered, password);
+    
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, emailEntered, password);
-      console.log("Sign-in successful", userCredential.user);
+      setLoading(true);
+      const userCredential = await signInWithEmailAndPassword(auth, emailEntered.trim(), password.trim());
+      const user = userCredential.user;
+  
+      // Check if email verification is required
+      if (!user.emailVerified) {
+        showAlertMessage("Please verify your email before signing in.");
+        return;
+      }
+  
+      console.log("Sign-in successful", user);
       navigation.navigate("main"); 
-    } catch (error) {
-      console.error("Sign-in error:", error);
-      showAlertMessage("Sign-in error Please Check your User ID and password.",error.message);
+    } catch (error) { 
+      console.error("Sign-in error:", error.code, error.message);
+  
+      // Display a more specific error message based on Firebase Auth error codes
+      let errorMessage = "Sign-in error. Please check your email and password.";
+      if (error.code === "auth/user-not-found") {
+        errorMessage = "No user found with this email address.";
+      } else if (error.code === "auth/wrong-password") {
+        errorMessage = "Incorrect password.";
+      } else if (error.code === "auth/user-disabled") {
+        errorMessage = "This user account has been disabled.";
+      } else if (error.code === "auth/invalid-email") {
+        errorMessage = "Invalid email format.";
+      }
+  
+      showAlertMessage(errorMessage);
+    }finally {
+      setLoading(false);
     }
   };
 
@@ -133,11 +219,6 @@ const handleContinueToSignup = () => {
 };
 //-----------------------------------------------------------------------------------------------------------
 
-
-  // const [email, setEmail] = useState("");
-  // // const [password, setPassword] = useState("");
-  // const [isNewUser, setIsNewUser] = useState(false);
-
   // Configure Google Sign-In
   useEffect(() => {
     GoogleSignin.configure({
@@ -150,55 +231,52 @@ const handleContinueToSignup = () => {
     try {
       // Check if device has Google Play Services
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
-
       
       await GoogleSignin.signOut();
-
       
       const userInfo = await GoogleSignin.signIn();
-      
-     
       console.log("User Info: ", userInfo);
 
+      // Get the ID token from Google
+      const { idToken } = await GoogleSignin.getTokens();
+      const googleCredential = GoogleAuthProvider.credential(idToken);
+
+      // Authenticate with Firebase using the Google credentials
+      const userCredential = await signInWithCredential(auth, googleCredential);
+      const firebaseUser = userCredential.user;
+
+      // Save the user to Firestore
+      await saveUserToFirestore(firebaseUser);
       
       setUserInfo(userInfo);
       navigation.navigate("main");
     } catch (error) {
-      console.error(error);
+      console.error("Google Sign-In Error: ", error);
     }
   };
 
-  // Email Login or Signup
-  // const handleEmailLoginOrSignUp = async () => {
-  //   if (isNewUser) {
-  //     // Sign-up Flow
-  //     auth()
-  //       .createUserWithEmailAndPassword(email, password)
-  //       .then((userCredential) => {
-  //         console.log("User signed up: ", userCredential.user);
-  //         generateAuthToken(userCredential.user);
-  //       })
-  //       .catch((error) => {
-  //         console.error("Error signing up: ", error);
-  //       });
-  //   } else {
-  //     // Login Flow
-  //     auth()
-  //       .signInWithEmailAndPassword(email, password)
-  //       .then((userCredential) => {
-  //         console.log("Logged in with email");
-  //         generateAuthToken(userCredential.user);
-  //       })
-  //       .catch((error) => console.error("Error logging in: ", error));
-  //   }
-  // };
-
-  // Generate Token After Login/SignUp
-  // const generateAuthToken = async (user) => {
-  //   const token = await user.getIdToken(); // Get Firebase ID Token
-  //   console.log("Generated Token: ", token);
-  //   await AsyncStorage.setItem("@token", token);
-  // };
+  const saveUserToFirestore = async (user) => {
+    try {
+      const userRef = doc(db, "users", user.uid); 
+      // Set user data in Firestore with proper field references
+      await setDoc(
+        userRef,
+        {
+          id: user.uid, // Firebase UID
+          email: user.email,
+          name: user.displayName, // Display name, if available
+          givenName: userInfo?.data?.user?.givenName || "", // Handle any missing fields
+          familyName: userInfo?.data?.user?.familyName || "",
+          photo: user.photoURL || "", // Ensure this field exists in user object
+          createdAt: new Date(),
+        },
+        { merge: true }
+      );
+      console.log("User data saved to Firestore successfully!");
+    } catch (error) {
+      console.error("Error saving user data to Firestore: ", error);
+    }
+  };
 
   const user = userInfo?.data?.user;
 
@@ -279,7 +357,7 @@ const handleContinueToSignup = () => {
           <Text style={styles.infoText}>
             Don't have an account?{" "}
             <Text style={styles.linkText} onPress={handleContinueToSignup}>
-              Continue
+              Click Here
             </Text>
           </Text>
         
@@ -297,11 +375,12 @@ const handleContinueToSignup = () => {
               style={styles.googleIcon}
             />
           </TouchableOpacity>
+          {loading && <Text style={styles.loadingText}>Loading...</Text>}
         </View>
       ) : (
-        <View style={styles.card}>
+        <View style={styles.input}>
           {/* <Text>Welcome, {user.name}</Text> */}
-          <Text>Email: {user.email}</Text>
+          <Text style={styles.text}>{user.email}</Text>
         </View>
       )}
 
@@ -453,16 +532,12 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 5,
     marginVertical: 20,
+  }, 
+  text: {
+    color: "white", 
+    fontSize: 16,
+    fontWeight: "bold",
   },
-  // input: {
-  //   width: "100%",
-  //   padding: 12,
-  //   marginVertical: 10,
-  //   borderWidth: 1,
-  //   borderColor: "#ddd",
-  //   borderRadius: 8,
-  //   backgroundColor: "#f9f9f9",
-  // },
   loginButton: {
     backgroundColor: "#0A74DA",
     width: "100%",

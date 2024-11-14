@@ -1,14 +1,13 @@
-// Header.js
-
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, Image, Alert, TouchableOpacity } from 'react-native';
-import { Menu, Provider, Avatar, Divider, Text } from 'react-native-paper';
+import { View, StyleSheet, Image, Alert, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { Menu, Provider, Avatar, Divider } from 'react-native-paper';
 import { auth } from '../../config/firebaseConfig';
-import { onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
 
 const Header = ({ navigation, isDarkMode, toggleTheme }) => {
   const [menuVisible, setMenuVisible] = useState(false);
   const [userName, setUserName] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -27,13 +26,19 @@ const Header = ({ navigation, isDarkMode, toggleTheme }) => {
   const closeMenu = () => setMenuVisible(false);
 
   const handleLogout = async () => {
+    closeMenu();
+    setLoading(true); 
+    console.log("logout clicked")
     try {
-      await auth.signOut();
+      await signOut(auth);
       Alert.alert("Logged Out", "You have successfully logged out.");
       navigation.navigate("signin");
     } catch (error) {
       console.log(error);
       Alert.alert("Logout Error", error.message);
+
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -54,9 +59,9 @@ const Header = ({ navigation, isDarkMode, toggleTheme }) => {
           }
           style={[
             styles.menu,
-            { backgroundColor: isDarkMode ? '#333' : '#fff' }, // Adjust menu background color
-            { marginLeft: -10 }, // Move menu a little left
-            { position: 'absolute', top: 1 },
+            { backgroundColor: isDarkMode ? '#333' : '#fff' },
+            { marginLeft: -10 },
+            { position: 'absolute', top: 1, zIndex: 1000},
           ]}
         >
           <View style={styles.menuItemContainer}>
@@ -73,16 +78,17 @@ const Header = ({ navigation, isDarkMode, toggleTheme }) => {
           <Divider />
           <View style={styles.menuItemContainer}>
             <Menu.Item
-              onPress={() => {
-                handleLogout();
-                closeMenu();
-              }}
+              onPress={handleLogout}
               title="Logout"
               icon="logout"
               titleStyle={styles.menuItemText}
+              disabled={loading}
             />
           </View>
         </Menu>
+        {loading && (
+          <ActivityIndicator size="small" color="#000" style={styles.loadingIndicator} />
+        )}
       </View>
     </Provider>
   );
@@ -96,6 +102,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     paddingHorizontal: 10,
     position: 'relative',
+    
   },
   logo: {
     marginTop: 10,
@@ -106,13 +113,19 @@ const styles = StyleSheet.create({
   menu: {
     width: 100, 
     marginTop: 3,
+    position: 'absolute',
+    zIndex: 1001,
   },
   menuItemContainer: {
     backgroundColor: '#fff', 
   },
   menuItemText: {
     color: '#000',
-  }
+  },
+  loadingIndicator: {
+    position: 'absolute',
+    right: 20,
+  },
 });
 
 export default Header;

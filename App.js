@@ -64,7 +64,7 @@ export default function App() {
       >
         
       <SQLiteProvider databaseName="myExpenseDB.db" useSuspense>
-      <Stack.Navigator initialRouteName="landing">
+      <Stack.Navigator initialRouteName="signin">
         <Stack.Screen name="landing" options={{ headerShown: false }} component={Landing} />
         <Stack.Screen name="signin" options={{ headerShown: false }} component={SignInPage} />
         <Stack.Screen name="main" options={{ headerShown: false }} component={MainTabNavigator} />
