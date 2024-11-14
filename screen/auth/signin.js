@@ -13,40 +13,44 @@ import { auth,db } from "../../config/firebaseConfig";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import "expo-dev-client";
+// import { useSQLiteContext } from 'expo-sqlite/next';
 // import { signInWithEmailAndPassword, sendPasswordResetEmail, fetchSignInMethodsForEmail  } from "firebase/auth";
 import { signInWithEmailAndPassword, sendPasswordResetEmail} from "firebase/auth";
 import {GoogleAuthProvider, signInWithCredential } from "firebase/auth";
 import {collection, getDocs, query, where,doc, setDoc } from "firebase/firestore";
 //---------------------------------------------------------------------------------------------------------------------------
 // Complete any pending authentication sessions
-WebBrowser.maybeCompleteAuthSession();
+  WebBrowser.maybeCompleteAuthSession();
 
-export default function SignInPage({ navigation }) {
-  const [input, setInput] = useState(""); 
-  const [userInfo, setUserInfo] = useState(null);
-  const [password, setPassword] = useState("");
-  const [emailEntered, setEmailEntered] = useState("");
-  const [showAlert, setShowAlert] = useState(false);
-  const [alertMessage, setAlertMessage] = useState("");
-  const [loading, setLoading] = useState(false);
-  
-  const isEmail = (input) => {
-    // A robust regex pattern for email validation
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    return emailRegex.test(input);
-  };
-  
+  export default function SignInPage({ navigation }) {
+    // const db = useSQLiteContext();
 
-  const isValidPhoneNumber = (input) => {
-    const phoneRegex = /^\+(\d{1,3})(\d{6,14})$/; 
-    return phoneRegex.test(input);
-  };
+    const [input, setInput] = useState(""); 
+    const [userInfo, setUserInfo] = useState(null);
+    const [password, setPassword] = useState("");
+    const [emailEntered, setEmailEntered] = useState("");
+    const [showAlert, setShowAlert] = useState(false);
+    const [alertMessage, setAlertMessage] = useState("");
+    const [loading, setLoading] = useState(false);
+    
+    const isEmail = (input) => {
+      // A robust regex pattern for email validation
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+      return emailRegex.test(input);
+    };
+    
 
-   // Function to show alert with a custom message
-   const showAlertMessage = (message) => {
-    setAlertMessage(message);
-    setShowAlert(true);
-  };
+    const isValidPhoneNumber = (input) => {
+      const phoneRegex = /^\+(\d{1,3})(\d{6,14})$/; 
+      return phoneRegex.test(input);
+    };
+    
+
+    // Function to show alert with a custom message
+    const showAlertMessage = (message) => {
+      setAlertMessage(message);
+      setShowAlert(true);
+    };
 
   // const handleContinue = async () => {
   //   const cleanedInput = input.trim();
@@ -101,13 +105,11 @@ export default function SignInPage({ navigation }) {
   const handleContinue = async () => {
     const cleanedInput = input.trim();
   
-    // Check if input is empty
     if (!cleanedInput) {
       showAlertMessage("Please enter your email.");
       return;
     }
   
-    // Validate email format
     if (!isEmail(cleanedInput)) {
       showAlertMessage("Please enter a valid email address.");
       return;
@@ -115,33 +117,24 @@ export default function SignInPage({ navigation }) {
   
     console.log("Valid email entered:", cleanedInput);
     setEmailEntered(cleanedInput);
-  
-    // Show loading alert
     showAlertMessage("Checking your email id...", true);
   
     try {
       setLoading(true);
-      console.log("Checking Firestore for the email...");
-  
       const usersRef = collection(db, "users");
       const q = query(usersRef, where("email", "==", cleanedInput));
       const querySnapshot = await getDocs(q);
   
       if (!querySnapshot.empty) {
         console.log("Email found in Firestore, checking Firebase Authentication...");
-  
         try {
           await signInWithEmailAndPassword(auth, cleanedInput, "dummyPassword");
-          console.log("Email exists in Firebase Authentication, showing password input.");
           setPassword("");
         } catch (signInError) {
-          console.log("Email exists, showing password input.");
           setPassword("");
         }
       } else {
-        console.log("Email not found in Firestore, navigating to sign up.");
-          navigation.navigate("EmailAuthentication", { email: cleanedInput });
-        
+        navigation.navigate("EmailAuthentication", { email: cleanedInput });
       }
     } catch (error) {
       console.error("Error during email check:", error);
@@ -229,7 +222,7 @@ const handleContinueToSignup = () => {
 
   const onGoogleButtonPress = async () => {
     try {
-      // Check if device has Google Play Services
+      // Check Google services and sign in
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
       
       await GoogleSignin.signOut();
@@ -280,6 +273,14 @@ const handleContinueToSignup = () => {
 
   const user = userInfo?.data?.user;
 
+  const signOutUser = async () => {
+    await AsyncStorage.removeItem("userEmail"); // Clear stored email
+    setUserInfo(null);
+    setEmailEntered("");
+    setInput("");
+    setPassword("");
+  };
+  
   return (
     <View style={styles.container}>
        <Modal
@@ -385,14 +386,9 @@ const handleContinueToSignup = () => {
       )}
 
       {/* Sign-out button */}
+      
       {userInfo && (
-        <Button
-          title="Sign Out"
-          onPress={async () => {
-            await AsyncStorage.removeItem("@token");
-            setUserInfo(null);
-          }}
-        />
+        <Button title="Sign Out" onPress={signOutUser} />
       )}
     </View>
   );
