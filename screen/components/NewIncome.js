@@ -68,31 +68,37 @@ const NewIncomeScreen = ({ navigation }) => {
 
     const getData = async () => {
         try {
-            const result = await db.getAllAsync('SELECT * FROM incomes');
-            console.log(result);
+            const result = await db.getAllAsync('SELECT * FROM income');
+            console.log("Query Result Structure:", result);
+            console.log("Fetched income data:", result.rows ? result.rows._array : result); // Check if result.rows exists and has _array
         } catch (error) {
             console.error('Error fetching data:', error);
         }
     };
+    
+    
+    
 
     const initializeDatabase = async () => {
         try {
+            await db.runAsync(`DROP TABLE IF EXISTS income`);
             await db.runAsync(`
-                CREATE TABLE IF NOT EXISTS incomes (
+                CREATE TABLE IF NOT EXISTS income (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     description TEXT,
                     amount REAL,
                     category TEXT,
                     icon TEXT,
                     date TEXT
-                )`
-            );
+                )
+            `);
             setDbLoaded(true);
-            console.log('Table created or already exists');
+            console.log('Table recreated successfully');
         } catch (error) {
-            console.error('Error creating table:', error);
+            console.error('Error recreating table:', error);
         }
     };
+    
 
 
 
@@ -121,7 +127,7 @@ const NewIncomeScreen = ({ navigation }) => {
     
         try {
             const result = await db.runAsync(
-                'INSERT INTO incomes (description, amount, category, icon, date) VALUES (?, ?, ?, ?, ?)',
+                'INSERT INTO income (description, amount, category, icon, date) VALUES (?, ?, ?, ?, ?)',
                 [
                     transactionDescription,
                     parseFloat(transactionAmount),
@@ -133,15 +139,22 @@ const NewIncomeScreen = ({ navigation }) => {
     
             if (result && result.rowsAffected > 0) {
                 Alert.alert('Success', 'Income transaction saved successfully!');
+                console.log("Transaction saved:", {
+                    description: transactionDescription,
+                    amount: transactionAmount,
+                    category: selectedCategory,
+                    icon: selectedIcon,
+                    date: transactionDate.toISOString(),
+                });
                 setTransactionDescription('');
                 setTransactionAmount('');
                 setSelectedCategory(null);
                 setSelectedIcon(null);
-    
-                // Navigate back to DashboardScreen with a refresh flag
+                
+                // Fetch and log all income data to verify
+                await getData(); // Call getData to fetch and log all saved income
                 navigation.navigate('main', { refresh: true });
             } else {
-               
                 navigation.navigate('main', { refresh: true });
             }
         } catch (error) {

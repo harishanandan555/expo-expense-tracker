@@ -14,12 +14,17 @@ import { auth } from "../../config/firebaseConfig";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import "expo-dev-client";
+import { useSQLiteContext } from 'expo-sqlite/next';
+
+
 import { signInWithEmailAndPassword, sendPasswordResetEmail, fetchSignInMethodsForEmail  } from "firebase/auth";
 //---------------------------------------------------------------------------------------------------------------------------
 // Complete any pending authentication sessions
 WebBrowser.maybeCompleteAuthSession();
 
 export default function SignInPage({ navigation }) {
+  const db = useSQLiteContext();
+
   const [input, setInput] = useState(""); 
   const [userInfo, setUserInfo] = useState(null);
   const [password, setPassword] = useState("");
@@ -36,6 +41,7 @@ export default function SignInPage({ navigation }) {
     const phoneRegex = /^\+(\d{1,3})(\d{6,14})$/; 
     return phoneRegex.test(input);
   };
+  
 
    // Function to show alert with a custom message
    const showAlertMessage = (message) => {
@@ -91,22 +97,7 @@ export default function SignInPage({ navigation }) {
   };
   
   
-  const handleSignIn = async () => {
-    if (!emailEntered) {
-      showAlertMessage("Please enter a valid email address.");
-      return; 
-    }
-    
-    console.log("Attempting to sign in with:", emailEntered, password); 
-    try {
-      const userCredential = await signInWithEmailAndPassword(auth, emailEntered, password);
-      console.log("Sign-in successful", userCredential.user);
-      navigation.navigate("main"); 
-    } catch (error) {
-      console.error("Sign-in error:", error);
-      showAlertMessage("Sign-in error Please Check your User ID and password.",error.message);
-    }
-  };
+
 
  const handlePasswordReset = async () =>{
  if(!isEmail(emailEntered)){
@@ -148,25 +139,89 @@ const handleContinueToSignup = () => {
 
   const onGoogleButtonPress = async () => {
     try {
-      // Check if device has Google Play Services
+      // Check Google services and sign in
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
-
-      
       await GoogleSignin.signOut();
 
-      
       const userInfo = await GoogleSignin.signIn();
-      
-     
-      console.log("User Info: ", userInfo);
 
-      
-      setUserInfo(userInfo);
-      navigation.navigate("main");
+      const email = userInfo?.data?.user?.email;
+      if (email) {
+        await AsyncStorage.setItem("userEmail", email);
+        await AsyncStorage.setItem("userInfo", JSON.stringify(userInfo)); 
+        console.log("UserInfo before navigation:", userInfo);
+
+        navigation.navigate("main", { userInfo: userInfo.user });
+      } else {
+        showAlertMessage("Failed to retrieve Google user information.");
+      }
     } catch (error) {
-      console.error(error);
+      console.error("Google Sign-In error:", error);
+      showAlertMessage("Google Sign-In failed.");
     }
   };
+
+  const handleSignIn = async () => {
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, emailEntered, password);
+      const email = userCredential.user.email; // Get the user's email
+      await AsyncStorage.setItem("userEmail", email); // Save email to AsyncStorage
+      navigation.navigate("main"); // Navigate to main screen
+    } catch (error) {
+      console.error("Sign-in error:", error);
+      showAlertMessage("Sign-in failed. Please check your email and password.");
+    }
+  };
+
+const initializeUserData = async (email) => {
+  try {
+      // Drop tables if they exist (for development/testing purposes)
+      await db.runAsync(`DROP TABLE IF EXISTS income;`);
+      await db.runAsync(`DROP TABLE IF EXISTS expense;`);
+
+      // Create tables with email column
+      await db.runAsync(`
+          CREATE TABLE IF NOT EXISTS income (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              email TEXT,
+              amount REAL,
+              date TEXT
+          );
+      `);
+      await db.runAsync(`
+          CREATE TABLE IF NOT EXISTS expense (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              email TEXT,
+              amount REAL,
+              date TEXT
+          );
+      `);
+
+      // Insert zero values for income and expense if this user is new
+      await db.runAsync(
+          `INSERT OR IGNORE INTO income (email, amount, date) VALUES (?, 0, '')`,
+          [email]
+      );
+      await db.runAsync(
+          `INSERT OR IGNORE INTO expense (email, amount, date) VALUES (?, 0, '')`,
+          [email]
+      );
+
+      console.log(`Default data initialized for user: ${email}`);
+  } catch (error) {
+      console.error('Error initializing user data:', error);
+      showAlertMessage('Error initializing user data. Please try again.');
+  }
+};
+
+
+const signOutUser = async () => {
+  await AsyncStorage.removeItem("userEmail"); // Clear stored email
+  setUserInfo(null);
+  setEmailEntered("");
+  setInput("");
+  setPassword("");
+};
 
  
 
@@ -276,14 +331,9 @@ const handleContinueToSignup = () => {
       )}
 
       {/* Sign-out button */}
+      
       {userInfo && (
-        <Button
-          title="Sign Out"
-          onPress={async () => {
-            await AsyncStorage.removeItem("@token");
-            setUserInfo(null);
-          }}
-        />
+        <Button title="Sign Out" onPress={signOutUser} />
       )}
     </View>
   );
