@@ -15,18 +15,105 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import "expo-dev-client";
 import { signInWithEmailAndPassword, sendPasswordResetEmail, fetchSignInMethodsForEmail  } from "firebase/auth";
+import { getFirestore, doc, setDoc, getDoc} from "firebase/firestore";
+
+import { storeUser, storeAccount } from '../services/firebaseSettings'
+
+const db = getFirestore();
+
 //---------------------------------------------------------------------------------------------------------------------------
 // Complete any pending authentication sessions
 WebBrowser.maybeCompleteAuthSession();
 
 export default function SignInPage({ navigation }) {
+
   const [input, setInput] = useState(""); 
-  const [userInfo, setUserInfo] = useState(null);
   const [password, setPassword] = useState("");
+  const [userInfo, setUserInfo] = useState(null);
   const [emailEntered, setEmailEntered] = useState("");
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
   
+  // DefaultCategories insertion
+  // async function insertIncomeCategories() {
+  //   const incomeCategories = [
+  //     { name: "Salary", icon: "💼", type: "income" },
+  //     { name: "Gifts", icon: "🎁", type: "income" },
+  //     { name: "Education Grants", icon: "🎓", type: "income" },
+  //     { name: "Bonus", icon: "💰", type: "income" },
+  //     { name: "Commission", icon: "🧾", type: "income" },
+  //     { name: "Investment Income", icon: "📈", type: "income" },
+  //     { name: "Rental Income", icon: "🏠", type: "income" },
+  //     { name: "Freelance Income", icon: "💵", type: "income" },
+  //     { name: "Tax Refund", icon: "💸", type: "income" },
+  //     { name: "Gambling Winnings", icon: "🎲", type: "income" },
+  //     { name: "Interest Income", icon: "🪙", type: "income" },
+  //     { name: "Selling Income", icon: "💹", type: "income" },
+  //     { name: "Tips", icon: "💳", type: "income" },
+  //     { name: "Side Job", icon: "🛠️", type: "income" },
+  //     { name: "Other Income", icon: "💲", type: "income" },
+  //   ];
+  
+  //   try {
+  //     // Iterate over income categories and store each one in Firestore
+  //     for (const category of incomeCategories) {
+  //       const sanitizedName = category.name.replace(/[\/\.\#\[\]]/g, '_'); // Replace invalid characters
+  //       const categoryRef = doc(db, "DefaultCategories", sanitizedName); // Use sanitized name as document ID
+  //       await setDoc(categoryRef, category); // Store the category in Firestore
+  //     }
+  //     console.log("Income categories inserted successfully.");
+  //   } catch (error) {
+  //     console.error("Error inserting categories:", error);
+  //   }
+  // }
+  
+  // // Call the function to insert income categories
+  // insertIncomeCategories();
+  
+  // async function insertExpenseCategories() {
+  //   const expenseCategories = [
+  //     { name: "Auto & Transport", icon: "🚗", type: "expense" },
+  //     { name: "Bills & Utilities", icon: "💡", type: "expense" },
+  //     { name: "Charity", icon: "💛", type: "expense" },
+  //     { name: "Clothing & Accessories", icon: "👗", type: "expense" },
+  //     { name: "Dining & Restaurants", icon: "🍽️", type: "expense" },
+  //     { name: "Education", icon: "📚", type: "expense" },
+  //     { name: "Entertainment", icon: "🎮", type: "expense" },
+  //     { name: "Fees & Charges", icon: "🏦", type: "expense" },
+  //     { name: "Food & Groceries", icon: "🥑", type: "expense" },
+  //     { name: "Health & Fitness", icon: "🏥", type: "expense" },
+  //     { name: "Home Improvement", icon: "🛠️", type: "expense" },
+  //     { name: "Household Supplies", icon: "🧴", type: "expense" },
+  //     { name: "Insurance", icon: "🛡️", type: "expense" },
+  //     { name: "Loans", icon: "💳", type: "expense" },
+  //     { name: "Miscellaneous", icon: "🎉", type: "expense" },
+  //     { name: "Personal Care", icon: "🧖", type: "expense" },
+  //     { name: "Pet Care", icon: "🐾", type: "expense" },
+  //     { name: "Rent/Mortgage", icon: "🏠", type: "expense" },
+  //     { name: "Shopping", icon: "🛍️", type: "expense" },
+  //     { name: "Subscriptions", icon: "📺", type: "expense" },
+  //     { name: "Taxes", icon: "🧾", type: "expense" },
+  //     { name: "Travel", icon: "✈️", type: "expense" },
+  //     { name: "Utilities", icon: "🔌", type: "expense" },
+  //     { name: "Other Expenses", icon: "💲", type: "expense" },
+  //   ];
+  
+  //   try {
+  //     // Iterate over expense categories and store each one in Firestore
+  //     for (const category of expenseCategories) {
+  //       const sanitizedName = category.name.replace(/[\/\.\#\[\]]/g, '_'); // Replace invalid characters
+  //       const categoryRef = doc(db, "DefaultCategories", sanitizedName); // Use sanitized name as document ID
+  //       await setDoc(categoryRef, category); // Store the category in Firestore
+  //     }
+  //     console.log("Expense categories inserted successfully.");
+  //   } catch (error) {
+  //     console.error("Error inserting categories:", error);
+  //   }
+  // }
+  
+  // // Call the function to insert expense categories
+  // insertExpenseCategories();
+
   const isEmail = (input) => {
     const emailRegex = /\S+@\S+\.\S+/;
     return emailRegex.test(input);
@@ -37,8 +124,8 @@ export default function SignInPage({ navigation }) {
     return phoneRegex.test(input);
   };
 
-   // Function to show alert with a custom message
-   const showAlertMessage = (message) => {
+  // Function to show alert with a custom message
+  const showAlertMessage = (message) => {
     setAlertMessage(message);
     setShowAlert(true);
   };
@@ -92,6 +179,7 @@ export default function SignInPage({ navigation }) {
   
   
   const handleSignIn = async () => {
+    
     if (!emailEntered) {
       showAlertMessage("Please enter a valid email address.");
       return; 
@@ -108,34 +196,48 @@ export default function SignInPage({ navigation }) {
     }
   };
 
- const handlePasswordReset = async () =>{
- if(!isEmail(emailEntered)){
-  showAlertMessage("Please enter a valid email address.");
-  return;
-}
-console.log("Sending password reset email to:", emailEntered);  
-try{
-  await sendPasswordResetEmail(auth, emailEntered);
-  showAlertMessage("A password reset email has been sent to your email address.");
-}catch(error){
-  console.error("Password reset error:", error);
-  showAlertMessage("Password reset error:",error.message);
-}
-};
+  const handlePasswordReset = async () =>{
 
-const handleContinueToSignup = () => {
-  if (isEmail(input.trim())) {
+    if(!isEmail(emailEntered)){
+      showAlertMessage("Please enter a valid email address.");
+      return;
+    }
+
+    console.log("Sending password reset email to:", emailEntered); 
+
+    try{
+      await sendPasswordResetEmail(auth, emailEntered);
+      showAlertMessage("A password reset email has been sent to your email address.");
+    }catch(error){
+      console.error("Password reset error:", error);
+      showAlertMessage("Password reset error:",error.message);
+    }
+
+  };
+
+  const handleContinueToSignup = () => {
+
     const cleanedInput = input.trim();
-    navigation.navigate("EmailAuthentication", { email: cleanedInput });
-  } else {
-    showAlertMessage("Please enter a valid email address before continuing to sign up.");
-  }
-};
+
+    if (isEmail(cleanedInput)) {
+
+      navigation.navigate("EmailAuthentication", { email: cleanedInput });
+
+      // navigation.navigate("NextScreen", {
+      //   email: cleanedInput,
+      //   password: password,
+      //   googleEmail: userInfo?.user?.email,
+      // });
+
+    } else {
+      showAlertMessage("Please enter a valid email address before continuing to sign up.");
+    }
+  };
+
 //-----------------------------------------------------------------------------------------------------------
 
-
   // const [email, setEmail] = useState("");
-  // // const [password, setPassword] = useState("");
+  // const [password, setPassword] = useState("");
   // const [isNewUser, setIsNewUser] = useState(false);
 
   // Configure Google Sign-In
@@ -147,6 +249,7 @@ const handleContinueToSignup = () => {
   }, []);
 
   const onGoogleButtonPress = async () => {
+
     try {
       // Check if device has Google Play Services
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
@@ -160,19 +263,23 @@ const handleContinueToSignup = () => {
      
       console.log("User Info: ", userInfo);
 
+      const user = await storeUser(userInfo.data.user)
+
+      await storeAccount( user.userId, userInfo.data )
       
       setUserInfo(userInfo);
+
       navigation.navigate("main");
+
     } catch (error) {
       console.error(error);
     }
   };
 
- 
-
   const user = userInfo?.data?.user;
 
   return (
+
     <View style={styles.container}>
        <Modal
         visible={showAlert}
@@ -235,9 +342,9 @@ const handleContinueToSignup = () => {
             />
           )}
 
-            <TouchableOpacity onPress={handlePasswordReset}>
+          <TouchableOpacity onPress={handlePasswordReset}>
             <Text style={styles.resetPasswordText}>Forgot Password?</Text>
-            </TouchableOpacity>
+          </TouchableOpacity>
          
           {/* Sign In Button - shown only after entering password */}
           {emailEntered && (
@@ -253,7 +360,7 @@ const handleContinueToSignup = () => {
             </Text>
           </Text>
         
-        {/* Google Sign-In Button */}
+          {/* Google Sign-In Button */}
           <TouchableOpacity
             style={styles.signInButton}
             onPress={() =>
@@ -267,6 +374,7 @@ const handleContinueToSignup = () => {
               style={styles.googleIcon}
             />
           </TouchableOpacity>
+
         </View>
       ) : (
         <View style={styles.card}>

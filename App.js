@@ -7,6 +7,8 @@ import { Asset } from 'expo-asset';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
 import Landing from './screen/landing';
 import SignInPage from './screen/auth/signin';
 import DashboardScreen from './screen/components/dashboard';
@@ -18,6 +20,8 @@ import { StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import PhoneAuth from './screen/auth/phoneAuth';
 import EmailAuth from './screen/auth/emailAuth';
+
+const queryClient = new QueryClient();
 
 const loadDatabase = async () => {
   const dbName = 'myExpenseDB.db';
@@ -53,7 +57,8 @@ export default function App() {
     );
   }
   return (
-    <NavigationContainer>
+    <QueryClientProvider client={queryClient}>
+      <NavigationContainer>
         <React.Suspense
         fallback={
           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -79,6 +84,8 @@ export default function App() {
       </SQLiteProvider>
       </React.Suspense>
     </NavigationContainer>
+    </QueryClientProvider>
+    
   );
 }
 // const ScreenContainer = ({ children }) => (

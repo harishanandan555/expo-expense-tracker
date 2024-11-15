@@ -25,6 +25,7 @@ import * as Progress from 'react-native-progress';
 import { BarChart } from 'react-native-chart-kit';
 
 const DashboardScreen = () => {
+
     const [theme, setTheme] = useState('dark'); // Set default theme to dark
     const [menuVisible, setMenuVisible] = useState(false);
     const [isIncomeModalVisible, setIncomeModalVisible] = useState(false);
@@ -57,10 +58,12 @@ const DashboardScreen = () => {
     const navigation = useNavigation();
     const db = useSQLiteContext(); // Your SQLite context
     const barBackgroundColor = isDarkMode ? '#333' : '#e0e0e0';
+
     // Function to handle theme switching
     const handleThemeSwitch = (mode) => {
         setTheme(mode);
     };
+
     const colors = {
         background: isDarkMode ? '#000' : '#fff',
         cardBackground: isDarkMode ? '#121212' : '#f4f4f4',
@@ -276,7 +279,29 @@ const DashboardScreen = () => {
 
 
     const route = useRoute();
+    
     const userInfo = route.params?.userInfo || { data: { user: { photo: null, firstName: 'User', lastName: '' } } };
+
+    // const { email, password, googleEmail } = route.params;
+
+    console.log("");
+    console.log("");
+    console.log("");
+    console.log("");
+    console.log("");
+    console.log("");
+    console.log("");
+    console.log("route.params:", route.params);
+    // console.log("Email:", email);
+    // console.log("Password:", password);
+    // console.log("Google Email:", googleEmail);
+    console.log("");
+    console.log("");
+    console.log("");
+    console.log("");
+    console.log("");
+    console.log("");
+    console.log("");
 
     // Set user initials
     const initials = `${userInfo.data.user.firstName[0] || 'U'}${userInfo.data.user.lastName[0] || ''}`;

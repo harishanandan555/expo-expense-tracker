@@ -1,12 +1,12 @@
 import { Alert } from 'react-native';
 
-import { SettingsSchema } from "../schemas/settings.schema";
+// import { SettingsSchema } from "../schemas/settings.schema";
 import { getCurrentUser } from "../services/user.services";
 import { updateCurrencyUser } from "../services/firebaseSettings";
 
 
 export async function updateUserCurrency(currency) {
-  // Validate the currency using your schema (Yup or any other library)
+  
   const parsedBody = SettingsSchema.validate({ currency })
     .then(() => true)
     .catch((error) => {
