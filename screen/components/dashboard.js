@@ -7,11 +7,13 @@ import {
     TouchableOpacity,
     Modal,
     TextInput,
-    Dimensions
+    Dimensions, Image
 
 } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import { useFocusEffect } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
 
 import { MaterialIcons } from '@expo/vector-icons';
 import { Avatar, Menu, Divider, Provider } from 'react-native-paper';
@@ -52,7 +54,9 @@ const DashboardScreen = () => {
     const [balance, setBalance] = useState(0); // State for balance
     const [expensesByCategory, setExpensesByCategory] = useState([]);
     const [incomeByCategory, setIncomeByCategory] = useState([]);
+    const [userInfos, setUserInfos] = useState(null);
 
+    const route = useRoute();
     const [expenses, setExpenses] = useState([]);
     const barFillColor = isDarkMode ? '#FF6A00' : '#FF8C00';
     const navigation = useNavigation();
@@ -76,13 +80,52 @@ const DashboardScreen = () => {
         setBalance(totalIncome - totalExpense);
     }, [totalIncome, totalExpense]);
 
+
+
     const toggleIncomeModal = () => {
         setIncomeModalVisible(true);
         setExpenseModalVisible(false);
         setActiveButton('income');
     };
+    useEffect(() => {
+        const fetchUserInfo = async () => {
+            try {
+                const storedUserInfo = await AsyncStorage.getItem('userInfo');
+                if (storedUserInfo) {
+                    setUserInfos(JSON.parse(storedUserInfo));
+                    console.log("UserInfo retrieved from AsyncStorage:", storedUserInfo);
+                } else {
+                    console.log("No UserInfo found in AsyncStorage");
+                }
+            } catch (error) {
+                console.error("Failed to retrieve UserInfo from AsyncStorage:", error);
+            }
+        };
+
+        fetchUserInfo();
+    }, []);
+
+    useEffect(() => {
+        if (userInfo) {
+            console.log("User Info in Dashboard:", userInfo); // Should log the user object
+        } else {
+            console.log("No User Info received");
+        }
+    }, [userInfo]);
 
 
+
+    const handleGoogleLogout = async () => {
+        try {
+            await GoogleSignin.signOut();
+            await AsyncStorage.removeItem('userInfo');
+            await AsyncStorage.removeItem('userEmail'); // Clear stored email if needed
+            setUserInfos(null);
+            navigation.replace('signin'); // Navigate back to the SignInPage
+        } catch (error) {
+            console.error('Error signing out from Google:', error);
+        }
+    };
     useEffect(() => {
         const loadIncomeByCategory = async () => {
             try {
@@ -93,7 +136,7 @@ const DashboardScreen = () => {
                 console.error("Error loading income by category:", error);
             }
         };
-    
+
         loadIncomeByCategory();
     }, []);
     const chartData = {
@@ -112,7 +155,9 @@ const DashboardScreen = () => {
             },
         ],
     };
-    
+    console.log('User Infos:', userInfos);
+
+
     const handleSaveExpenseCategory = () => {
         if (newExpenseCategory && selectedExpenseIcon) {
             setExpenseCategories([...expenseCategories, { id: expenseCategories.length + 1, name: newExpenseCategory, icon: selectedExpenseIcon }]);
@@ -191,13 +236,13 @@ const DashboardScreen = () => {
             }
         } catch (error) {
             console.error('Error fetching total income:', error);
+            setTotalIncome(0); // Set to 0 on error
         }
     };
 
-
     const fetchTotalExpense = async () => {
         try {
-            const result = await db.getAllAsync('SELECT SUM(amount) as totalExpense FROM expense');
+            const result = await db.getAllAsync('SELECT SUM(amount) as totalExpense FROM expenses');
             console.log('Query Result:', result);
 
             if (result && result.length > 0) {
@@ -210,14 +255,16 @@ const DashboardScreen = () => {
             }
         } catch (error) {
             console.error('Error fetching total expense:', error);
+            settotalExpense(0); // Set to 0 on error
         }
     };
+
 
     const fetchTotalExpenseByCategory = async () => {
         try {
             const query = `
                 SELECT category, icon, SUM(amount) as totalAmount
-                FROM expense
+                FROM expenses
                 GROUP BY category, icon
             `;
             const result = await db.getAllAsync(query);
@@ -249,8 +296,8 @@ const DashboardScreen = () => {
     useEffect(() => {
         fetchTotalIncome();
         fetchTotalExpense();
-        fetchExpensesByCategory(); 
-       fetchTotalIncomeByCategory();
+        fetchExpensesByCategory();
+        fetchTotalIncomeByCategory();
         // Fetch total income when the component mounts
     }, []);
 
@@ -272,42 +319,29 @@ const DashboardScreen = () => {
             Alert.alert('Error', 'Could not fetch expenses for the selected date range.');
         }
     };
+    useEffect(() => {
+        GoogleSignin.configure({
+            webClientId:
+                "622095554406-32i6saoa7sn60bu32n33f4um21ep2i65.apps.googleusercontent.com",
+        });
+    }, []);
 
     useEffect(() => {
         fetchExpensesForDate();
     }, [startDate, endDate]);
 
+    const userInfo = route.params?.userInfo;
 
-    const route = useRoute();
-    
-    const userInfo = route.params?.userInfo || { data: { user: { photo: null, firstName: 'User', lastName: '' } } };
-
-    // const { email, password, googleEmail } = route.params;
-
-    console.log("");
-    console.log("");
-    console.log("");
-    console.log("");
-    console.log("");
-    console.log("");
-    console.log("");
-    console.log("route.params:", route.params);
-    // console.log("Email:", email);
-    // console.log("Password:", password);
-    // console.log("Google Email:", googleEmail);
-    console.log("");
-    console.log("");
-    console.log("");
-    console.log("");
-    console.log("");
-    console.log("");
-    console.log("");
-
-    // Set user initials
-    const initials = `${userInfo.data.user.firstName[0] || 'U'}${userInfo.data.user.lastName[0] || ''}`;
+    useEffect(() => {
+        if (userInfo) {
+            console.log("User Info in Dashboard:", userInfo); // Log to confirm data
+        } else {
+            console.log("No User Info received");
+        }
+    }, [userInfo]);
 
     // Fetch income and expense data
-    
+
     useEffect(() => {
         // Set up the focus listener
         const unsubscribe = navigation.addListener('focus', () => {
@@ -366,19 +400,26 @@ const DashboardScreen = () => {
                         visible={menuVisible}
                         onDismiss={closeMenu}
                         anchor={
-                            <TouchableOpacity onPress={openMenu}>
-                                {userInfo?.data?.user?.photo ? (
-                                    <Avatar.Image
-                                        size={40}
-                                        source={{ uri: userInfo.data.user.photo }}
-                                    />
-                                ) : (
-                                    <Avatar.Text size={40} label={initials} />
-                                )}
-                            </TouchableOpacity>
+                            <View style={styles.header}>
+        <TouchableOpacity onPress={openMenu} style={styles.avatarContainer}>
+        {userInfos?.data?.user?.photo ? (
+                                        <Avatar.Image size={40} source={{ uri: userInfos.data.user.photo }} />
+                                    ) : (
+                                        <Avatar.Icon size={40} icon="account" />
+                                    )}
+                                </TouchableOpacity>
+                            </View>
                         }
+                        style={[
+                            styles.menuItem,
+                            {
+                               
+                                paddingVertical: 0,
+                                marginVertical: 0,
+                                // Remove height to allow dynamic sizing
+                            },
+                        ]}
                     >
-
                         <Menu.Item
                             onPress={() => {
                                 handleThemeSwitch('light');
@@ -386,6 +427,12 @@ const DashboardScreen = () => {
                             }}
                             title="Light"
                             icon="weather-sunny"
+                            style={{
+                              
+                                paddingVertical: 4, // Slight padding adjustment
+                                marginVertical: 0,
+                            }}
+                          
                         />
                         <Menu.Item
                             onPress={() => {
@@ -394,10 +441,25 @@ const DashboardScreen = () => {
                             }}
                             title="Dark"
                             icon="weather-night"
+                            style={{
+                                
+                                paddingVertical: 4,
+                            }}
+                            
                         />
-                        <Divider />
-                        <Menu.Item onPress={() => alert('Logout pressed')} title="Logout" icon="logout" />
+                        <Divider style={{ height: 1, backgroundColor: isDarkMode ? '#444' : '#e0e0e0' }} />
+                        <Menu.Item
+                            onPress={handleGoogleLogout}
+                            title="Logout"
+                            icon="logout"
+                            style={{
+                               
+                                paddingVertical: 4,
+                            }}
+                            
+                        />
                     </Menu>
+
                 </View>
 
                 {/* Top Upgrade Bar */}
@@ -514,39 +576,39 @@ const DashboardScreen = () => {
                 </View>
 
                 {/* Income and Expense Section */}
-              
+
                 <Text style={[styles.sectionTitle, { color: textColor }]}>Income</Text>
-            <View style={[styles.noDataCard, { backgroundColor: cardBackgroundColor }]}>
-                {incomeByCategory.length === 0 ? (
-                    // Display this message if there is no data
-                    <>
-                        <Text style={[styles.noDataText, { color: textColor }]}>No data for the selected period.</Text>
-                        <Text style={styles.noDataSubtext}>Try to select a different period or add income.</Text>
-                    </>
-                ) : (
-                    // Display the income items if there is data
-                    incomeByCategory.map((item, index) => {
-                        const percentage = totalIncome ? (item.totalAmount / totalIncome) * 100 : 0;
-                        return (
-                            <View key={index} style={styles.expenseItem}>
-                                <View style={styles.iconAndLabel}>
-                                    <Text style={[styles.categoryEmoji, { color: isDarkMode ? '#fff' : '#000' }]}>{item.icon}</Text>
-                                    <Text style={[styles.categoryLabel, { color: isDarkMode ? '#fff' : '#000' }]}>
-                                        {item.category} ({percentage.toFixed(0)}%)
-                                    </Text>
+                <View style={[styles.noDataCard, { backgroundColor: cardBackgroundColor }]}>
+                    {incomeByCategory.length === 0 ? (
+                        // Display this message if there is no data
+                        <>
+                            <Text style={[styles.noDataText, { color: textColor }]}>No data for the selected period.</Text>
+                            <Text style={styles.noDataSubtext}>Try to select a different period or add income.</Text>
+                        </>
+                    ) : (
+                        // Display the income items if there is data
+                        incomeByCategory.map((item, index) => {
+                            const percentage = totalIncome ? (item.totalAmount / totalIncome) * 100 : 0;
+                            return (
+                                <View key={index} style={styles.expenseItem}>
+                                    <View style={styles.iconAndLabel}>
+                                        <Text style={[styles.categoryEmoji, { color: isDarkMode ? '#fff' : '#000' }]}>{item.icon}</Text>
+                                        <Text style={[styles.categoryLabel, { color: isDarkMode ? '#fff' : '#000' }]}>
+                                            {item.category} ({percentage.toFixed(0)}%)
+                                        </Text>
+                                    </View>
+                                    <View style={[styles.progressBarContainer, { backgroundColor: isDarkMode ? '#333' : '#e0e0e0' }]}>
+                                        <View style={[
+                                            styles.progressBarFill,
+                                            { width: `${percentage}%`, backgroundColor: isDarkMode ? '#FF6A00' : '#FF8C00' }
+                                        ]} />
+                                    </View>
+                                    <Text style={[styles.amountText, { color: isDarkMode ? '#fff' : '#000' }]}>${item.totalAmount.toFixed(2)}</Text>
                                 </View>
-                                <View style={[styles.progressBarContainer, { backgroundColor: isDarkMode ? '#333' : '#e0e0e0' }]}>
-                                    <View style={[
-                                        styles.progressBarFill,
-                                        { width: `${percentage}%`, backgroundColor: isDarkMode ? '#FF6A00' : '#FF8C00' }
-                                    ]} />
-                                </View>
-                                <Text style={[styles.amountText, { color: isDarkMode ? '#fff' : '#000' }]}>${item.totalAmount.toFixed(2)}</Text>
-                            </View>
-                        );
-                    })
-                )}
-            </View>
+                            );
+                        })
+                    )}
+                </View>
 
                 <Text style={[styles.sectionTitle, { color: textColor }]}>Expense</Text>
                 <View style={[styles.noDataCard, { backgroundColor: cardBackgroundColor }]}>
@@ -814,13 +876,16 @@ const DashboardScreen = () => {
 
 const styles = StyleSheet.create({
     container: {
-        marginTop: 30,
-        padding: 20,
+        marginTop: 200,
+        padding: 60,
+        flexGrow: 1,  // Ensures ScrollView has full height
+        backgroundColor: 'white', // Example background color, adjust as needed
     },
     header: {
         flexDirection: 'row',
-        justifyContent: 'flex-end', // Align Avatar to the right
+        justifyContent: 'flex-end',
         alignItems: 'center',
+        marginBottom: 10,  // Add a little space below the avatar
     },
     avatarRight: {
         position: 'absolute',
@@ -1045,6 +1110,11 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         marginBottom: 10,
     },
+    menuItem: {
+
+        marginTop: 50,
+
+    },
     createNewText: {
         fontSize: 18, // Make the text larger
         fontWeight: 'bold',
@@ -1091,6 +1161,10 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         marginTop: 20,
         alignSelf: 'flex-start', // Align button to the left
+    },
+    avatarContainer: {
+        alignItems: 'flex-end',
+        margin: 10, // Example, adjust as necessary for positioning
     },
 
     smallCancelText: {
@@ -1176,5 +1250,4 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
 });
-
 export default DashboardScreen;

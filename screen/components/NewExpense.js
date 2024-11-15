@@ -52,7 +52,7 @@ const NewExpenseScreen = ({ navigation }) => {
     };
     const fetchExpenses = async () => {
         try {
-            const result = await db.getAllAsync('SELECT * FROM expense');
+            const result = await db.getAllAsync('SELECT * FROM expenses');
             setExpenses(result);
             console.log("expense in table", result)
         } catch (error) {
@@ -61,7 +61,7 @@ const NewExpenseScreen = ({ navigation }) => {
     };
     const deleteExpense = async (id) => {
         try {
-            await db.runAsync('DELETE FROM expense WHERE id = ?', [id]);
+            await db.runAsync('DELETE FROM expenses WHERE id = ?', [id]);
             Alert.alert('Success', 'Expense deleted successfully');
             fetchExpenses();
             navigation.navigate('main', { refresh: true }); // Refresh the list after deleting
@@ -89,7 +89,7 @@ const NewExpenseScreen = ({ navigation }) => {
 
     const getData = async () => {
         try {
-            const result = await db.getAllAsync('SELECT * FROM expense');
+            const result = await db.getAllAsync('SELECT * FROM expenses');
             console.log(result);
         } catch (error) {
             console.error('Error fetching data:', error);
@@ -99,7 +99,7 @@ const NewExpenseScreen = ({ navigation }) => {
     const initializeDatabase = async () => {
         try {
             await db.runAsync(`
-                CREATE TABLE IF NOT EXISTS expense (
+                CREATE TABLE IF NOT EXISTS expenses (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     description TEXT,
                     amount REAL,
@@ -143,7 +143,7 @@ const NewExpenseScreen = ({ navigation }) => {
     
         try {
             const result = await db.runAsync(
-                'INSERT INTO expense (description, amount, category, icon, date) VALUES (?, ?, ?, ?, ?)',
+                'INSERT INTO expenses (description, amount, category, icon, date) VALUES (?, ?, ?, ?, ?)',
                 [
                     transactionDescription,
                     parseFloat(transactionAmount),

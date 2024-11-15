@@ -1,5 +1,6 @@
-import { db } from "../lib/firebase";
+// import { db } from "../lib/firebase";
 import {
+  getFirestore,
   collection,
   addDoc,
   deleteDoc,
@@ -12,8 +13,18 @@ import {
   updateDoc,
   setDoc
 } from 'firebase/firestore';
-import cuid from 'cuid';
+import { db } from "../../config/firebaseConfig"
+// import cuid from 'cuid';
 
+// import { getAuth, signInWithEmailAndPassword, sendPasswordResetEmail, fetchSignInMethodsForEmail, GoogleAuthProvider, signInWithCredential} from "firebase/auth";
+// import {GoogleAuthProvider, signInWithCredential } from "firebase/auth";
+// import { collection, getDocs, query, where, doc, getFirestore, setDoc, getDoc } from "firebase/firestore";
+// import { signInWithEmailAndPassword, sendPasswordResetEmail, fetchSignInMethodsForEmail  } from "firebase/auth";
+
+// import { storeUser, storeAccount } from '../services/firebaseSettings'
+
+// const auth = getAuth();
+// const db = getFirestore();
 
 
 
@@ -342,11 +353,18 @@ export async function useVerificationToken({ identifier, token }) {
   return null;
 }
 
-//======================================================================
+//==============USER========================================================
 
 export async function storeUser(user) {
   // const Id = cuid();
   // const Doc = doc(db, 'User', Id);
+
+  // Remove undefined fields
+  // Object.keys(user).forEach((key) => {
+  //   if (userData[key] === undefined) {
+  //     delete userData[key];
+  //   }
+  // });
 
   try {
 
@@ -354,7 +372,7 @@ export async function storeUser(user) {
       id: user.id,
       displayName: user.displayName,
       email: user.email,
-      phoneNumber: user.phoneNumber,
+      // phoneNumber: user.phoneNumber ?? null,
       emailVerified: user.emailVerified,
       photoURL: user.photoURL
     }).then((response) => {
@@ -363,18 +381,6 @@ export async function storeUser(user) {
     .catch((error) => {
       console.error('Error saving user data in Firestore:', error.message);
     });
-
-    // await setDoc( Doc, {
-    //   name: user.name,
-    //   email: user.email,
-    //   emailVerified: new Date(),
-    //   image: user.photo || '',
-    //   transactionsAttempts: user.transactionsAttempts || 0,
-    //   categoriesAttempts: user.categoriesAttempts || 0,
-    //   createdAt: user.createdAt ? new Date(user.createdAt) : new Date(),
-    //   updatedAt: user.updatedAt ? new Date(user.updatedAt) : new Date(),
-    // });
-    // return { userId: Id };
 
   } catch (e) {
     console.error('Error adding user: ', e);
@@ -400,18 +406,22 @@ export async function getUserById(userId) {
 }
 
 // Function to get a user by their email
-export async function fetchUserByEmail(email) {
+export async function getUserByEmail(email) {
   const q = query(collection(db, 'User'), where('email', '==', email));
+
   try {
     const querySnapshot = await getDocs(q);
+
     if (!querySnapshot.empty) {
+      // Return the first matched document's data
       return querySnapshot.docs[0].data();
     } else {
-      throw new Error('User not found');
+      console.log('No user found with this email');
+      return null;  // Return null instead of throwing an error
     }
   } catch (e) {
     console.error('Error getting user by email: ', e);
-    throw new Error(`Error retrieving user: ${e}`);
+    throw new Error(`Error retrieving user by email: ${e.message}`);
   }
 }
 
@@ -444,6 +454,7 @@ export async function deleteUser(userId) {
   }
 }
 
+//==============Account========================================================
 
 export async function storeAccount(userId, account) {
   const Id = cuid();
@@ -472,6 +483,7 @@ export async function storeAccount(userId, account) {
 }
 
 
+//==============USER========================================================
 export async function storeTransaction(transaction) {
   const transactionCollection = collection(db, 'Transaction');
   try {

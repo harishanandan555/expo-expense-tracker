@@ -121,44 +121,46 @@
 
 import React from "react";
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import { TypographyH2 } from "../global_components/typography-h2";
 import { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent } from "../ui/card";
-
 import { CurrencyComboBox } from "../global_components/currency-combo-box"; 
-
 import { BillingSection } from "../local__components/billing-section"; 
-
 import { CategoriesList } from "../local__components/categories-list"; 
+
+const queryClient = new QueryClient();
 
 const SettingsScreen = () => {
 	return (
-    <View style={styles.container}>
+        <QueryClientProvider client={queryClient}>
+            <View style={styles.container}>
 
-    <View style={styles.header}>
-        <TypographyH2>Settings</TypographyH2>
-        <Text style={styles.subtitle}>Manage your settings and categories</Text>
-    </View>
+                <View style={styles.header}>
+                    <TypographyH2>Settings</TypographyH2>
+                    <Text style={styles.subtitle}>Manage your settings and categories</Text>
+                </View>
 
-    <Card>
-      <CardHeader>
-        <CardTitle>Currency</CardTitle>
-        <CardDescription>Set your default currency.</CardDescription>
-      </CardHeader>
-      <CardContent>
+                <Card>
+                <CardHeader>
+                    <CardTitle>Currency</CardTitle>
+                    <CardDescription>Set your default currency.</CardDescription>
+                </CardHeader>
+                <CardContent>
 
-        <CurrencyComboBox />
+                    <CurrencyComboBox />
 
-      </CardContent>
-    </Card>
+                </CardContent>
+                </Card>
 
-    <BillingSection />
+                <BillingSection />
 
-    <CategoriesList type="income" />
-    
-    <CategoriesList type="expense" />
+                <CategoriesList type="income" />
+                
+                <CategoriesList type="expense" />
 
-</View>
+            </View>
+        </QueryClientProvider>
 	);
 };
 
