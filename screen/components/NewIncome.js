@@ -91,7 +91,7 @@ const NewIncomeScreen = ({ navigation }) => {
                 await db.runAsync(`
                     CREATE TABLE IF NOT EXISTS incomes (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        email TEXT,
+                       
                         description TEXT,
                         amount REAL,
                         category TEXT,
@@ -139,7 +139,7 @@ const NewIncomeScreen = ({ navigation }) => {
             const result = await db.runAsync(
                 'INSERT INTO incomes (email, description, amount, category, date) VALUES (?, ?, ?, ?, ?)',
                 [
-                    userEmail, // Insert the retrieved email directly into the table
+                     // Insert the retrieved email directly into the table
                     transactionDescription,
                     parseFloat(transactionAmount),
                     selectedCategory,
