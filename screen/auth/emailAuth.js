@@ -53,7 +53,6 @@ export default function EmailAuth({ navigation, route }) {
       setValue({ ...value, error: 'All fields are mandatory.' });
       return;
     }
-
     if (!validatePassword(value.password)) {
       setValue({
         ...value,
@@ -61,7 +60,6 @@ export default function EmailAuth({ navigation, route }) {
       });
       return;
     }
-
     if (value.password !== value.confirmPassword) {
       setValue({ ...value, error: 'Passwords do not match.' });
       return;
@@ -357,6 +355,15 @@ export default function EmailAuth({ navigation, route }) {
   //   return () => clearInterval(intervalId);
   // }, []);
 
+  //         // Update Firestore with emailVerified as true
+  //         await setDoc(doc(db, "users", user.uid), { emailVerified: true }, { merge: true });
+  //         Alert.alert("Email Verified", "Your email has been successfully verified.");
+  //       }
+  //     }
+  //   }, 3000);
+  //   return () => clearInterval(intervalId);
+  // }, []);
+ 
   return (
     <View style={styles.container}>
       <View style={styles.innerContainer}>
@@ -368,6 +375,7 @@ export default function EmailAuth({ navigation, route }) {
         <Text style={styles.title}>Sign Up</Text>
 
         <View style={styles.inputContainer}>
+
           <View style={styles.inputWrapper}>
             <Icon style={styles.icon} name="person" size={18} color="gray" />
             <TextInput
@@ -377,6 +385,7 @@ export default function EmailAuth({ navigation, route }) {
               onChangeText={(text) => setValue({ ...value, displayName: text })}
             />
           </View>
+
           <View style={styles.inputWrapper}>
             <Icon style={styles.icon} name="email" size={18} color="gray" />
             <TextInput
@@ -388,7 +397,6 @@ export default function EmailAuth({ navigation, route }) {
               onChangeText={(text) => setValue({ ...value, email: text })}
             />
           </View>
-
           
           {/* <View style={styles.inputWrapper}>
             <Icon style={styles.icon} name="phone" size={18} color="gray" />
@@ -449,6 +457,7 @@ export default function EmailAuth({ navigation, route }) {
               onChangeText={(text) => setValue({ ...value, confirmPassword: text })}
             />
           </View>
+
           {/* <FirebaseRecaptchaVerifierModal
             ref={ref => setRecaptchaVerifier(ref)}
             firebaseConfig={auth.app.options}
@@ -479,8 +488,33 @@ export default function EmailAuth({ navigation, route }) {
             Sign In
           </Text>
         </Text>
+        </View>
+
+        {value.error ? (  <Text style={styles.errorText}>{value.error}</Text>    ) : null}
+
+        {isVerificationSent && (
+          <Text style={styles.successText}>A verification email has been sent!</Text>
+        )}
+
+        {isEmailVerified && (
+          <Text style={styles.successText}>Your email is verified!</Text>
+        )}
+
+        <Pressable style={styles.button} onPress={signUp}>
+          <Text style={styles.buttonText}>SignUp</Text>
+        </Pressable>
+
+        <Text style={styles.footerText}>
+          Have an account?{" "}
+          <Text
+            style={styles.link}
+            onPress={() => navigation.navigate("signin")}
+          >
+            Sign In
+          </Text>
+        </Text>
       </View>
-    </View>
+    // </View>
   );
 
 }

@@ -7497,7 +7497,7 @@ react-native-sqlite-storage@^6.0.1:
   resolved "https://registry.npmjs.org/react-native-sqlite-storage/-/react-native-sqlite-storage-6.0.1.tgz"
   integrity sha512-1tDFjrint6X6qSYKf3gDyz+XB+X79jfiL6xTugKHPRtF0WvqMtVgdLuNqZunIXjNEvNtNVEbXaeZ6MsguFu00A==
 
-react-native-svg@15.2.0:
+react-native-svg@^15.2.0:
   version "15.2.0"
   resolved "https://registry.npmjs.org/react-native-svg/-/react-native-svg-15.2.0.tgz"
   integrity sha512-R0E6IhcJfVLsL0lRmnUSm72QO+mTqcAOM5Jb8FVGxJqX3NfJMlMP0YyvcajZiaRR8CqQUpEoqrY25eyZb006kw==
