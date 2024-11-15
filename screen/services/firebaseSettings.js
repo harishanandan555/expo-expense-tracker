@@ -368,7 +368,7 @@ export async function storeUser(user) {
 
   try {
 
-    await setDoc( doc(db, "User", user.id), {
+    await setDoc( doc(db, "users", user.id), {
       id: user.id,
       displayName: user.displayName,
       email: user.email,
@@ -390,7 +390,7 @@ export async function storeUser(user) {
 
 // Function to get a user by their ID
 export async function getUserById(userId) {
-  const Doc = doc(db, 'User', userId);
+  const Doc = doc(db, 'users', userId);
   
   try {
     const docSnapshot = await getDoc(Doc);
@@ -407,7 +407,7 @@ export async function getUserById(userId) {
 
 // Function to get a user by their email
 export async function getUserByEmail(email) {
-  const q = query(collection(db, 'User'), where('email', '==', email));
+  const q = query(collection(db, 'users'), where('email', '==', email));
 
   try {
     const querySnapshot = await getDocs(q);
