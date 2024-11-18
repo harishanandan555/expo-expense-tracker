@@ -1,37 +1,131 @@
-// import { stripe } from "../lib/stripe";
-// import { getCurrentUser } from './user.services';
-// import { storeStripeCustomer, getStripeCustomerByUserId } from './firebaseSettings';
+import { useState } from 'react';
+import { Alert, Linking } from 'react-native';
 
-// exports.createCustomer = async (req, res) => {
-//   const user = await getCurrentUser(req); // Ensure this extracts user data from token/session
+// Set your app's URL
+let APP_URL = "http://localhost:3000";
 
-//   if (!user) {
-//     return res.status(401).json({ redirect: "/auth/sign-in" });
-//   }
+const plan = {
+  features: [
+    {
+      id: 1,
+      label: "Unlimited Transactions",
+    },
+    {
+      id: 2,
+      label: "Unlimited Categories",
+    },
+  ],
+  price: 5.99,
+  interval: "monthly",
+};
 
-//   let stripeCustomer = await getStripeCustomerByUserId(user.id);
+// This function will call your backend to create a Stripe customer
+export async function createCustomer() {
+  try {
+    const response = await fetch('http://localhost:3001/stripe/create-customer', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: 'user@example.com',  // Pass the user's email here (or other user-specific data)
+      }),
+    });
 
-//   if (!stripeCustomer) {
-//     const customer = await stripe.customers.create({
-//       email: String(user.email),
-//     });
+    const data = await response.json();
 
-//     stripeCustomer = await storeStripeCustomer({
-//       userId: user.id,
-//       stripeCustomerId: customer.id,
-//     });
-//   }
+    if (data.error) {
+      throw new Error(data.error);
+    }
 
-//   res.json(stripeCustomer);
-// };
+    return data.customer; // Assuming customer contains the Stripe customer ID and other details
+  } catch (error) {
+    console.error('Error creating customer:', error);
+    throw new Error('Could not create customer');
+  }
+}
 
-// exports.hasSubscription = async (req, res) => {
-//   const customer = await this.createCustomer(req, res);
+// This function will check if the user has an active subscription
+export async function hasSubscription() {
 
-//   const subscriptions = await stripe.subscriptions.list({
-//     customer: customer.stripeCustomerId,
-//   });
+  const customer = await createCustomer();
 
-//   res.json({ hasSubscription: subscriptions.data.length > 0 });
-// };
-// // 
+  try {
+    const response = await fetch('http://localhost:3001/stripe/check-subscription', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        stripeCustomerId: customer.stripeCustomerId,
+      }),
+    });
+
+    const data = await response.json();
+    return data.hasSubscription; // Return true or false based on subscription status
+  } catch (error) {
+    console.error('Error checking subscription:', error);
+    return false;
+  }
+}
+
+// Checkout function
+export async function Checkout() {
+
+  const customer = await createCustomer();
+
+  try {
+    const response = await fetch('http://localhost:3001/stripe/checkout', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        stripeCustomerId: customer.stripeCustomerId,
+        priceId: 'test_priceId', // Use the actual price ID here
+      }),
+    });
+
+    const data = await response.json();
+
+    if (data.checkoutUrl) {
+      // Redirect the user to the checkout URL
+      Linking.openURL(data.checkoutUrl);
+    } else {
+      Alert.alert('Error', 'Could not create checkout session.');
+    }
+  } catch (error) {
+    console.error('Error during checkout:', error);
+    Alert.alert('Error', 'There was an error during checkout.');
+  }
+}
+
+// Customer portal function
+export async function GenerateCustomerPortal() {
+    
+  const customer = await createCustomer();
+
+  try {
+    const response = await fetch('http://localhost:3001/stripe/generate-portal', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        stripeCustomerId: customer.stripeCustomerId,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (data.portalUrl) {
+      // Redirect the user to the customer portal
+      Linking.openURL(data.portalUrl);
+    } else {
+      Alert.alert('Error', 'Could not generate customer portal.');
+    }
+  } catch (error) {
+    console.error('Error generating customer portal:', error);
+    Alert.alert('Error', 'There was an error generating the customer portal.');
+  }
+}

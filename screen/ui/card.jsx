@@ -40,7 +40,7 @@ export const CardTitle = React.forwardRef(({ className, ...props }, ref) => (
   <Text
     ref={ref}
     style={[
-      { fontSize: 24, fontWeight: "600", lineHeight: 28 },
+      { fontSize: 24, fontWeight: "600", lineHeight: 28, textAlign: "center"},
       className && cn(className),
     ]}
     {...props}
@@ -52,7 +52,7 @@ export const CardDescription = React.forwardRef(({ className, ...props }, ref) =
   <Text
     ref={ref}
     style={[
-      { fontSize: 14, color: 'gray' },
+      { fontSize: 14, color: 'gray', textAlign: "center"},
       className && cn(className),
     ]}
     {...props}

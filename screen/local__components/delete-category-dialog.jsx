@@ -6,6 +6,7 @@ import Toast from "react-native-toast-message";
 import { DeleteCategory } from "../actions/categories.action";
 
 export const DeleteCategoryDialog = ({ children, category }) => {
+	
 	const queryClient = useQueryClient();
 	const [isModalVisible, setModalVisible] = useState(false);
 
