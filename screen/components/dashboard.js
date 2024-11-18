@@ -10,6 +10,8 @@ import {
     Dimensions, Image
 
 } from 'react-native';
+import { auth, db } from "../../config/firebaseConfig";
+
 import { useRoute } from '@react-navigation/native';
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -25,7 +27,7 @@ import { useNavigation } from '@react-navigation/native'; // Import useNavigatio
 import { useSQLiteContext } from 'expo-sqlite/next'; // Assuming you're using expo-sqlite context
 import * as Progress from 'react-native-progress';
 import { BarChart } from 'react-native-chart-kit';
-
+import { doc, setDoc } from "firebase/firestore";
 const DashboardScreen = () => {
 
     const [theme, setTheme] = useState('dark'); // Set default theme to dark
@@ -55,13 +57,28 @@ const DashboardScreen = () => {
     const [expensesByCategory, setExpensesByCategory] = useState([]);
     const [incomeByCategory, setIncomeByCategory] = useState([]);
     const [userInfos, setUserInfos] = useState(null);
-
+    const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1); // Default to current month
+    const [isMonthPickerVisible, setMonthPickerVisible] = useState(false); // State to toggle Picker visibility
     const route = useRoute();
     const [expenses, setExpenses] = useState([]);
     const barFillColor = isDarkMode ? '#FF6A00' : '#FF8C00';
     const navigation = useNavigation();
-    const db = useSQLiteContext(); // Your SQLite context
+    const sqldb = useSQLiteContext(); // Your SQLite context
     const barBackgroundColor = isDarkMode ? '#333' : '#e0e0e0';
+    const months = [
+        { label: 'January', value: 1 },
+        { label: 'February', value: 2 },
+        { label: 'March', value: 3 },
+        { label: 'April', value: 4 },
+        { label: 'May', value: 5 },
+        { label: 'June', value: 6 },
+        { label: 'July', value: 7 },
+        { label: 'August', value: 8 },
+        { label: 'September', value: 9 },
+        { label: 'October', value: 10 },
+        { label: 'November', value: 11 },
+        { label: 'December', value: 12 },
+    ];
 
     // Function to handle theme switching
     const handleThemeSwitch = (mode) => {
@@ -78,6 +95,7 @@ const DashboardScreen = () => {
 
     useEffect(() => {
         setBalance(totalIncome - totalExpense);
+        saveDataToFirebase();
     }, [totalIncome, totalExpense]);
 
 
@@ -114,7 +132,32 @@ const DashboardScreen = () => {
     }, [userInfo]);
 
 
-
+    const saveDataToFirebase = async () => {
+        try {
+            const userId = await AsyncStorage.getItem("userId"); // Retrieve user ID from AsyncStorage
+            if (!userId) {
+                console.error("No user ID found. Cannot save data.");
+                return;
+            }
+    
+            const userDocRef = doc(db, "users", userId);
+    
+            // Prepare the data to be saved
+            const data = {
+                totalIncome,
+                totalExpense,
+                balance,
+                lastUpdated: new Date().toISOString(), // Add a timestamp
+            };
+    
+            // Save the data to Firestore
+            await setDoc(userDocRef, { financialData: data }, { merge: true });
+    
+            console.log("Income, expense, and balance saved to Firebase.");
+        } catch (error) {
+            console.error("Error saving data to Firebase:", error);
+        }
+    };
     const handleGoogleLogout = async () => {
         try {
             await GoogleSignin.signOut();
@@ -223,7 +266,7 @@ const DashboardScreen = () => {
 
     const fetchTotalIncome = async () => {
         try {
-            const result = await db.getAllAsync('SELECT SUM(amount) as totalIncome FROM incomes');
+            const result = await sqldb.getAllAsync('SELECT SUM(amount) as totalIncome FROM incomes');
             console.log('Query Result:', result);
 
             if (result && result.length > 0) {
@@ -239,10 +282,82 @@ const DashboardScreen = () => {
             setTotalIncome(0); // Set to 0 on error
         }
     };
+    const getData = async () => {
+        try {
+            const result = await sqldb.getAllAsync('SELECT * FROM transactions');
+            console.log("Query Result Structure:", result);
+            console.log("Fetched transaction data:", result.rows ? result.rows._array : result); // Check if result.rows exists and has _array
+        } catch (error) {
+            console.error('Error fetching data:', error);
+        }
+    };
+    
+
+    const initializeDatabase = async () => {
+        try {
+            // Create incomes table
+            await sqldb.runAsync(`
+                CREATE TABLE IF NOT EXISTS incomes (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    description TEXT,
+                    amount REAL,
+                    category TEXT,
+                    date TEXT
+                )
+            `);
+    
+            // Create expenses table
+            await sqldb.runAsync(`
+                CREATE TABLE IF NOT EXISTS expenses (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    description TEXT,
+                    amount REAL,
+                    category TEXT,
+                    date TEXT
+                )
+            `);
+    
+            // Create transactions table by combining incomes and expenses
+            await sqldb.runAsync(`
+                CREATE TABLE IF NOT EXISTS transactions AS
+                SELECT 
+                    'income' AS type, 
+                    id AS transaction_id, 
+                    description, 
+                    amount, 
+                    category, 
+                    date
+                FROM incomes
+                UNION ALL
+                SELECT 
+                    'expense' AS type, 
+                    id AS transaction_id, 
+                    description, 
+                    amount, 
+                    category, 
+                    date
+                FROM expenses
+            `);
+    
+          
+        } catch (error) {
+            console.error('Error initializing database:', error);
+        }
+    };
+    
+    useEffect(() => {
+        const initializeAndCheckSchema = async () => {
+            await initializeDatabase();
+            await getData();
+        };
+    
+        initializeAndCheckSchema();
+    }, [db]);
+    
 
     const fetchTotalExpense = async () => {
         try {
-            const result = await db.getAllAsync('SELECT SUM(amount) as totalExpense FROM expenses');
+            const result = await sqldb.getAllAsync('SELECT SUM(amount) as totalExpense FROM expenses');
             console.log('Query Result:', result);
 
             if (result && result.length > 0) {
@@ -267,7 +382,7 @@ const DashboardScreen = () => {
                 FROM expenses
                 GROUP BY category, icon
             `;
-            const result = await db.getAllAsync(query);
+            const result = await sqldb.getAllAsync(query);
             console.log('Expense:', result);
             return result;
         } catch (error) {
@@ -284,7 +399,7 @@ const DashboardScreen = () => {
                 FROM incomes
                 GROUP BY category, icon
             `;
-            const result = await db.getAllAsync(query);
+            const result = await sqldb.getAllAsync(query);
             console.log('income:', result);
             return result;
         } catch (error) {
@@ -308,7 +423,7 @@ const DashboardScreen = () => {
         const formattedEndDate = formatDate(endDate);
 
         try {
-            const result = await db.getAllAsync(
+            const result = await sqldb.getAllAsync(
                 `SELECT * FROM expense WHERE date BETWEEN ? AND ?`,
                 [formattedStartDate, formattedEndDate]
             );
@@ -388,11 +503,11 @@ const DashboardScreen = () => {
     return (
         <Provider>
             <ScrollView
-                contentContainerStyle={[
-                    styles.container,
-                    { backgroundColor: backgroundColor },
-                ]}
-            >
+            contentContainerStyle={[
+                styles.scrollContent,
+                { backgroundColor: backgroundColor },
+            ]}
+        >
                 {/* Header Section */}
                 <View style={styles.header}>
                     {/* Right-aligned Avatar */}
@@ -654,7 +769,34 @@ const DashboardScreen = () => {
                             <Text style={[styles.switchButtonText, { color: textColor }]}>Year</Text>
                         </TouchableOpacity>
                         <TouchableOpacity style={[styles.switchButton, styles.activeSwitch]}>
-                            <Text style={styles.switchButtonText}>Month</Text>
+                       
+            <Text style={styles.label}>Select Month:</Text>
+
+            {/* Month Selection Dropdown */}
+            <TouchableOpacity
+                style={[styles.switchButton, styles.activeSwitch]}
+                onPress={() => setMonthPickerVisible(!isMonthPickerVisible)} // Toggle Picker visibility
+            >
+                <Text style={styles.switchButtonText}>
+                    {months.find((month) => month.value === selectedMonth)?.label || 'Select Month'}
+                </Text>
+            </TouchableOpacity>
+
+            {isMonthPickerVisible && (
+                <Picker
+                    selectedValue={selectedMonth}
+                    onValueChange={(value) => {
+                        setSelectedMonth(value);
+                        setMonthPickerVisible(false); // Close Picker after selection
+                    }}
+                    style={styles.picker}
+                >
+                    {months.map((month) => (
+                        <Picker.Item key={month.value} label={month.label} value={month.value} />
+                    ))}
+                </Picker>
+            )}
+       
                         </TouchableOpacity>
                     </View>
 
@@ -875,6 +1017,10 @@ const DashboardScreen = () => {
 };
 
 const styles = StyleSheet.create({
+    scrollContent: {
+        flexGrow: 1, // Ensures the content can grow and scroll
+        padding: 20, // Adjust padding as needed
+    },
     container: {
         marginTop: 200,
         padding: 60,
@@ -1248,6 +1394,38 @@ const styles = StyleSheet.create({
     amountText: {
         fontSize: 16,
         fontWeight: 'bold',
+    },
+    container: {
+        padding: 20,
+        backgroundColor: '#f4f4f4',
+        flex: 1,
+    },
+    label: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginBottom: 10,
+    },
+    switchButton: {
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: '#FF6A00',
+        alignItems: 'center',
+        backgroundColor: '#fff',
+        marginBottom: 10,
+    },
+    activeSwitch: {
+        backgroundColor: '#FF6A00',
+    },
+    switchButtonText: {
+        color: '#fff',
+        fontWeight: 'bold',
+    },
+    picker: {
+        marginTop: 10,
+        backgroundColor: '#fff',
+        borderRadius: 10,
     },
 });
 export default DashboardScreen;

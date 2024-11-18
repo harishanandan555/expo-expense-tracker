@@ -1,16 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { Alert, Image, Pressable, StyleSheet, TextInput, Text, View } from 'react-native';
-import { getAuth, createUserWithEmailAndPassword, updateProfile, sendEmailVerification, signInWithEmailAndPassword } from "firebase/auth";
+import { getAuth, createUserWithEmailAndPassword, updateProfile, sendEmailVerification  } from "firebase/auth";
 import { getFirestore, doc, setDoc, getDoc, Timestamp } from "firebase/firestore"; 
-
-import { storeUser } from "../services/firebaseSettings"  //*
-
-const auth = getAuth();
-const db = getFirestore();  
+import { auth, db } from "../../config/firebaseConfig";
+// const auth = getAuth();
+// const db = getFirestore();  
 
 export default function EmailAuth({ navigation, route }) {
-  
+
   const [value, setValue] = useState({
     email: route.params?.email || '',
     password: '',
@@ -25,26 +23,8 @@ export default function EmailAuth({ navigation, route }) {
   
   // Password validation regex
   const passwordRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-  const validatePassword = (password) => {return passwordRegex.test(password);};
-
-  //* Function to generate a random color
-  const getRandomColor = () => {
-    const letters = '0123456789ABCDEF';
-    let color = '#';
-    for (let i = 0; i < 6; i++) {
-      color += letters[Math.floor(Math.random() * 16)];
-    }
-    return color;
-  };
-
-  //* Function to generate a photo URL based on the display name
-  const generatePhotoUrl = (displayName) => {
-    const firstLetter = displayName.charAt(0).toUpperCase(); // Get the first letter of the display name
-    const backgroundColor = getRandomColor(); // Generate a random background color
-
-    // You can either generate an SVG or return a base64 image.
-    // Here, I will just construct a URL-like string with the background color and first letter.
-    return `https://dummyimage.com/200x200/${backgroundColor.replace('#', '')}/ffffff&text=${firstLetter}`;
+  const validatePassword = (password) => {
+    return passwordRegex.test(password);
   };
 
   // Step 1: Create a user and send email verification
@@ -53,6 +33,7 @@ export default function EmailAuth({ navigation, route }) {
       setValue({ ...value, error: 'All fields are mandatory.' });
       return;
     }
+
     if (!validatePassword(value.password)) {
       setValue({
         ...value,
@@ -60,78 +41,38 @@ export default function EmailAuth({ navigation, route }) {
       });
       return;
     }
+
     if (value.password !== value.confirmPassword) {
       setValue({ ...value, error: 'Passwords do not match.' });
       return;
     }
 
     try {
-
       console.log("Attempting to create user...");
-
       const userCredential = await createUserWithEmailAndPassword(auth, value.email, value.password);
       console.log("User created: ", userCredential.user);
 
       const user = userCredential.user;
       console.log("User UID:", user.uid);
 
-      //* Generate photoURL using the display name
-      const photoURL = generatePhotoUrl(value.displayName);
-
-      //* Set the display name for the user in Firebase Auth
-      await updateProfile(user, { displayName: value.displayName, photoURL: photoURL || 'default_photo_url' });
+      // Set the display name for the user in Firebase Auth
+      await updateProfile(user, { displayName: value.displayName });
 
       // Send email verification
       await sendEmailVerification(user);
       console.log("Verification email sent.");
-
       setIsVerificationSent(true);
       Alert.alert("Check Your Email", "A verification email has been sent to your email address.");
 
       console.log("Attempting to store user data in Firestore...");
-
-      //* Polling function to check email verification status
-      const checkEmailVerification = async () => {
-        await user.reload(); // Refresh the user data
-        if (user.emailVerified) {
-
-          console.log("Your email has been successfully verified.", user.emailVerified);
-
-          let param = {
-            id: user.uid,
-            displayName: value.displayName,
-            email: value.email,
-            // phoneNumber: value.phoneNumber,
-            emailVerified: user.emailVerified,
-            photoURL: photoURL
-          };
-          
-          await storeUser(param).then((response) => {
-            console.log("User data saved in Firestore");
-          })
-          .catch((error) => {
-            console.error("Error saving user data in Firestore:", error.message);
-          });
-
-        } else {
-          // Retry after a delay if email is still not verified
-          setTimeout(checkEmailVerification, 5000); // Checks every 5 seconds
-        }
-      };
-      //* Start polling for verification
-      checkEmailVerification();
-
-      // await setDoc(doc(db, "users", user.uid), {
-      //   displayName: value.displayName,
-      //   email: value.email,
-      //   emailVerified: false,
-      //   createdAt: Timestamp.now(),
-      // });
-
+      await setDoc(doc(db, "users", user.uid), {
+        displayName: value.displayName,
+        email: value.email,
+        emailVerified: false,
+        createdAt: Timestamp.now(),
+      });
       console.log("User data successfully stored in Firestore.");
-
       navigation.navigate("signin");
-
     } catch (error) {
       console.error("Error creating user: ", error);
       setValue({ ...value, error: error.message });
@@ -168,15 +109,15 @@ export default function EmailAuth({ navigation, route }) {
   };
 
   useEffect(() => {
-    const intervalId = setInterval(async () => {
-      await checkEmailVerificationAndUpdateFirestore();
-      const user = auth.currentUser;
-      if (user && user.emailVerified) {
-        clearInterval(intervalId); // Stop checking once verified
-      }
-    }, 5000); // Check every 5 seconds
+  const intervalId = setInterval(async () => {
+    await checkEmailVerificationAndUpdateFirestore();
+    const user = auth.currentUser;
+    if (user && user.emailVerified) {
+      clearInterval(intervalId); // Stop checking once verified
+    }
+  }, 5000); // Check every 5 seconds
 
-    return () => clearInterval(intervalId);
+  return () => clearInterval(intervalId);
   }, [])
 
   //   const signUp = async () => {
@@ -355,15 +296,6 @@ export default function EmailAuth({ navigation, route }) {
   //   return () => clearInterval(intervalId);
   // }, []);
 
-  //         // Update Firestore with emailVerified as true
-  //         await setDoc(doc(db, "users", user.uid), { emailVerified: true }, { merge: true });
-  //         Alert.alert("Email Verified", "Your email has been successfully verified.");
-  //       }
-  //     }
-  //   }, 3000);
-  //   return () => clearInterval(intervalId);
-  // }, []);
- 
   return (
     <View style={styles.container}>
       <View style={styles.innerContainer}>
@@ -375,7 +307,6 @@ export default function EmailAuth({ navigation, route }) {
         <Text style={styles.title}>Sign Up</Text>
 
         <View style={styles.inputContainer}>
-
           <View style={styles.inputWrapper}>
             <Icon style={styles.icon} name="person" size={18} color="gray" />
             <TextInput
@@ -385,7 +316,6 @@ export default function EmailAuth({ navigation, route }) {
               onChangeText={(text) => setValue({ ...value, displayName: text })}
             />
           </View>
-
           <View style={styles.inputWrapper}>
             <Icon style={styles.icon} name="email" size={18} color="gray" />
             <TextInput
@@ -397,7 +327,7 @@ export default function EmailAuth({ navigation, route }) {
               onChangeText={(text) => setValue({ ...value, email: text })}
             />
           </View>
-          
+
           {/* <View style={styles.inputWrapper}>
             <Icon style={styles.icon} name="phone" size={18} color="gray" />
             <TextInput
@@ -457,17 +387,16 @@ export default function EmailAuth({ navigation, route }) {
               onChangeText={(text) => setValue({ ...value, confirmPassword: text })}
             />
           </View>
-
           {/* <FirebaseRecaptchaVerifierModal
             ref={ref => setRecaptchaVerifier(ref)}
             firebaseConfig={auth.app.options}
             attemptInvisibleVerification={true}
           /> */}
-        </View>
+          </View>
 
-        {value.error ? (  <Text style={styles.errorText}>{value.error}</Text>    ) : null}
+          {value.error ? (  <Text style={styles.errorText}>{value.error}</Text>    ) : null}
 
-        {isVerificationSent && (
+          {isVerificationSent && (
           <Text style={styles.successText}>A verification email has been sent!</Text>
         )}
 
@@ -475,48 +404,22 @@ export default function EmailAuth({ navigation, route }) {
           <Text style={styles.successText}>Your email is verified!</Text>
         )}
 
-        <Pressable style={styles.button} onPress={signUp}>
-          <Text style={styles.buttonText}>SignUp</Text>
-        </Pressable>
+          <Pressable style={styles.button} onPress={signUp}>
+            <Text style={styles.buttonText}>SignUp</Text>
+          </Pressable>
 
-        <Text style={styles.footerText}>
-          Have an account?{" "}
-          <Text
-            style={styles.link}
-            onPress={() => navigation.navigate("signin")}
-          >
-            Sign In
+          <Text style={styles.footerText}>
+            Have an account?{" "}
+            <Text
+              style={styles.link}
+              onPress={() => navigation.navigate("signin")}
+            >
+              Sign In
+            </Text>
           </Text>
-        </Text>
         </View>
-
-        {value.error ? (  <Text style={styles.errorText}>{value.error}</Text>    ) : null}
-
-        {isVerificationSent && (
-          <Text style={styles.successText}>A verification email has been sent!</Text>
-        )}
-
-        {isEmailVerified && (
-          <Text style={styles.successText}>Your email is verified!</Text>
-        )}
-
-        <Pressable style={styles.button} onPress={signUp}>
-          <Text style={styles.buttonText}>SignUp</Text>
-        </Pressable>
-
-        <Text style={styles.footerText}>
-          Have an account?{" "}
-          <Text
-            style={styles.link}
-            onPress={() => navigation.navigate("signin")}
-          >
-            Sign In
-          </Text>
-        </Text>
       </View>
-    // </View>
-  );
-
+    );
 }
 
 const styles = StyleSheet.create({

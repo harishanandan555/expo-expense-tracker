@@ -8,31 +8,24 @@ import {
   TouchableOpacity,
   Image,
 } from "react-native";
+// import auth from '@react-native-firebase/auth';
 import * as WebBrowser from "expo-web-browser";
-// import { auth,db } from "../../config/firebaseConfig";
+import { auth, db } from "../../config/firebaseConfig";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import "expo-dev-client";
-// import { useSQLiteContext } from 'expo-sqlite/next';
-// import { signInWithEmailAndPassword, sendPasswordResetEmail, fetchSignInMethodsForEmail  } from "firebase/auth";
-import { getAuth, signInWithEmailAndPassword, sendPasswordResetEmail, fetchSignInMethodsForEmail, GoogleAuthProvider, signInWithCredential, createUserWithEmailAndPassword } from "firebase/auth";
-// import {GoogleAuthProvider, signInWithCredential } from "firebase/auth";
-import { collection, getDocs, query, where, doc, getFirestore, setDoc, getDoc } from "firebase/firestore";
-// import { signInWithEmailAndPassword, sendPasswordResetEmail, fetchSignInMethodsForEmail  } from "firebase/auth";
-
-import { storeUser, storeAccount, getUserByEmail } from '../services/firebaseSettings'
-
-const auth = getAuth();
-const db = getFirestore();
+import { useSQLiteContext } from 'expo-sqlite/next';
+import { signInWithEmailAndPassword, sendPasswordResetEmail, fetchSignInMethodsForEmail  } from "firebase/auth";
+import {GoogleAuthProvider, signInWithCredential } from "firebase/auth";
+import {collection, getDocs, query, where,doc, setDoc } from "firebase/firestore";
 
 //---------------------------------------------------------------------------------------------------------------------------
-
 // Complete any pending authentication sessions
 WebBrowser.maybeCompleteAuthSession();
 
 export default function SignInPage({ navigation }) {
-  
-  // const db = useSQLiteContext();
+  const sqlDb = useSQLiteContext();
+
   const [input, setInput] = useState(""); 
   const [userInfo, setUserInfo] = useState(null);
   const [password, setPassword] = useState("");
@@ -41,85 +34,10 @@ export default function SignInPage({ navigation }) {
   const [alertMessage, setAlertMessage] = useState("");
   const [loading, setLoading] = useState(false);
   
-  // DefaultCategories insertion
-  async function insertIncomeCategories() {
-    const incomeCategories = [
-      { name: "Salary", icon: "💼", type: "income" },
-      { name: "Gifts", icon: "🎁", type: "income" },
-      { name: "Education Grants", icon: "🎓", type: "income" },
-      { name: "Bonus", icon: "💰", type: "income" },
-      { name: "Commission", icon: "🧾", type: "income" },
-      { name: "Investment Income", icon: "📈", type: "income" },
-      { name: "Rental Income", icon: "🏠", type: "income" },
-      { name: "Freelance Income", icon: "💵", type: "income" },
-      { name: "Tax Refund", icon: "💸", type: "income" },
-      { name: "Gambling Winnings", icon: "🎲", type: "income" },
-      { name: "Interest Income", icon: "🪙", type: "income" },
-      { name: "Selling Income", icon: "💹", type: "income" },
-      { name: "Tips", icon: "💳", type: "income" },
-      { name: "Side Job", icon: "🛠️", type: "income" },
-      { name: "Other Income", icon: "💲", type: "income" },
-    ];
-  
-    try {
-      for (const category of incomeCategories) {
-        const sanitizedName = category.name.replace(/[\/\.\#\[\]]/g, '_');
-        const categoryRef = doc(db, "DefaultCategories", sanitizedName);
-        await setDoc(categoryRef, category);
-      }
-      console.log("Income categories inserted successfully.");
-    } catch (error) {
-      console.error("Error inserting categories:", error);
-    }
-  }
-  // insertIncomeCategories();
-  async function insertExpenseCategories() {
-    const expenseCategories = [
-      { name: "Auto & Transport", icon: "🚗", type: "expense" },
-      { name: "Bills & Utilities", icon: "💡", type: "expense" },
-      { name: "Charity", icon: "💛", type: "expense" },
-      { name: "Clothing & Accessories", icon: "👗", type: "expense" },
-      { name: "Dining & Restaurants", icon: "🍽️", type: "expense" },
-      { name: "Education", icon: "📚", type: "expense" },
-      { name: "Entertainment", icon: "🎮", type: "expense" },
-      { name: "Fees & Charges", icon: "🏦", type: "expense" },
-      { name: "Food & Groceries", icon: "🥑", type: "expense" },
-      { name: "Health & Fitness", icon: "🏥", type: "expense" },
-      { name: "Home Improvement", icon: "🛠️", type: "expense" },
-      { name: "Household Supplies", icon: "🧴", type: "expense" },
-      { name: "Insurance", icon: "🛡️", type: "expense" },
-      { name: "Loans", icon: "💳", type: "expense" },
-      { name: "Miscellaneous", icon: "🎉", type: "expense" },
-      { name: "Personal Care", icon: "🧖", type: "expense" },
-      { name: "Pet Care", icon: "🐾", type: "expense" },
-      { name: "Rent/Mortgage", icon: "🏠", type: "expense" },
-      { name: "Shopping", icon: "🛍️", type: "expense" },
-      { name: "Subscriptions", icon: "📺", type: "expense" },
-      { name: "Taxes", icon: "🧾", type: "expense" },
-      { name: "Travel", icon: "✈️", type: "expense" },
-      { name: "Utilities", icon: "🔌", type: "expense" },
-      { name: "Other Expenses", icon: "💲", type: "expense" },
-    ];
-  
-    try {
-      for (const category of expenseCategories) {
-        const sanitizedName = category.name.replace(/[\/\.\#\[\]]/g, '_');
-        const categoryRef = doc(db, "DefaultCategories", sanitizedName);
-        await setDoc(categoryRef, category);
-      }
-      console.log("Expense categories inserted successfully.");
-    } catch (error) {
-      console.error("Error inserting categories:", error);
-    }
-  }
-  // insertExpenseCategories();
-
   const isEmail = (input) => {
-    // A robust regex pattern for email validation
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    const emailRegex = /\S+@\S+\.\S+/;
     return emailRegex.test(input);
   };
-  
 
   const isValidPhoneNumber = (input) => {
     const phoneRegex = /^\+(\d{1,3})(\d{6,14})$/; 
@@ -127,12 +45,13 @@ export default function SignInPage({ navigation }) {
   };
   
 
-  // Function to show alert with a custom message
-  const showAlertMessage = (message) => {
+   // Function to show alert with a custom message
+   const showAlertMessage = (message) => {
     setAlertMessage(message);
     setShowAlert(true);
   };
 
+  //========================================
   // const handleContinue = async () => {
   //   const cleanedInput = input.trim();
   //   if (cleanedInput) {
@@ -142,14 +61,11 @@ export default function SignInPage({ navigation }) {
   //       setEmailEntered(cleanedInput);
 
   //       try {
-  //         setLoading(true);
   //         console.log("Checking if email exists in Firebase...");
   //         const signInMethods = await fetchSignInMethodsForEmail(auth, cleanedInput);
   //         console.log("Fetched sign-in methods:", signInMethods);
           
   //         if (signInMethods.length > 0) {
-
-
   //           // Email exists, show password input only
   //           console.log("Email exists in Firebase, showing password input.");
   //           setPassword("");
@@ -226,85 +142,33 @@ export default function SignInPage({ navigation }) {
   };
   
   
-  const handleSignIn = async () => {
-    
-    if (!emailEntered) {
-      showAlertMessage("Please enter a valid email address.");
-      return;
-    }
-    
-    console.log("Attempting to sign in with:", emailEntered, password);
-    
-    try {
-      setLoading(true);
-      const userCredential = await signInWithEmailAndPassword(auth, emailEntered.trim(), password.trim());
-      const user = userCredential.user;
-  
-      // Check if email verification is required
-      if (!user.emailVerified) {
-        showAlertMessage("Please verify your email before signing in.");
-        return;
-      }
-  
-      console.log("Sign-in successful", user);
-      navigation.navigate("main"); 
-    } catch (error) { 
-      console.error("Sign-in error:", error.code, error.message);
-  
-      // Display a more specific error message based on Firebase Auth error codes
-      let errorMessage = "Sign-in error. Please check your email and password.";
-      if (error.code === "auth/user-not-found") {
-        errorMessage = "No user found with this email address.";
-      } else if (error.code === "auth/wrong-password") {
-        errorMessage = "Incorrect password.";
-      } else if (error.code === "auth/user-disabled") {
-        errorMessage = "This user account has been disabled.";
-      } else if (error.code === "auth/invalid-email") {
-        errorMessage = "Invalid email format.";
-      }
-  
-      showAlertMessage(errorMessage);
-    }finally {
-      setLoading(false);
-    }
-  };
-
   const handlePasswordReset = async () =>{
-
-    if(!isEmail(emailEntered)){
-      showAlertMessage("Please enter a valid email address.");
-      return;
-    }
-
-    console.log("Sending password reset email to:", emailEntered); 
-
-    try{
-      await sendPasswordResetEmail(auth, emailEntered);
-      showAlertMessage("A password reset email has been sent to your email address.");
-    }catch(error){
-      console.error("Password reset error:", error);
-      showAlertMessage("Password reset error:",error.message);
-    }
-
+ if(!isEmail(emailEntered)){
+  showAlertMessage("Please enter a valid email address.");
+  return;
+}
+console.log("Sending password reset email to:", emailEntered);  
+try{
+  await sendPasswordResetEmail(auth, emailEntered);
+  showAlertMessage("A password reset email has been sent to your email address.");
+}catch(error){
+  console.error("Password reset error:", error);
+  showAlertMessage("Password reset error:",error.message);
+}
   };
 
   const handleContinueToSignup = () => {
-
-    const cleanedInput = input.trim();
-
-    if (isEmail(cleanedInput)) {
-
+    if (isEmail(input.trim())) {
+      const cleanedInput = input.trim();
       navigation.navigate("EmailAuthentication", { email: cleanedInput });
-
     } else {
       showAlertMessage("Please enter a valid email address before continuing to sign up.");
     }
   };
 
-  //-----------------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------------------------------
 
   // Configure Google Sign-In
-  
   useEffect(() => {
     GoogleSignin.configure({
       webClientId:
@@ -313,99 +177,123 @@ export default function SignInPage({ navigation }) {
   }, []);
 
   const onGoogleButtonPress = async () => {
-
     try {
       // Check Google services and sign in
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
-      
       await GoogleSignin.signOut();
-      
+
       const userInfo = await GoogleSignin.signIn();
-      console.log("User Info: ", userInfo);
 
       // Get the ID token from Google
       const { idToken } = await GoogleSignin.getTokens();
       const googleCredential = GoogleAuthProvider.credential(idToken);
 
-      setUserInfo(userInfo);
-      
       // Authenticate with Firebase using the Google credentials
-      try {
+      const userCredential = await signInWithCredential(auth, googleCredential);
+      const firebaseUser = userCredential.user;
 
-        const userCredential = await signInWithCredential(auth, googleCredential);
-        const firebaseUser = userCredential.user;
+      await AsyncStorage.setItem("userId", firebaseUser.uid);
+      await AsyncStorage.setItem("userEmail", firebaseUser.email);
+      await AsyncStorage.setItem("userInfo", JSON.stringify(firebaseUser));
 
-        console.log("User signed in: ", firebaseUser);
+      // Save the user to Firestore
+      await saveUserToFirestore(firebaseUser);
 
-        // Check if user exists in Firestore
-        const existingUser = await getUserByEmail(firebaseUser.email);
+      setUserInfo(userInfo);
+      navigation.navigate("main");
 
-        if (existingUser) {
-          console.log("User already exists in Firestore, navigating to 'main'");
-          navigation.navigate("main",{userInfo: firebaseUser});
-        } else {
+      // const email = userInfo?.data?.user?.email;
+      // if (email) {
+      //   await AsyncStorage.setItem("userEmail", email);
+      //   await AsyncStorage.setItem("userInfo", JSON.stringify(userInfo)); 
+      //   console.log("UserInfo before navigation:", userInfo);
 
-          // Save the user to Firestore if needed
-          // await saveUserToFirestore(firebaseUser);
-
-          let param = {
-            id: firebaseUser.uid,
-            displayName: firebaseUser.displayName,
-            email: firebaseUser.email,
-            phoneNumber: firebaseUser.phoneNumber,
-            emailVerified: firebaseUser.emailVerified,
-            photoURL: firebaseUser.photoURL
-          }
-
-          if (firebaseUser.emailVerified === true) {
-
-            await storeUser(param).then((response) => {
-              console.log('User data saved in Firestore');
-            })
-            .catch((error) => {
-              console.error('Error saving user data in Firestore:', error.message);
-            });
-
-            navigation.navigate("main",{userInfo: firebaseUser});
-            
-          }
-
-        }
-
-      } catch (error) {
-        console.error("Error saving user data in Firestore:", error.message);
-        console.trace();
-      }
-
+      //   navigation.navigate("main", { userInfo: userInfo.user });
+      // } else {
+      //   showAlertMessage("Failed to retrieve Google user information.");
+      // }
     } catch (error) {
-      console.error("Google Sign-In Error: ", error);
+      console.error("Google Sign-In error:", error);
+      showAlertMessage("Google Sign-In failed.");
     }
   };
 
-  // const saveUserToFirestore = async (user) => {
-  //   try {
-  //     const userRef = doc(db, "users", user.uid); 
-  //     // Set user data in Firestore with proper field references
-  //     await setDoc(
-  //       userRef,
-  //       {
-  //         id: user.uid, // Firebase UID
-  //         email: user.email,
-  //         name: user.displayName, // Display name, if available
-  //         givenName: userInfo?.data?.user?.givenName || "", // Handle any missing fields
-  //         familyName: userInfo?.data?.user?.familyName || "",
-  //         photo: user.photoURL || "", // Ensure this field exists in user object
-  //         createdAt: new Date(),
-  //       },
-  //       { merge: true }
-  //     );
-  //     console.log("User data saved to Firestore successfully!");
-  //   } catch (error) {
-  //     console.error("Error saving user data to Firestore: ", error);
-  //   }
-  // };
+  const handleSignIn = async () => {
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, emailEntered, password);
+      const email = userCredential.user.email; // Get the user's email
+      await AsyncStorage.setItem("userEmail", email); // Save email to AsyncStorage
+      navigation.navigate("main"); // Navigate to main screen
+    } catch (error) {
+      console.error("Sign-in error:", error);
+      showAlertMessage("Sign-in failed. Please check your email and password.");
+    }
+  };
 
-  const user = userInfo?.data?.user;
+  const initializeUserData = async (email) => {
+    try {
+        // Drop tables if they exist (for development/testing purposes)
+        await sqlDb.runAsync(`DROP TABLE IF EXISTS income;`);
+        await sqlDb.runAsync(`DROP TABLE IF EXISTS expense;`);
+
+        // Create tables with email column
+        await sqlDb.runAsync(`
+            CREATE TABLE IF NOT EXISTS income (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                email TEXT,
+                amount REAL,
+                date TEXT
+            );
+        `);
+        await sqlDb.runAsync(`
+            CREATE TABLE IF NOT EXISTS expense (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                email TEXT,
+                amount REAL,
+                date TEXT
+            );
+        `);
+
+        // Insert zero values for income and expense if this user is new
+        await sqlDb.runAsync(
+            `INSERT OR IGNORE INTO income (email, amount, date) VALUES (?, 0, '')`,
+            [email]
+        );
+        await sqlDb.runAsync(
+            `INSERT OR IGNORE INTO expense (email, amount, date) VALUES (?, 0, '')`,
+            [email]
+        );
+
+        console.log(`Default data initialized for user: ${email}`);
+    } catch (error) {
+        console.error('Error initializing user data:', error);
+        showAlertMessage('Error initializing user data. Please try again.');
+    }
+  };
+
+  //====================
+  const saveUserToFirestore = async (user) => {
+    try {
+      const userRef = doc(db, "users", user.uid); 
+      // Set user data in Firestore with proper field references
+      await setDoc(
+        userRef,
+        {
+          id: user.uid, // Firebase UID
+          email: user.email,
+          name: user.displayName, // Display name, if available
+          givenName: userInfo?.data?.user?.givenName || "", // Handle any missing fields
+          familyName: userInfo?.data?.user?.familyName || "",
+          photo: user.photoURL || "", // Ensure this field exists in user object
+          createdAt: new Date(),
+        },
+        { merge: true }
+      );
+      console.log("User data saved to Firestore successfully!");
+    } catch (error) {
+      console.error("Error saving user data to Firestore: ", error);
+    }
+  };
 
   const signOutUser = async () => {
     await AsyncStorage.removeItem("userEmail"); // Clear stored email
@@ -414,9 +302,10 @@ export default function SignInPage({ navigation }) {
     setInput("");
     setPassword("");
   };
-  
-  return (
 
+  const user = userInfo?.data?.user;
+
+  return (
     <View style={styles.container}>
        <Modal
         visible={showAlert}
@@ -479,9 +368,9 @@ export default function SignInPage({ navigation }) {
             />
           )}
 
-          <TouchableOpacity onPress={handlePasswordReset}>
+            <TouchableOpacity onPress={handlePasswordReset}>
             <Text style={styles.resetPasswordText}>Forgot Password?</Text>
-          </TouchableOpacity>
+            </TouchableOpacity>
          
           {/* Sign In Button - shown only after entering password */}
           {emailEntered && (
@@ -493,11 +382,11 @@ export default function SignInPage({ navigation }) {
           <Text style={styles.infoText}>
             Don't have an account?{" "}
             <Text style={styles.linkText} onPress={handleContinueToSignup}>
-              Click Here
+              Continue
             </Text>
           </Text>
         
-          {/* Google Sign-In Button */}
+        {/* Google Sign-In Button */}
           <TouchableOpacity
             style={styles.signInButton}
             onPress={() =>
@@ -511,12 +400,11 @@ export default function SignInPage({ navigation }) {
               style={styles.googleIcon}
             />
           </TouchableOpacity>
-          {loading && <Text style={styles.loadingText}>Loading...</Text>}
         </View>
       ) : (
-        <View style={styles.input}>
+        <View style={styles.card}>
           {/* <Text>Welcome, {user.name}</Text> */}
-          <Text style={styles.text}>{user.email}</Text>
+          <Text>Email: {user.email}</Text>
         </View>
       )}
 
@@ -663,12 +551,16 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 5,
     marginVertical: 20,
-  }, 
-  text: {
-    color: "white", 
-    fontSize: 16,
-    fontWeight: "bold",
   },
+  // input: {
+  //   width: "100%",
+  //   padding: 12,
+  //   marginVertical: 10,
+  //   borderWidth: 1,
+  //   borderColor: "#ddd",
+  //   borderRadius: 8,
+  //   backgroundColor: "#f9f9f9",
+  // },
   loginButton: {
     backgroundColor: "#0A74DA",
     width: "100%",
