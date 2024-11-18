@@ -188,7 +188,7 @@ const NewExpenseScreen = ({ navigation }) => {
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
                     <MaterialIcons name="arrow-back" size={24} color={textColor} />
                 </TouchableOpacity>
-                <Text style={[styles.screenTitle, { color: textColor }]}>New Income</Text>
+                <Text style={[styles.screenTitle, { color: textColor }]}>New Expense</Text>
                 <Switch
                     value={isDarkMode}
                     onValueChange={toggleDarkMode}
@@ -224,7 +224,7 @@ const NewExpenseScreen = ({ navigation }) => {
 
             {/* Category and Date Picker */
             }<Text style={[styles.categoryText, { color: textColor }]}>
-                {selectedCategory ? `Category: ${selectedCategory}` : 'Select a category.'}
+                {selectedCategory ? `Category: ${selectedCategory}` : 'Select a category'}
             </Text>
 
             <View style={styles.row}>
@@ -234,7 +234,7 @@ const NewExpenseScreen = ({ navigation }) => {
                         onPress={openCategoryModal}
                     >
                         <Text style={[styles.categoryText, { color: textColor }]}>
-                            {selectedCategory ? `Category: ${selectedCategory}` : 'Select a category.'}
+                            {selectedCategory ? `Category: ${selectedCategory}` : 'Select a category'}
                         </Text>
                         <MaterialIcons name="arrow-drop-down" size={24} color={textColor} />
                     </TouchableOpacity>

@@ -1,19 +1,28 @@
-import firebase from 'firebase/app'; 
-import 'firebase/auth';
+import { initializeApp, getApps } from 'firebase/app';
+import { getAuth, initializeAuth, getReactNativePersistence } from 'firebase/auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Your Firebase Config object based on google-services.json
+// Your Firebase Config object
 const firebaseConfig = {
   apiKey: "AIzaSyBha6mMtoCvncZRSF8gRN9A8IEUQn9q01U",
-  authDomain: "expense-tracker-9e7fe.firebaseapp.com", // projectId.firebaseapp.com
-  projectId: "expense-tracker-9e7fe", // from google-services.json
-  storageBucket: "expense-tracker-9e7fe.appspot.com", // from google-services.json
-  messagingSenderId: "421563005646", // project_number from google-services.json
-  appId: "1:421563005646:android:00e4dc18e6555951562e9f", // mobilesdk_app_id
+  authDomain: "expense-tracker-9e7fe.firebaseapp.com",
+  projectId: "expense-tracker-9e7fe",
+  storageBucket: "expense-tracker-9e7fe.appspot.com",
+  messagingSenderId: "421563005646",
+  appId: "1:421563005646:android:00e4dc18e6555951562e9f",
 };
 
-// Initialize Firebase
-if (!firebase.apps.length) {
-  firebase.initializeApp(firebaseConfig);
+// Initialize Firebase app
+let app;
+if (!getApps().length) {
+  app = initializeApp(firebaseConfig);
+} else {
+  app = getApps()[0]; // Use the already-initialized app
 }
 
-export { firebase };
+// Initialize Firebase Auth with AsyncStorage persistence
+const auth = initializeAuth(app, {
+  persistence: getReactNativePersistence(AsyncStorage),
+});
+
+export { app, auth };

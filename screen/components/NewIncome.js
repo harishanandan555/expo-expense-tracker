@@ -130,14 +130,14 @@ const NewIncomeScreen = ({ navigation }) => {
 
 
     const handleSaveIncome = async () => {
-        if (!transactionAmount || !selectedCategory || !transactionDate || !userEmail) {
+        if (!transactionAmount || !selectedCategory || !transactionDate) {
             Alert.alert('Error', 'Please fill out all required fields.');
             return;
         }
 
         try {
             const result = await db.runAsync(
-                'INSERT INTO incomes (email, description, amount, category, date) VALUES (?, ?, ?, ?, ?)',
+                'INSERT INTO incomes (email, description, amount, category, date) VALUES (?, ?, ?, ?)',
                 [
                      // Insert the retrieved email directly into the table
                     transactionDescription,
@@ -207,7 +207,7 @@ const NewIncomeScreen = ({ navigation }) => {
 
             {/* Category and Date Picker */
             }<Text style={[styles.categoryText, { color: textColor }]}>
-                {selectedCategory ? `Category: ${selectedCategory}` : 'Select a category.'}
+                {selectedCategory ? `Category: ${selectedCategory}` : 'Select a category'}
             </Text>
 
             <View style={styles.row}>
@@ -217,7 +217,7 @@ const NewIncomeScreen = ({ navigation }) => {
                         onPress={openCategoryModal}
                     >
                         <Text style={[styles.categoryText, { color: textColor }]}>
-                            {selectedCategory ? `Category: ${selectedCategory}` : 'Select a category.'}
+                            {selectedCategory ? `Category: ${selectedCategory}` : 'Select a category'}
                         </Text>
                         <MaterialIcons name="arrow-drop-down" size={24} color={textColor} />
                     </TouchableOpacity>

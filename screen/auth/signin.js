@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Image,
 } from "react-native";
+// import auth from '@react-native-firebase/auth';
 import * as WebBrowser from "expo-web-browser";
 import { auth,db } from "../../config/firebaseConfig";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -537,12 +538,16 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 5,
     marginVertical: 20,
-  }, 
-  text: {
-    color: "white", 
-    fontSize: 16,
-    fontWeight: "bold",
   },
+  // input: {
+  //   width: "100%",
+  //   padding: 12,
+  //   marginVertical: 10,
+  //   borderWidth: 1,
+  //   borderColor: "#ddd",
+  //   borderRadius: 8,
+  //   backgroundColor: "#f9f9f9",
+  // },
   loginButton: {
     backgroundColor: "#0A74DA",
     width: "100%",
