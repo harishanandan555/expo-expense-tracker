@@ -8,14 +8,17 @@ const Header = ({ navigation, isDarkMode, toggleTheme }) => {
   const [menuVisible, setMenuVisible] = useState(false);
   const [userName, setUserName] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [userPhoto, setUserPhoto] = useState(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         const displayName = user.displayName ? user.displayName : user.email?.split('@')[0] || 'User';
         setUserName(displayName);
+        setUserPhoto(user.photoURL);
       } else {
         setUserName(null);
+        setUserPhoto(null);
       }
     });
 
@@ -42,11 +45,18 @@ const Header = ({ navigation, isDarkMode, toggleTheme }) => {
     }
   };
 
+  const getAvatarLabel = () => {
+    if (userName) {
+      return userName.slice(0, 2).toUpperCase();
+    }
+    return 'U';
+  };
+
   return (
     <Provider>
       <View style={[styles.header, { backgroundColor: isDarkMode ? '#000' : '#fff' }]}>
         <Image
-          source={require("../../assets/wallet_logo.png")}
+          source={require('../../assets/wallet_logo.png')}
           style={styles.logo}
         />
         <Menu
@@ -54,14 +64,18 @@ const Header = ({ navigation, isDarkMode, toggleTheme }) => {
           onDismiss={closeMenu}
           anchor={
             <TouchableOpacity onPress={openMenu}>
-              <Avatar.Text size={45} label={userName ? userName.charAt(0).toUpperCase() : 'U'} />
+              {userPhoto ? (
+                <Avatar.Image size={45} source={{ uri: userPhoto }} />
+              ) : (
+                <Avatar.Text size={45} label={getAvatarLabel()} />
+              )}
             </TouchableOpacity>
           }
           style={[
             styles.menu,
             { backgroundColor: isDarkMode ? '#333' : '#fff' },
             { marginLeft: -10 },
-            { position: 'absolute', top: 1, zIndex: 1000},
+            { position: 'absolute', top: 1, zIndex: 1000 },
           ]}
         >
           <View style={styles.menuItemContainer}>
@@ -70,8 +84,8 @@ const Header = ({ navigation, isDarkMode, toggleTheme }) => {
                 toggleTheme();
                 closeMenu();
               }}
-              title={isDarkMode ? "Light Mode" : "Dark Mode"}
-              icon={isDarkMode ? "weather-sunny" : "weather-night"}
+              title={isDarkMode ? 'Light Mode' : 'Dark Mode'}
+              icon={isDarkMode ? 'weather-sunny' : 'weather-night'}
               titleStyle={styles.menuItemText}
             />
           </View>
@@ -100,9 +114,9 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 10,
+    marginTop:15,
     paddingHorizontal: 10,
-    position: 'relative',
-    
+    position: 'fixed',
   },
   logo: {
     marginTop: 10,

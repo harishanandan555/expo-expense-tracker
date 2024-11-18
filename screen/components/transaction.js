@@ -1,19 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-  Alert,
-  Image,
-} from "react-native";
+import {View, Text,StyleSheet,FlatList, TouchableOpacity, Alert, Image,} from "react-native";
 import { Avatar, Menu, Divider, Provider } from 'react-native-paper';
 import { Picker } from "@react-native-picker/picker";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { format } from "date-fns";
 import * as MediaLibrary from "expo-media-library";
-// import * as Print from 'expo-print';
+import * as Print from 'expo-print';
 import { shareAsync } from 'expo-sharing';
 import * as FileSystem from 'expo-file-system';
 import Icon from "react-native-vector-icons/MaterialIcons";
@@ -128,11 +120,30 @@ const TransactionScreen = () => {
   const [transactionsFound, setTransactionsFound] = useState(true);
   const [selectedPrinter, setSelectedPrinter] = useState(null);
   const [selectedExportOption, setSelectedExportOption] = useState("");
+  const [userEmail, setUserEmail] = useState(null);
 
   const openMenu = () => setMenuVisible(true);
   const closeMenu = () => setMenuVisible(false);
 
   const navigation = useNavigation();
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) {
+        setUserEmail(user.email);
+        if (user.email === "roopashree_v@bullbox.in") {
+          setTransactionsData(initialTransactionsData);
+        } else {
+          setTransactionsData([]); // Clear data if user email doesn't match
+        }
+      } else {
+        setUserEmail(null);
+        setTransactionsData([]); // Clear data if not logged in
+      }
+    });
+
+    return () => unsubscribe(); // Cleanup on component unmount
+  }, []);
 
    // Determine colors based on the theme
    const isDarkMode = theme === 'dark';
@@ -480,16 +491,6 @@ const TransactionScreen = () => {
               <Picker.Item label="PDF" value="PDF" />
             </Picker>
           </View>
-         
-          {/* <TouchableOpacity style={[styles.exportButton, { backgroundColor: themes[theme].buttonBackground, borderColor: themes[theme].buttonBorder }]}
-           onPress={exportToCSV}>
-            <Text style={[styles.exportButtonText, { color: themes[theme].buttonText }]}>Export CSV</Text>
-          </TouchableOpacity>
-
-        <TouchableOpacity style={[styles.exportButton, { backgroundColor: themes[theme].buttonBackground, borderColor: themes[theme].buttonBorder }]}
-         onPress={printToFile}>
-          <Text style={[styles.exportButtonText, { color: themes[theme].buttonText }]}>Export PDF</Text>
-        </TouchableOpacity> */}
 
           {/* Date Picker Button */}
           <TouchableOpacity
@@ -521,28 +522,18 @@ const TransactionScreen = () => {
 
         {/* No Transactions Message */}
         {noTransactionsMessage && !transactionsFound ? (
-          <View>
-            <Text
-              style={[styles.noTransactionsText, { color: themes[theme].text }]}
-            >
+          <View style={styles.noTransactionsContainer}>
+            <Text style={[styles.noTransactionsText, { color: themes[theme].text }]} >
               {noTransactionsMessage}
             </Text>
-            <TouchableOpacity
-              style={styles.refreshButton}
-              onPress={handleRefresh}
-            >
+            <TouchableOpacity style={styles.refreshButton} onPress={handleRefresh} >
               <Text style={styles.refreshButtonText}>Refresh</Text>
             </TouchableOpacity>
           </View>
         ) : null}
 
         {/* Transactions Table Header */}
-        <View
-          style={[
-            styles.tableHeader,
-            { backgroundColor: themes[theme].tableHeaderBackground },
-          ]}
-        >
+        <View style={[ styles.tableHeader,  { backgroundColor: themes[theme].tableHeaderBackground }]}>
           <Text
             style={[
               styles.headerText,
@@ -593,6 +584,8 @@ const TransactionScreen = () => {
         </View>
 
         {/* Transactions List */}
+        {userEmail === "roopashree_v@bullbox.in" ? (
+        filterTransactions().length > 0 ? (
         <FlatList
           data={filterTransactions()}
           keyExtractor={(item) => item.id}
@@ -650,6 +643,21 @@ const TransactionScreen = () => {
           )}
           contentContainerStyle={styles.listContainer}
         />
+      ) : (
+        <View style={styles.noTransactionsContainer }>
+        <Text style={[  styles.noTransactionsText, { color: themes[theme].text }]}>
+          No transactions found.
+        </Text>
+        <TouchableOpacity style={styles.refreshButton} onPress={handleRefresh}>
+          <Text style={styles.refreshButtonText}>Refresh</Text>
+        </TouchableOpacity>
+      </View>
+    )
+  ) : (
+        <Text style={styles.noAccessMessage}>
+          You do not have access to view transactions.
+        </Text>
+      )}
       </View>
     </Provider>
   );
@@ -658,19 +666,19 @@ const TransactionScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
+    padding: 15,
     // backgroundColor: "#000",
   },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 10,
-  },
+  // header: {
+  //   flexDirection: "row",
+  //   justifyContent: "space-between",
+  //   alignItems: "center",
+  //   // marginBottom: 10,
+  // },
   headerTitle: {
     fontSize: 24,
     color: "#fff",
-    marginBottom:10,
+    marginBottom:10
   },
   avatarRight: {
     position: 'absolute',
@@ -719,11 +727,22 @@ logo: {
     color: "#fff",
     fontSize: 16,
   },
+  noTransactionsContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 20,
+  },
   noTransactionsText: {
-    color: "#FF0000",
-    textAlign: "center",
     fontSize: 18,
-    marginBottom: 20,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  noAccessMessage: {
+    textAlign: "center",
+    marginTop: 50,
+    fontSize: 18,
+    color: "red",
   },
   tableHeader: {
     flexDirection: "row",
@@ -751,6 +770,7 @@ logo: {
     borderBottomColor: "#ccc",
     backgroundColor: "#121212",
     marginBottom: 10,
+    borderRadius: 5,
   },
   transactionCategory: {
     color: "#fff",
