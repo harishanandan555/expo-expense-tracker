@@ -14,6 +14,7 @@ import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { format } from 'date-fns'; // For date formatting
 import EmojiSelector from 'react-native-emoji-selector'; // For emoji picking
 import { useSQLiteContext } from 'expo-sqlite/next'; // Import SQLite context
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 
 
@@ -90,7 +91,7 @@ const NewIncomeScreen = ({ navigation }) => {
                 await db.runAsync(`
                     CREATE TABLE IF NOT EXISTS incomes (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        email TEXT,
+                       
                         description TEXT,
                         amount REAL,
                         category TEXT,
@@ -138,7 +139,7 @@ const NewIncomeScreen = ({ navigation }) => {
             const result = await db.runAsync(
                 'INSERT INTO incomes (email, description, amount, category, date) VALUES (?, ?, ?, ?, ?)',
                 [
-                    userEmail, // Insert the retrieved email directly into the table
+                     // Insert the retrieved email directly into the table
                     transactionDescription,
                     parseFloat(transactionAmount),
                     selectedCategory,

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'; 
+import React, { useState, useEffect } from 'react';
 import { SQLiteProvider } from 'expo-sqlite/next';
 import { ActivityIndicator, Text, View } from 'react-native';
 import * as FileSystem from 'expo-file-system';
@@ -6,6 +6,7 @@ import { Asset } from 'expo-asset';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+
 import Landing from './screen/landing';
 import SignInPage from './screen/auth/signin';
 import DashboardScreen from './screen/components/dashboard';
@@ -51,11 +52,16 @@ export default function App() {
       </View>
     );
   }
-  
+
   return (
     <React.Suspense fallback={<LoadingScreen />}>
       <SQLiteProvider databaseName="Expense.db" useSuspense>
         <NavigationContainer>
+          {/* testing settingScreen */}
+          {/* <Stack.Navigator initialRouteName="Settings">
+            <Stack.Screen name="Settings" options={{ headerShown: false }} component={SettingScreen} />
+          </Stack.Navigator> */}
+          {/* main */}
           <Stack.Navigator initialRouteName="signin">
             <Stack.Screen name="landing" options={{ headerShown: false }} component={Landing} />
             <Stack.Screen name="signin" options={{ headerShown: false }} component={SignInPage} />
@@ -125,14 +131,14 @@ function MainTabNavigator({ route }) {
 
 const styles = StyleSheet.create({
   tabBar: {
-    backgroundColor: '#000', 
+    backgroundColor: '#000',
     borderTopWidth: 1,
-    borderTopColor: '#ccc', 
-    height: 60, 
-    paddingBottom: 10, 
+    borderTopColor: '#ccc',
+    height: 60,
+    paddingBottom: 10,
   },
   tabIcon: {
-    width: 24, 
+    width: 24,
     height: 24,
     tintColor: '#fff',
   },

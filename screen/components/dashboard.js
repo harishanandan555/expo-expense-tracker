@@ -27,6 +27,7 @@ import * as Progress from 'react-native-progress';
 import { BarChart } from 'react-native-chart-kit';
 
 const DashboardScreen = () => {
+
     const [theme, setTheme] = useState('dark'); // Set default theme to dark
     const [menuVisible, setMenuVisible] = useState(false);
     const [isIncomeModalVisible, setIncomeModalVisible] = useState(false);
@@ -61,10 +62,12 @@ const DashboardScreen = () => {
     const navigation = useNavigation();
     const db = useSQLiteContext(); // Your SQLite context
     const barBackgroundColor = isDarkMode ? '#333' : '#e0e0e0';
+
     // Function to handle theme switching
     const handleThemeSwitch = (mode) => {
         setTheme(mode);
     };
+
     const colors = {
         background: isDarkMode ? '#000' : '#fff',
         cardBackground: isDarkMode ? '#121212' : '#f4f4f4',
@@ -326,8 +329,6 @@ const DashboardScreen = () => {
     useEffect(() => {
         fetchExpensesForDate();
     }, [startDate, endDate]);
-
-
 
     const userInfo = route.params?.userInfo;
 
