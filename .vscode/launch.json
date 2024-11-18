@@ -9,18 +9,3 @@
         }
     ]
 }
-
-
-// {
-//     "version": "0.2.0",
-//     "configurations": [
-//       {
-//         "name": "Attach to Hermes application",
-//         "cwd": "${workspaceFolder}",
-//         "type": "reactnativedirect",
-//         "request": "attach",
-//         "sourceMaps": true,
-//         "skipFiles": ["<node_internals>/**", "node_modules/**"]
-//       }
-//     ]
-//   }

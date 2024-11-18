@@ -135,7 +135,10 @@
 
 import React from "react";
 import { View, Text, TouchableOpacity } from "react-native";
-import { Card, Button, Badge } from "react-native-elements";
+import {  Button, Badge } from "react-native-elements";
+
+import { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent } from "../ui/card";
+
 import { useStripeMock } from "../hooks/use-media-query"; // mock hook for testing
 
 export const BillingSection = () => {
@@ -146,35 +149,39 @@ export const BillingSection = () => {
   }
 
   return (
-    <Card containerStyle={{ borderRadius: 8, padding: 20 }}>
-      <Text style={{ fontSize: 16, fontWeight: "600", color: "#555" }}>
-        Billing Information
-      </Text>
-      <View style={{ flexDirection: "column", justifyContent: "space-between", alignItems: "center", marginVertical: 15 }}>
-        <View style={{ alignItems: "center" }}>
-          <Text style={{ fontSize: 22, fontWeight: "bold", textAlign: "center" }}>
-            {hasAccess ? "You're A" : "Become A"}{" "}
-            <Text style={{ color: "skyblue", fontWeight: "bold" }}>Premium</Text> User
-          </Text>
-          <Text style={{ fontSize: 14, color: "#777", textAlign: "center", marginVertical: 5 }}>
-            {hasAccess
-              ? "Enjoy all premium user features."
-              : "Upgrade to premium user and enjoy with all features."}
-          </Text>
+    <Card>
+      <CardHeader>
+        <CardTitle>Billing Information</CardTitle>
+        {/* <CardDescription>Set your default currency.</CardDescription> */}
+      </CardHeader>
+      <CardContent>
+         {/* marginVertical: 15 */}
+        <View style={{ flexDirection: "column", justifyContent: "space-between", alignItems: "center", marginVertical: 0 }}> 
+          <View style={{ alignItems: "center" }}>
+            <Text style={{ fontSize: 22, fontWeight: "bold", textAlign: "center" }}>
+              {hasAccess ? "You're A" : "Become A"}{" "}
+              <Text style={{ color: "skyblue", fontWeight: "bold" }}>Premium</Text> User
+            </Text>
+            <Text style={{ fontSize: 14, color: "#777", textAlign: "center", marginVertical: 5 }}>
+              {hasAccess
+                ? "Enjoy all premium user features."
+                : "Upgrade to premium user and enjoy with all features."}
+            </Text>
+          </View>
+          {!hasAccess ? (
+            <Button
+              title="Upgrade"
+              onPress={() => console.log("Navigate to Upgrade")}
+              buttonStyle={{ backgroundColor: "orange", paddingHorizontal: 20, marginTop: 10 }}
+            />
+          ) : (
+            <Badge value="Premium User" status="success" containerStyle={{ marginTop: 10 }} />
+          )}
         </View>
-        {!hasAccess ? (
-          <Button
-            title="Upgrade"
-            onPress={() => console.log("Navigate to Upgrade")}
-            buttonStyle={{ backgroundColor: "orange", paddingHorizontal: 20, marginTop: 10 }}
-          />
-        ) : (
-          <Badge value="Premium User" status="success" containerStyle={{ marginTop: 10 }} />
-        )}
-      </View>
-      <TouchableOpacity onPress={onManageBilling} style={{ marginTop: 10 }}>
-        <Text style={{ color: "blue", textAlign: "center", textDecorationLine: "underline" }}>Manage Billing</Text>
-      </TouchableOpacity>
+        <TouchableOpacity onPress={onManageBilling} style={{ marginTop: 10 }}>
+          <Text style={{ color: "blue", textAlign: "center", textDecorationLine: "underline" }}>Manage Billing</Text>
+        </TouchableOpacity>
+      </CardContent>
     </Card>
   );
 

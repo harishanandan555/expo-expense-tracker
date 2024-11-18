@@ -3,29 +3,28 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { Alert, Image, Pressable, StyleSheet, TextInput, Text, View } from 'react-native';
 import { getAuth, createUserWithEmailAndPassword, updateProfile, sendEmailVerification  } from "firebase/auth";
 import { getFirestore, doc, setDoc, getDoc, Timestamp } from "firebase/firestore"; 
-import { auth, db } from "../../config/firebaseConfig";
-// const auth = getAuth();
-// const db = getFirestore();  
 
-export default function EmailAuth({ navigation, route }) {
+  const auth = getAuth();
+  const db = getFirestore();  
 
-  const [value, setValue] = useState({
-    email: route.params?.email || '',
-    password: '',
-    confirmPassword: '',
-    displayName: '',
-    // phoneNumber: '',
-    error: ''
-  });
+  export default function EmailAuth({ navigation, route }) {
+    const [value, setValue] = useState({
+      email: route.params?.email || '',
+      password: '',
+      confirmPassword: '',
+      displayName: '',
+      // phoneNumber: '',
+      error: ''
+    });
 
-  const [isEmailVerified, setIsEmailVerified] = useState(false);
-  const [isVerificationSent, setIsVerificationSent] = useState(false);
-  
-  // Password validation regex
-  const passwordRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-  const validatePassword = (password) => {
-    return passwordRegex.test(password);
-  };
+    const [isEmailVerified, setIsEmailVerified] = useState(false);
+    const [isVerificationSent, setIsVerificationSent] = useState(false);
+    
+    // Password validation regex
+    const passwordRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    const validatePassword = (password) => {
+      return passwordRegex.test(password);
+    };
 
   // Step 1: Create a user and send email verification
   const signUp = async () => {
@@ -33,7 +32,7 @@ export default function EmailAuth({ navigation, route }) {
       setValue({ ...value, error: 'All fields are mandatory.' });
       return;
     }
-
+  
     if (!validatePassword(value.password)) {
       setValue({
         ...value,
@@ -41,29 +40,29 @@ export default function EmailAuth({ navigation, route }) {
       });
       return;
     }
-
+  
     if (value.password !== value.confirmPassword) {
       setValue({ ...value, error: 'Passwords do not match.' });
       return;
     }
-
+  
     try {
       console.log("Attempting to create user...");
       const userCredential = await createUserWithEmailAndPassword(auth, value.email, value.password);
       console.log("User created: ", userCredential.user);
-
+  
       const user = userCredential.user;
       console.log("User UID:", user.uid);
-
+  
       // Set the display name for the user in Firebase Auth
       await updateProfile(user, { displayName: value.displayName });
-
+  
       // Send email verification
       await sendEmailVerification(user);
       console.log("Verification email sent.");
       setIsVerificationSent(true);
       Alert.alert("Check Your Email", "A verification email has been sent to your email address.");
-
+  
       console.log("Attempting to store user data in Firestore...");
       await setDoc(doc(db, "users", user.uid), {
         displayName: value.displayName,
@@ -79,36 +78,36 @@ export default function EmailAuth({ navigation, route }) {
     }
   };
 
-  // Step 2: Check email verification status
-  const checkEmailVerificationAndUpdateFirestore = async () => {
-    const user = auth.currentUser;
-    if (user) {
-      await user.reload();
-      if (user.emailVerified) {
-        setIsEmailVerified(true);
-        
-        // Fetch the latest sign-in metadata
-        const metadata = {
-          emailVerified: true,
-          lastLoginAt:  lastLoginAt,
-          expirationTime: stsTokenManager.expirationTime
-        };
+ // Step 2: Check email verification status
+ const checkEmailVerificationAndUpdateFirestore = async () => {
+  const user = auth.currentUser;
+  if (user) {
+    await user.reload();
+    if (user.emailVerified) {
+      setIsEmailVerified(true);
+      
+      // Fetch the latest sign-in metadata
+      const metadata = {
+        emailVerified: true,
+        lastLoginAt:  lastLoginAt,
+        expirationTime: stsTokenManager.expirationTime
+      };
 
-        await setDoc(
-          doc(db, "users", user.uid),
-          metadata,
-          { merge: true }
-        );
+      await setDoc(
+        doc(db, "users", user.uid),
+        metadata,
+        { merge: true }
+      );
 
-        console.log("User data successfully updated in Firestore.");
-        Alert.alert("Email Verified", "Your email has been successfully verified.");
-      } else {
-        setIsEmailVerified(false);
-      }
+      console.log("User data successfully updated in Firestore.");
+      Alert.alert("Email Verified", "Your email has been successfully verified.");
+    } else {
+      setIsEmailVerified(false);
     }
-  };
+  }
+};
 
-  useEffect(() => {
+useEffect(() => {
   const intervalId = setInterval(async () => {
     await checkEmailVerificationAndUpdateFirestore();
     const user = auth.currentUser;
@@ -118,7 +117,7 @@ export default function EmailAuth({ navigation, route }) {
   }, 5000); // Check every 5 seconds
 
   return () => clearInterval(intervalId);
-  }, [])
+}, [])
 
   //   const signUp = async () => {
   //     console.log("SignUp function started");
@@ -295,7 +294,7 @@ export default function EmailAuth({ navigation, route }) {
   //   }, 3000);
   //   return () => clearInterval(intervalId);
   // }, []);
-
+ 
   return (
     <View style={styles.container}>
       <View style={styles.innerContainer}>
@@ -420,7 +419,7 @@ export default function EmailAuth({ navigation, route }) {
         </View>
       </View>
     );
-}
+  }
 
 const styles = StyleSheet.create({
   container: {
