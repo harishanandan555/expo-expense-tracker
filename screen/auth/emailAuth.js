@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { Alert, Image, Pressable, StyleSheet, TextInput, Text, View } from 'react-native';
 import { getAuth, createUserWithEmailAndPassword, updateProfile, sendEmailVerification  } from "firebase/auth";
-import { getFirestore, doc, setDoc, getDoc} from "firebase/firestore"; 
+import { getFirestore, doc, setDoc, getDoc, Timestamp } from "firebase/firestore"; 
 
   const auth = getAuth();
   const db = getFirestore();  
@@ -18,7 +18,7 @@ import { getFirestore, doc, setDoc, getDoc} from "firebase/firestore";
     });
 
     const [isEmailVerified, setIsEmailVerified] = useState(false);
-
+    const [isVerificationSent, setIsVerificationSent] = useState(false);
     
     // Password validation regex
     const passwordRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
@@ -26,85 +26,176 @@ import { getFirestore, doc, setDoc, getDoc} from "firebase/firestore";
       return passwordRegex.test(password);
     };
 
-    const signUp = async () => {
-      console.log("SignUp function started");
-      if (!value.email || !value.password || !value.confirmPassword || !value.displayName) {
-        setValue({ ...value, error: 'All fields are mandatory.' });
-        console.log("Missing fields");
-        return;
-      }
-      if (!validatePassword(value.password)) {
-        setValue({
-          ...value,
-          error: 'Password must be at least 8 characters long, with uppercase, lowercase, a number, and a special character.'
-        });
-        console.log("Password validation failed");
-        return;
-      }
-      if (value.password !== value.confirmPassword) {
-        setValue({ ...value, error: 'Passwords do not match.' });
-        console.log("Passwords do not match");
-        return;
-      }
-      try {
-        const userCredential = await createUserWithEmailAndPassword(auth, value.email, value.password);
-        const user = userCredential.user;
-        console.log("User created successfully:", user);
-
-        // Update user profile with display name
-        await updateProfile(user, { displayName: value.displayName });
-        console.log("User profile updated successfully");
-
-        // Send email verification after user creation
-        await sendEmailVerification(user);
-        Alert.alert("Verification Sent", "A verification email has been sent to your email address.");
-
-        // Store user details in Firestore
-        await setDoc(doc(db, "users", user.uid), {
-          displayName: value.displayName,
-          email: value.email,
-          phoneNumber: value.phoneNumber,
-          emailVerified: user.emailVerified
-        });
-        console.log("User details saved successfully");
-
-        navigation.navigate("signin");
-      } catch (error) {
-        console.log("Error creating account:", error);
-        setValue({
-          ...value,
-          error: error.message,
-        });
-      }
-    };
-
-    const verifyEmail = async () => {
-      try {
-        const user = auth.currentUser;
-        if (user && !user.emailVerified) {
-          await sendEmailVerification(user);
-          Alert.alert("Verification Sent", "A verification email has been sent to your email address.");
-        } else if (user && user.emailVerified) {
-          Alert.alert("Info", "Your email is already verified.");
-        }
-      } catch (error) {
-        console.log("Error sending verification email:", error);
-        Alert.alert("Error", error.message);
-      }
-    };
-
-  const checkEmailVerification = async () => {
-    const user = auth.currentUser;
-    if (user) {
-      await user.reload(); // Ensure we have the latest user info
-      if (user.emailVerified) {
-        setIsEmailVerified(true);
-        Alert.alert("Email Verified", "Your email has been successfully verified.");
-      } else {
-        setIsEmailVerified(false);
-      }
+  // Step 1: Create a user and send email verification
+  const signUp = async () => {
+    if (!value.password || !value.confirmPassword || !value.displayName) {
+      setValue({ ...value, error: 'All fields are mandatory.' });
+      return;
+    }
+  
+    if (!validatePassword(value.password)) {
+      setValue({
+        ...value,
+        error: 'Password must be at least 8 characters long, with uppercase, lowercase, a number, and a special character.'
+      });
+      return;
+    }
+  
+    if (value.password !== value.confirmPassword) {
+      setValue({ ...value, error: 'Passwords do not match.' });
+      return;
+    }
+  
+    try {
+      console.log("Attempting to create user...");
+      const userCredential = await createUserWithEmailAndPassword(auth, value.email, value.password);
+      console.log("User created: ", userCredential.user);
+  
+      const user = userCredential.user;
+      console.log("User UID:", user.uid);
+  
+      // Set the display name for the user in Firebase Auth
+      await updateProfile(user, { displayName: value.displayName });
+  
+      // Send email verification
+      await sendEmailVerification(user);
+      console.log("Verification email sent.");
+      setIsVerificationSent(true);
+      Alert.alert("Check Your Email", "A verification email has been sent to your email address.");
+  
+      console.log("Attempting to store user data in Firestore...");
+      await setDoc(doc(db, "users", user.uid), {
+        displayName: value.displayName,
+        email: value.email,
+        emailVerified: false,
+        createdAt: Timestamp.now(),
+      });
+      console.log("User data successfully stored in Firestore.");
+      navigation.navigate("signin");
+    } catch (error) {
+      console.error("Error creating user: ", error);
+      setValue({ ...value, error: error.message });
     }
   };
+
+ // Step 2: Check email verification status
+ const checkEmailVerificationAndUpdateFirestore = async () => {
+  const user = auth.currentUser;
+  if (user) {
+    await user.reload();
+    if (user.emailVerified) {
+      setIsEmailVerified(true);
+      
+      // Fetch the latest sign-in metadata
+      const metadata = {
+        emailVerified: true,
+        lastLoginAt:  lastLoginAt,
+        expirationTime: stsTokenManager.expirationTime
+      };
+
+      await setDoc(
+        doc(db, "users", user.uid),
+        metadata,
+        { merge: true }
+      );
+
+      console.log("User data successfully updated in Firestore.");
+      Alert.alert("Email Verified", "Your email has been successfully verified.");
+    } else {
+      setIsEmailVerified(false);
+    }
+  }
+};
+
+useEffect(() => {
+  const intervalId = setInterval(async () => {
+    await checkEmailVerificationAndUpdateFirestore();
+    const user = auth.currentUser;
+    if (user && user.emailVerified) {
+      clearInterval(intervalId); // Stop checking once verified
+    }
+  }, 5000); // Check every 5 seconds
+
+  return () => clearInterval(intervalId);
+}, [])
+
+  //   const signUp = async () => {
+  //     console.log("SignUp function started");
+  //     if (!value.email || !value.displayName || !value.password || !value.confirmPassword) {
+  //     setValue({ ...value, error: 'All fields are mandatory.' });
+  //       console.log("Missing fields");
+  //       return;
+  //     }
+  //     if (!validatePassword(value.password)) {
+  //       setValue({
+  //         ...value,
+  //         error: 'Password must be at least 8 characters long, with uppercase, lowercase, a number, and a special character.'
+  //       });
+  //       console.log("Password validation failed");
+  //       return;
+  //     }
+  //     if (value.password !== value.confirmPassword) {
+  //       setValue({ ...value, error: 'Passwords do not match.' });
+  //       console.log("Passwords do not match");
+  //       return;
+  //     }
+  //     try {
+  //       const userCredential = await createUserWithEmailAndPassword(auth, value.email, value.password);
+  //       const user = userCredential.user;
+  //       console.log("User created successfully:", user);
+
+  //       // Update user profile with display name
+  //       await updateProfile(user, { displayName: value.displayName });
+  //       console.log("User profile updated successfully");
+
+  //       // Send email verification after user creation
+  //       // await sendEmailVerification(user);
+  //       // Alert.alert("Verification Sent", "A verification email has been sent to your email address.");
+
+  //       // Store user details in Firestore
+  //       await setDoc(doc(db, "users", user.uid), {
+  //         displayName: value.displayName,
+  //         email: value.email,
+  //         // phoneNumber: value.phoneNumber,
+  //         emailVerified: true  
+  //       });
+  //       console.log("User details saved successfully");
+
+  //       navigation.navigate("signin");
+  //     } catch (error) {
+  //       console.log("Error creating account:", error);
+  //       setValue({ ...value, error: error.message,});
+  //     }
+  //   };
+
+  //   const verifyEmail = async () => {
+  //     try {
+  //       console.log("verify button clicked")
+  //       const user = auth.currentUser;
+  //       if (user && !user.emailVerified) {
+  //         await sendEmailVerification(user);
+  //         Alert.alert("Verification Sent", "A verification email has been sent to your email address.");
+  //       } else {
+  //         Alert.alert("Info", "Your email is already verified.");
+  //       }
+  //     } catch (error) {
+  //       console.log("Error sending verification email:", error);
+  //       Alert.alert("Error", error.message);
+  //     }
+  //   };
+
+  // const checkEmailVerification = async () => {
+  //   const user = auth.currentUser;
+  //   if (user) {
+  //     await user.reload(); // Ensure we have the latest user info
+  //     if (user.emailVerified) {
+  //       setIsEmailVerified(true);
+  //       Alert.alert("Email Verified", "Your email has been successfully verified.");
+  //     } else {
+  //       setIsEmailVerified(false);
+  //     } 
+  //   }
+  // };
 
   // const getPhoneNumber = async (uid) => {
   //   try {
@@ -185,27 +276,32 @@ import { getFirestore, doc, setDoc, getDoc} from "firebase/firestore";
   //   }
   // };
 
-  useEffect(() => {
-    const intervalId = setInterval(async () => {
-      const user = auth.currentUser;
-      if (user) {
-        await user.reload(); 
-        console.log("user:", user)// Ensure we have the latest user info
-        if (user.emailVerified) {
-          setIsEmailVerified(true);
-          console.log("Email verified,",user.emailVerified);
-          clearInterval(intervalId);
-          Alert.alert("Email Verified", "Your email has been successfully verified.");
-        }
-      }
-    }, 3000);
-    return () => clearInterval(intervalId);
-  }, []);
+  // useEffect(() => {
+  //   const intervalId = setInterval(async () => {
+  //     const user = auth.currentUser;
+  //     if (user) {
+  //       await user.reload();
+  //       if (user.emailVerified) {
+  //         setIsEmailVerified(true);
+  //         setIsPasswordFieldsEnabled(true);
+  //         clearInterval(intervalId);
 
+  //         // Update Firestore with emailVerified as true
+  //         await setDoc(doc(db, "users", user.uid), { emailVerified: true }, { merge: true });
+  //         Alert.alert("Email Verified", "Your email has been successfully verified.");
+  //       }
+  //     }
+  //   }, 3000);
+  //   return () => clearInterval(intervalId);
+  // }, []);
+ 
   return (
     <View style={styles.container}>
       <View style={styles.innerContainer}>
-        <Image source={require("../../assets/wallet_logo.png")} style={styles.logo} />
+        <Image
+          source={require("../../assets/wallet_logo.png")}
+          style={styles.logo}
+        />
 
         <Text style={styles.title}>Sign Up</Text>
 
@@ -222,15 +318,13 @@ import { getFirestore, doc, setDoc, getDoc} from "firebase/firestore";
           <View style={styles.inputWrapper}>
             <Icon style={styles.icon} name="email" size={18} color="gray" />
             <TextInput
-              placeholder='Email'
+              placeholder="Email"
               placeholderTextColor="#fff"
               value={value.email}
               style={styles.input}
+              editable={false}
               onChangeText={(text) => setValue({ ...value, email: text })}
             />
-            <Pressable style={styles.verifyButton} onPress={verifyEmail()}>
-              <Text style={styles.verifyButtonText}>Verify</Text>
-            </Pressable>
           </View>
 
           {/* <View style={styles.inputWrapper}>
@@ -297,21 +391,35 @@ import { getFirestore, doc, setDoc, getDoc} from "firebase/firestore";
             firebaseConfig={auth.app.options}
             attemptInvisibleVerification={true}
           /> */}
+          </View>
+
+          {value.error ? (  <Text style={styles.errorText}>{value.error}</Text>    ) : null}
+
+          {isVerificationSent && (
+          <Text style={styles.successText}>A verification email has been sent!</Text>
+        )}
+
+        {isEmailVerified && (
+          <Text style={styles.successText}>Your email is verified!</Text>
+        )}
+
+          <Pressable style={styles.button} onPress={signUp}>
+            <Text style={styles.buttonText}>SignUp</Text>
+          </Pressable>
+
+          <Text style={styles.footerText}>
+            Have an account?{" "}
+            <Text
+              style={styles.link}
+              onPress={() => navigation.navigate("signin")}
+            >
+              Sign In
+            </Text>
+          </Text>
         </View>
-
-        {value.error ? <Text style={styles.errorText}>{value.error}</Text> : null}
-
-        <Pressable style={styles.button} onPress={signUp}>
-          <Text style={styles.buttonText}>SignUp</Text>
-        </Pressable>
-
-        <Text style={styles.footerText}>
-          Have an account? <Text style={styles.link} onPress={() => navigation.navigate('signin')}>Sign In</Text>
-        </Text>
       </View>
-    </View>
-  );
-}
+    );
+  }
 
 const styles = StyleSheet.create({
   container: {
@@ -391,7 +499,12 @@ const styles = StyleSheet.create({
   link: {
     color: 'orange',
   },
-  errorText: {
+  successText: {
+    color: 'green',
+    marginVertical: 10,
+    textAlign: 'center',
+  },
+  errorText: {  
     color: 'red',
   },
 });

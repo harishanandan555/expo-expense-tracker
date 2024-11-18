@@ -29,12 +29,14 @@
       "supportsTablet": true
     },
     "android": {
+      "permissions": ["WRITE_EXTERNAL_STORAGE", "READ_EXTERNAL_STORAGE"],
       "googleServicesFile":"./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.mangoleeftechlabspvtltd.expensetracker"
+      "package": "com.mangoleeftechlabspvtltd.expensetracker",
+      "jsEngine": "jsc"
     },
     "web": {
       "favicon": "./assets/favicon.png"
