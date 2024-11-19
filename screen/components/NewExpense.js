@@ -71,6 +71,11 @@ const NewExpenseScreen = ({ navigation }) => {
         }
     };
 
+    const checkTableSchema = async () => {
+        const result = await db.getAllAsync("PRAGMA table_info(expenses)");
+        console.log("Table Schema:", result);
+    };
+
     const toggleDarkMode = () => setIsDarkMode(!isDarkMode);
 
     const openCategoryModal = () => setCategoryModalVisible(true);
@@ -98,6 +103,10 @@ const NewExpenseScreen = ({ navigation }) => {
 
     const initializeDatabase = async () => {
         try {
+            // Drop the table if it exists (only in development)
+            await db.runAsync(`DROP TABLE IF EXISTS expenses`);
+    
+            // Create the table with the correct schema
             await db.runAsync(`
                 CREATE TABLE IF NOT EXISTS expenses (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -106,14 +115,15 @@ const NewExpenseScreen = ({ navigation }) => {
                     category TEXT,
                     icon TEXT,
                     date TEXT
-                )`
-            );
-            setDbLoaded(true);
+                )
+            `);
             console.log('Table created or already exists');
+            setDbLoaded(true);
         } catch (error) {
             console.error('Error creating table:', error);
         }
     };
+    
 
 
 
@@ -122,7 +132,7 @@ const NewExpenseScreen = ({ navigation }) => {
             await initializeDatabase();
 
             await getData();
-
+            await checkTableSchema();
         };
 
         initializeAndCheckSchema();

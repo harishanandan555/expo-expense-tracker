@@ -7,7 +7,8 @@ import {
     TouchableOpacity,
     Modal,
     TextInput,
-    Dimensions, Image
+    Dimensions, Image,
+    FlatList,
 
 } from 'react-native';
 import { auth, db } from "../../config/firebaseConfig";
@@ -16,6 +17,7 @@ import { useRoute } from '@react-navigation/native';
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
+import DropDownPicker from "react-native-dropdown-picker";
 
 import { MaterialIcons } from '@expo/vector-icons';
 import { Avatar, Menu, Divider, Provider } from 'react-native-paper';
@@ -63,28 +65,53 @@ const DashboardScreen = () => {
     const [expenses, setExpenses] = useState([]);
     const barFillColor = isDarkMode ? '#FF6A00' : '#FF8C00';
     const navigation = useNavigation();
+
+    const [isModalVisible, setModalVisible] = useState(false);
     const sqldb = useSQLiteContext(); // Your SQLite context
     const barBackgroundColor = isDarkMode ? '#333' : '#e0e0e0';
-    const months = [
-        { label: 'January', value: 1 },
-        { label: 'February', value: 2 },
-        { label: 'March', value: 3 },
-        { label: 'April', value: 4 },
-        { label: 'May', value: 5 },
-        { label: 'June', value: 6 },
-        { label: 'July', value: 7 },
-        { label: 'August', value: 8 },
-        { label: 'September', value: 9 },
-        { label: 'October', value: 10 },
-        { label: 'November', value: 11 },
-        { label: 'December', value: 12 },
-    ];
-
+    const [open, setOpen] = useState(false);
+    const [value, setValue] = useState(null);
+    const [items, setItems] = useState([
+        { label: "January", value: "January" },
+        { label: "February", value: "February" },
+        { label: "March", value: "March" },
+        { label: "April", value: "April" },
+        { label: "May", value: "May" },
+        { label: "June", value: "June" },
+        { label: "July", value: "July" },
+        { label: "August", value: "August" },
+        { label: "September", value: "September" },
+        { label: "October", value: "October" },
+        { label: "November", value: "November" },
+        { label: "December", value: "December" },
+    ]);
     // Function to handle theme switching
     const handleThemeSwitch = (mode) => {
         setTheme(mode);
     };
+    useEffect(() => {
+        const fetchUserInfo = async () => {
+            try {
+                const storedUserInfo = await AsyncStorage.getItem("userInfo");
+                if (storedUserInfo) {
+                    setUserInfos(JSON.parse(storedUserInfo));
+                    console.log("User Info retrieved:", JSON.parse(storedUserInfo));
+                } else {
+                    console.log("No User Info found.");
+                }
+            } catch (error) {
+                console.error("Error retrieving user info:", error);
+            }
+        };
 
+        fetchUserInfo();
+    }, []);
+    const handleSelect = (month) => {
+        setSelectedMonth(month);
+        setModalVisible(false);
+    };
+    const photoUrl = userInfos?.data?.user?.photo;
+    const userName = userInfos?.data?.user?.name;
     const colors = {
         background: isDarkMode ? '#000' : '#fff',
         cardBackground: isDarkMode ? '#121212' : '#f4f4f4',
@@ -105,31 +132,9 @@ const DashboardScreen = () => {
         setExpenseModalVisible(false);
         setActiveButton('income');
     };
-    useEffect(() => {
-        const fetchUserInfo = async () => {
-            try {
-                const storedUserInfo = await AsyncStorage.getItem('userInfo');
-                if (storedUserInfo) {
-                    setUserInfos(JSON.parse(storedUserInfo));
-                    console.log("UserInfo retrieved from AsyncStorage:", storedUserInfo);
-                } else {
-                    console.log("No UserInfo found in AsyncStorage");
-                }
-            } catch (error) {
-                console.error("Failed to retrieve UserInfo from AsyncStorage:", error);
-            }
-        };
 
-        fetchUserInfo();
-    }, []);
 
-    useEffect(() => {
-        if (userInfo) {
-            console.log("User Info in Dashboard:", userInfo); // Should log the user object
-        } else {
-            console.log("No User Info received");
-        }
-    }, [userInfo]);
+
 
 
     const saveDataToFirebase = async () => {
@@ -139,9 +144,9 @@ const DashboardScreen = () => {
                 console.error("No user ID found. Cannot save data.");
                 return;
             }
-    
+
             const userDocRef = doc(db, "users", userId);
-    
+
             // Prepare the data to be saved
             const data = {
                 totalIncome,
@@ -149,10 +154,10 @@ const DashboardScreen = () => {
                 balance,
                 lastUpdated: new Date().toISOString(), // Add a timestamp
             };
-    
+
             // Save the data to Firestore
             await setDoc(userDocRef, { financialData: data }, { merge: true });
-    
+
             console.log("Income, expense, and balance saved to Firebase.");
         } catch (error) {
             console.error("Error saving data to Firebase:", error);
@@ -291,7 +296,7 @@ const DashboardScreen = () => {
             console.error('Error fetching data:', error);
         }
     };
-    
+
 
     const initializeDatabase = async () => {
         try {
@@ -305,7 +310,7 @@ const DashboardScreen = () => {
                     date TEXT
                 )
             `);
-    
+
             // Create expenses table
             await sqldb.runAsync(`
                 CREATE TABLE IF NOT EXISTS expenses (
@@ -316,7 +321,7 @@ const DashboardScreen = () => {
                     date TEXT
                 )
             `);
-    
+
             // Create transactions table by combining incomes and expenses
             await sqldb.runAsync(`
                 CREATE TABLE IF NOT EXISTS transactions AS
@@ -338,22 +343,22 @@ const DashboardScreen = () => {
                     date
                 FROM expenses
             `);
-    
-          
+
+
         } catch (error) {
             console.error('Error initializing database:', error);
         }
     };
-    
+
     useEffect(() => {
         const initializeAndCheckSchema = async () => {
             await initializeDatabase();
             await getData();
         };
-    
+
         initializeAndCheckSchema();
     }, [db]);
-    
+
 
     const fetchTotalExpense = async () => {
         try {
@@ -503,11 +508,11 @@ const DashboardScreen = () => {
     return (
         <Provider>
             <ScrollView
-            contentContainerStyle={[
-                styles.scrollContent,
-                { backgroundColor: backgroundColor },
-            ]}
-        >
+                contentContainerStyle={[
+                    styles.scrollContent,
+                    { backgroundColor: backgroundColor },
+                ]}
+            >
                 {/* Header Section */}
                 <View style={styles.header}>
                     {/* Right-aligned Avatar */}
@@ -516,19 +521,31 @@ const DashboardScreen = () => {
                         onDismiss={closeMenu}
                         anchor={
                             <View style={styles.header}>
-        <TouchableOpacity onPress={openMenu} style={styles.avatarContainer}>
-        {userInfos?.data?.user?.photo ? (
-                                        <Avatar.Image size={40} source={{ uri: userInfos.data.user.photo }} />
+                                <TouchableOpacity onPress={openMenu} style={styles.avatarContainer}>
+
+                                    {userInfos?.photoURL ? (
+                                        <Avatar.Image
+                                            size={40}
+                                            source={{ uri: userInfos.photoURL }}
+                                            style={styles.avatar}
+                                        />
                                     ) : (
-                                        <Avatar.Icon size={40} icon="account" />
+                                        <Avatar.Text
+                                            size={40}
+                                            label={userInfos?.displayName ? userInfos.displayName[0] : '?'}
+                                            style={styles.avatar}
+                                        />
                                     )}
+
+
+
                                 </TouchableOpacity>
                             </View>
                         }
                         style={[
                             styles.menuItem,
                             {
-                               
+
                                 paddingVertical: 0,
                                 marginVertical: 0,
                                 // Remove height to allow dynamic sizing
@@ -543,11 +560,11 @@ const DashboardScreen = () => {
                             title="Light"
                             icon="weather-sunny"
                             style={{
-                              
+
                                 paddingVertical: 4, // Slight padding adjustment
                                 marginVertical: 0,
                             }}
-                          
+
                         />
                         <Menu.Item
                             onPress={() => {
@@ -557,10 +574,10 @@ const DashboardScreen = () => {
                             title="Dark"
                             icon="weather-night"
                             style={{
-                                
+
                                 paddingVertical: 4,
                             }}
-                            
+
                         />
                         <Divider style={{ height: 1, backgroundColor: isDarkMode ? '#444' : '#e0e0e0' }} />
                         <Menu.Item
@@ -568,10 +585,10 @@ const DashboardScreen = () => {
                             title="Logout"
                             icon="logout"
                             style={{
-                               
+
                                 paddingVertical: 4,
                             }}
-                            
+
                         />
                     </Menu>
 
@@ -765,46 +782,49 @@ const DashboardScreen = () => {
                 <View style={[styles.historyContainer, { backgroundColor: cardBackgroundColor }]}>
                     {/* Switch between Year and Month */}
                     <View style={styles.switchContainer}>
-                        <TouchableOpacity style={[styles.switchButton, { backgroundColor: cardBackgroundColor }]}>
-                            <Text style={[styles.switchButtonText, { color: textColor }]}>Year</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={[styles.switchButton, styles.activeSwitch]}>
-                       
-            <Text style={styles.label}>Select Month:</Text>
+                        <View>
+                            <TouchableOpacity style={[styles.switchButton, { backgroundColor: cardBackgroundColor }]}>
+                                <Text style={[styles.switchButtonText, { color: textColor }]}>2024</Text>
+                            </TouchableOpacity>
 
-            {/* Month Selection Dropdown */}
-            <TouchableOpacity
-                style={[styles.switchButton, styles.activeSwitch]}
-                onPress={() => setMonthPickerVisible(!isMonthPickerVisible)} // Toggle Picker visibility
-            >
-                <Text style={styles.switchButtonText}>
-                    {months.find((month) => month.value === selectedMonth)?.label || 'Select Month'}
-                </Text>
-            </TouchableOpacity>
 
-            {isMonthPickerVisible && (
-                <Picker
-                    selectedValue={selectedMonth}
-                    onValueChange={(value) => {
-                        setSelectedMonth(value);
-                        setMonthPickerVisible(false); // Close Picker after selection
-                    }}
-                    style={styles.picker}
-                >
-                    {months.map((month) => (
-                        <Picker.Item key={month.value} label={month.label} value={month.value} />
-                    ))}
-                </Picker>
-            )}
-       
-                        </TouchableOpacity>
+
+                            {/* Month Selection Dropdown */}
+                            <View style={styles.dropdownWrapper}>
+                                <DropDownPicker
+                                    open={open}
+                                    value={value}
+                                    items={items}
+                                    setOpen={setOpen}
+                                    setValue={setValue}
+                                    setItems={setItems}
+                                    placeholder="Select Month"
+                                    placeholderStyle={styles.dropdownPlaceholder}
+                                    style={styles.dropdown}
+                                    dropDownContainerStyle={styles.dropdownContainer}
+                                    textStyle={styles.dropdownText}
+                                    arrowIconStyle={styles.arrowIcon}
+                                    listMode="SCROLLVIEW" // Enables scrolling
+                                    scrollViewProps={{
+                                        nestedScrollEnabled: true, // Ensure smooth scrolling within parent ScrollView
+                                    }}
+                                    maxHeight={300} // Set an appropriate max height for the dropdown
+                                    zIndex={5000} // Ensure dropdown is displayed above other components
+                                    zIndexInverse={1000}
+                                    onChangeValue={(selectedMonth) => {
+                                        console.log("Selected Month:", selectedMonth);
+                                        setSelectedMonth(selectedMonth); // Update state
+                                    }}
+                                />
+
+                            </View>
+
+
+                        </View>
                     </View>
 
                     {/* Date Picker */}
-                    <View style={styles.datePicker}>
-                        <Text style={[styles.pickerText, { color: textColor }]}>2024</Text>
-                        <Text style={[styles.pickerText, { color: textColor }]}>October</Text>
-                    </View>
+
 
                     {/* Income and Expense Toggle */}
                     <View style={styles.toggleContainer}>
@@ -1123,9 +1143,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
     },
-    arrowIcon: {
-        marginLeft: 5,
-    },
+
     overviewCard: {
         flexDirection: 'row',
         padding: 20,
@@ -1418,14 +1436,90 @@ const styles = StyleSheet.create({
     activeSwitch: {
         backgroundColor: '#FF6A00',
     },
-    switchButtonText: {
+    container: {
+        padding: 20,
+    },
+    dropdownButton: {
+        borderWidth: 1,
+        borderColor: '#ccc',
+        borderRadius: 5,
+        padding: 10,
+        backgroundColor: '#FF6A00',
+        alignItems: 'center',
+    },
+    dropdownText: {
         color: '#fff',
         fontWeight: 'bold',
     },
-    picker: {
-        marginTop: 10,
+    modalOverlay: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0,0,0,0.5)',
+    },
+    modalContent: {
+        width: '80%',
         backgroundColor: '#fff',
         borderRadius: 10,
+        padding: 20,
+    },
+    monthItem: {
+        padding: 15,
+        borderBottomWidth: 1,
+        borderBottomColor: '#ccc',
+    },
+    monthText: {
+        fontSize: 16,
+    },
+    closeButton: {
+        backgroundColor: '#FF6A00',
+        padding: 10,
+        borderRadius: 5,
+        marginTop: 10,
+        alignItems: 'center',
+    },
+    closeButtonText: {
+        color: '#fff',
+        fontWeight: 'bold',
+    },
+    historyContainer: {
+        padding: 20,
+        borderRadius: 10,
+        backgroundColor: "#121212", // Match your app theme
+        marginBottom: 20,
+    },
+    dropdownWrapper: {
+        width: "100%",
+        alignSelf: "center",
+        zIndex: 5000, // Ensure the dropdown is displayed above other components
+        marginBottom: 20,
+    },
+    dropdown: {
+        backgroundColor: "#1F1F1F",
+        borderColor: "#FF6A00",
+        borderRadius: 8,
+        height: 50,
+        paddingHorizontal: 15,
+        justifyContent: "center",
+    },
+    dropdownContainer: {
+        backgroundColor: "#2C2C2C",
+        borderColor: "#FF6A00",
+        borderRadius: 8,
+        maxHeight: 500, // Ensure sufficient height for scrolling
+    },
+    dropdownPlaceholder: {
+        color: "#A6A6A6",
+        fontSize: 16,
+        fontWeight: "bold",
+    },
+    dropdownText: {
+        color: "#FFFFFF",
+        fontSize: 16,
+        fontWeight: "bold",
+    },
+    arrowIcon: {
+        tintColor: "#FF6A00",
     },
 });
 export default DashboardScreen;
