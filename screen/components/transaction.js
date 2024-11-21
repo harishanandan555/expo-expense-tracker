@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {View, Text,StyleSheet,FlatList, TouchableOpacity, Alert, Image,} from "react-native";
-import { Avatar, Menu, Divider, Provider } from 'react-native-paper';
+import { Provider } from 'react-native-paper';
 import { Picker } from "@react-native-picker/picker";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { format } from "date-fns";
@@ -10,36 +10,10 @@ import { shareAsync } from 'expo-sharing';
 import * as FileSystem from 'expo-file-system';
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { useNavigation } from '@react-navigation/native';
-import { auth } from "../../config/firebaseConfig";
+import { auth, db } from "../../config/firebaseConfig";
 import { onAuthStateChanged } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
 import Header from './header';
-
-const initialTransactionsData = [
-  {
-    id: "1",
-    date: "08-10-2024",
-    type: "Income",
-    description: "Paycheck",
-    amount: "$2,000",
-    category: "Salary",
-  },
-  {
-    id: "2",
-    date: "03-10-2024",
-    type: "Income",
-    description: "Salary Payment",
-    amount: "$5,000",
-    category: "Salary",
-  },
-  {
-    id: "3",
-    date: "08-10-2024",
-    type: "Expense",
-    description: "Grocery Purchase",
-    amount: "$200",
-    category: "Grocery",
-  },
-];
 
 const themes = {
   light: {
@@ -66,95 +40,145 @@ const themes = {
   },
 };
 
-const generateHtml = (initialTransactionsData) =>{
-  let transactionHtml = initialTransactionsData.map((initialTransactionsData) =>
- 
- <tr>
-  <td style="padding: 10px;">${initialTransactionsData.date}</td>
-  <td style="padding: 10px;">${initialTransactionsData.type}</td>
-  <td style="padding: 10px;">${initialTransactionsData.description}</td>
-  <td style="padding: 10px;">${initialTransactionsData.amount}</td>
-  <td style="padding: 10px;">${initialTransactionsData.category}</td>
-  </tr>
+// const generateHtml = (transactionsData) =>{
+//   let transactionHtml = transactionsData.map((transaction) =>
+//  <tr>
+//   <td style="padding: 10px;">${transaction.date}</td>
+//   <td style="padding: 10px;">${transaction.type}</td>
+//   <td style="padding: 10px;">${transaction.description}</td>
+//   <td style="padding: 10px;">${transaction.amount}</td>
+//   <td style="padding: 10px;">${transaction.category}</td>
+//   {/* <td style="padding: 10px;">${transaction.icon}</td> */}
+//   </tr>
 
-  ).join('');
+//   ).join('');
 
-  return `
-  <html>
-    <head>
-      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
-    </head>
-    <body style="text-align: center; font-family: Helvetica Neue;">
-      <h1 style="font-size: 40px; font-weight: normal;">Transaction Report</h1>
-      <table style="width: 80%; margin: 0 auto; border-collapse: collapse;">
-        <thead>
-          <tr>
-            <th style="padding: 10px;">Date</th>
-             <th style="padding: 10px;">Type</th>
-            <th style="padding: 10px;">Description</th>
-            <th style="padding: 10px;">Amount</th>
-            <th style="padding: 10px;">Category</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${transactionHtml}
-        </tbody>
-      </table>
-    </body>
-  </html>
-`;
-}
-
-const categories = ["Category", "Salary", "Grocery"];
-const transactionTypes = ["Type", "Income", "Expense"];
+//   return `
+//   <html>
+//     <head>
+//       <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
+//     </head>
+//     <body style="text-align: center; font-family: Helvetica Neue;">
+//       <h1 style="font-size: 40px; font-weight: normal;">Transaction Report</h1>
+//       <table style="width: 80%; margin: 0 auto; border-collapse: collapse;">
+//         <thead>
+//           <tr>
+//             <th style="padding: 10px;">Date</th>
+//             <th style="padding: 10px;">Type</th>
+//             <th style="padding: 10px;">Description</th>
+//             <th style="padding: 10px;">Amount</th>
+//             <th style="padding: 10px;">Category</th>
+//           </tr>
+//         </thead>
+//         <tbody>
+//           ${transactionHtml}
+//         </tbody>
+//       </table>
+//     </body>
+//   </html>
+// `;
+// }
 
 const TransactionScreen = () => {
   const [theme, setTheme] = useState('dark');
-  const [menuVisible, setMenuVisible] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("Category");
   const [selectedType, setSelectedType] = useState("Type");
-  const [transactionsData, setTransactionsData] = useState(initialTransactionsData);
+  // const [transactionsData, setTransactionsData] = useState([]); 
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
   const [noTransactionsMessage, setNoTransactionsMessage] = useState("");
   const [transactionsFound, setTransactionsFound] = useState(true);
   const [selectedPrinter, setSelectedPrinter] = useState(null);
+  const [transactionsData, setTransactionsData] = useState([]);
   const [selectedExportOption, setSelectedExportOption] = useState("");
-  const [userEmail, setUserEmail] = useState(null);
-
-  const openMenu = () => setMenuVisible(true);
-  const closeMenu = () => setMenuVisible(false);
-
+  const [transactionTypes, setTransactionTypes] = useState(['Type', 'Income', 'Expense']);
+  const [categories, setCategories] = useState(['Category']);
+  
   const navigation = useNavigation();
 
+  // useEffect(() => {
+  //   const unsubscribe = auth.onAuthStateChanged((user) => {
+  //     if (user) {
+  //       fetchTransactions(user.uid);
+  //     } else {
+  //       setTransactionsData([]);
+  //     }
+  //   });
+  
+  //   return () => unsubscribe();
+  // }, []);
+
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        setUserEmail(user.email);
-        if (user.email === "roopashree_v@bullbox.in") {
-          setTransactionsData(initialTransactionsData);
-        } else {
-          setTransactionsData([]); // Clear data if user email doesn't match
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        fetchTransactions(user.uid);
+        if (userDoc.exists()) {
+          const transactions = userDoc.data().transactions || [];
+          setTransactionsData(transactions);
         }
       } else {
-        setUserEmail(null);
-        setTransactionsData([]); // Clear data if not logged in
+        setTransactionsData([]);
       }
     });
-
-    return () => unsubscribe(); // Cleanup on component unmount
+    return unsubscribe;
   }, []);
 
+
+  const fetchTransactions = async (uid) => {
+    try {
+      const userDocRef = doc(db, 'users', uid);
+      const userDoc = await getDoc(userDocRef);
+  
+      if (userDoc.exists()) {
+        const data = userDoc.data();
+        const incomeData = data.income || [];
+        const expenseData = data.expenses || [];
+  
+        // Combine income and expense data into a single array
+        const allTransactions = [
+          ...incomeData.map(item => ({ ...item, type: 'Income' })),
+          ...expenseData.map(item => ({ ...item, type: 'Expense' })),
+        ];
+  
+      console.log("Fetched transactions in fetchTransactions fn:", allTransactions);
+      // Extract unique categories and transaction types
+      const uniqueCategories = [...new Set(allTransactions.map(item => item.category))];
+      const uniqueTransactionTypes = ['Type', 'Income', 'Expense'];
+      
+      setTransactionsData(allTransactions);
+      setCategories(uniqueCategories);
+      setTransactionTypes(uniqueTransactionTypes);
+        // const formattedTransactions = allTransactions.map(item => ({
+        //   ...item,
+        //   date: new Date(item.timestamp.seconds * 1000).toLocaleString(),
+        // }));
+  
+        if (allTransactions.length === 0) {
+          setNoTransactionsMessage("No transactions found.");
+          setTransactionsFound(false);
+        } else {
+          setNoTransactionsMessage("");
+          setTransactionsFound(true);
+        }
+      } else {
+        setNoTransactionsMessage("User data not found.");
+        setTransactionsFound(false);
+      }
+    } catch (error) {
+      console.error("Error fetching transactions: ", error);
+      setNoTransactionsMessage("Error fetching transactions.");
+      setTransactionsFound(false);
+    }
+  };
+  
    // Determine colors based on the theme
    const isDarkMode = theme === 'dark';
    const backgroundColor = isDarkMode ? '#000' : '#fff';
    const textColor = isDarkMode ? '#fff' : '#000';
 
   const showDatePicker = () => {setDatePickerVisibility(true);};
-
   const hideDatePicker = () => {setDatePickerVisibility(false); };
-
-  const handleThemeSwitch = (mode) => {setTheme(mode);};
 
   const toggleTheme = () => {
     setTheme((prevTheme) => (prevTheme === 'light' ? 'dark' : 'light'));
@@ -178,17 +202,19 @@ const TransactionScreen = () => {
 
     hideDatePicker();
   };
-
+  
   const filterTransactions = () => {
-    return transactionsData.filter((transaction) => {
-      const transactionDate = transaction.date;
+    const filtered = transactionsData.filter((transaction) => {
+      const transactionDate = transaction.date; // Ensure this is in the correct format
       return (
-        (selectedCategory === "Category" ||
-          transaction.category === selectedCategory) &&
+        (selectedCategory === "Category" || transaction.category === selectedCategory) &&
         (selectedType === "Type" || transaction.type === selectedType) &&
         (selectedDate ? transactionDate === selectedDate : true)
       );
     });
+  
+    console.log("Filtered transactions:", filtered); // Debugging line
+    return filtered;
   };
 
   const deleteTransaction = (id) => {
@@ -200,12 +226,15 @@ const TransactionScreen = () => {
         {
           text: "OK",
           onPress: () =>
-            setTransactionsData(
-              transactionsData.filter((transaction) => transaction.id !== id)
-            ),
+            setTransactionsData(transactionsData.filter((transaction) => transaction.id !== id)),
         },
       ]
     );
+  };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
   };
 
   const renderTransactionItem = ({ item }) => (
@@ -230,17 +259,20 @@ const TransactionScreen = () => {
   };
 
   const exportToCSV = async () => {
-    // Request permission to access media library
     const { status } = await MediaLibrary.requestPermissionsAsync();
     if (status !== "granted") {
-      Alert.alert(
-        "Permission denied",
-        "You need to enable permission to save files."
-      );
+      Alert.alert("Permission denied", "You need to enable permission to save files.");
       return;
     }
 
     const filteredTransactions = filterTransactions();
+    console.log("Filtered transactions for CSV:", filteredTransactions);
+
+    if (filteredTransactions.length === 0) {
+      Alert.alert("No transactions found", "There are no transactions to export.");
+      return;
+    }
+
     const csvData = [
       ["Category", "Description", "Date", "Type", "Amount"],
       ...filteredTransactions.map((transaction) => [
@@ -255,122 +287,60 @@ const TransactionScreen = () => {
       .join("\n");
 
     const fileUri = `${FileSystem.documentDirectory}transactions.csv`;
-
     await FileSystem.writeAsStringAsync(fileUri, csvData);
 
-    const asset = await MediaLibrary.createAssetAsync(fileUri);
-    Alert.alert(
-      "CSV Exported",
-      "Your transactions have been exported to CSV and saved in your media library."
-    );
-  };
+  // const downloadsDir = FileSystem.documentDirectory + 'Downloads';
+  // const newFileUri = `${downloadsDir}/transactions.csv`;
 
-  // const generateHtml = () => {
-  //   const filteredTransactions = filterTransactions();
-  //   let htmlContent = `
-  //     <html>
-  //       <head>
-  //         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  //       </head>
-  //       <body style="text-align: center;">
-  //         <h1 style="font-size: 30px;">Transaction Report</h1>
-  //         <table style="width: 100%; border-collapse: collapse;">
-  //           <thead>
-  //             <tr>
-  //               <th style="border: 1px solid #000; padding: 8px;">Category</th>
-  //               <th style="border: 1px solid #000; padding: 8px;">Description</th>
-  //               <th style="border: 1px solid #000; padding: 8px;">Date</th>
-  //               <th style="border: 1px solid #000; padding: 8px;">Type</th>
-  //               <th style="border: 1px solid #000; padding: 8px;">Amount</th>
-  //             </tr>
-  //           </thead>
-  //           <tbody>
-  //   `;
-
-  //   filteredTransactions.forEach(transaction => {
-  //     htmlContent += `
-  //       <tr>
-  //         <td style="border: 1px solid #000; padding: 8px;">${transaction.category}</td>
-  //         <td style="border: 1px solid #000; padding: 8px;">${transaction.description}</td>
-  //         <td style="border: 1px solid #000; padding: 8px;">${transaction.date}</td>
-  //         <td style="border: 1px solid #000; padding: 8px;">${transaction.type}</td>
-  //         <td style="border: 1px solid #000; padding: 8px;">${transaction.amount}</td>
-  //       </tr>
-  //     `;
-  //   });
-
-  //   htmlContent += `
-  //           </tbody>
-  //         </table>
-  //       </body>
-  //     </html>
-  //   `;
-
-  //   return htmlContent;
-  // };
-
-  // const print = async () => {
-  //   const html = generateHtml();
-  //   await Print.printAsync({ html });
-  // };
-
-  // const printToFile = async () => {
-  //   const html = generateHtml();
-  //   const { uri } = await Print.printToFileAsync({ html });
-  //   console.log('File has been saved to:', uri);
-  //   await shareAsync(uri, { UTI: '.pdf', mimeType: 'application/pdf' });
-  // };
-  
-  // const exportToPDF = async () =>{
-  //   const filteredTransactions = filterTransactions();
-
-  //   if (filteredTransactions.length === 0) {
-  //     Alert.alert("No Data", "No transactions found to export.");
-  //     return;
-  //   }
-
-  //   let htmlContent = `
-  //   <h1>Transaction Report</h1>
-  //   <table style="width: 100%; border-collapse: collapse;">
-  //     <thead>
-  //       <tr>
-  //         <th style="border: 1px solid #000; padding: 8px;">Category</th>
-  //         <th style="border: 1px solid #000; padding: 8px;">Description</th>
-  //         <th style="border: 1px solid #000; padding: 8px;">Date</th>
-  //         <th style="border: 1px solid #000; padding: 8px;">Type</th>
-  //         <th style="border: 1px solid #000; padding: 8px;">Amount</th>
-  //       </tr>
-  //     </thead>
-  //     <tbody>
-  // `;
-
-  // filteredTransactions.forEach(transaction => {
-  //   htmlContent += `
-  //     <tr>
-  //       <td style="border: 1px solid #000; padding: 8px;">${transaction.category}</td>
-  //       <td style="border: 1px solid #000; padding: 8px;">${transaction.description}</td>
-  //       <td style="border: 1px solid #000; padding: 8px;">${transaction.date}</td>
-  //       <td style="border: 1px solid #000; padding: 8px;">${transaction.type}</td>
-  //       <td style="border: 1px solid #000; padding: 8px;">${transaction.amount}</td>
-  //     </tr>
-  //   `;
+  // await FileSystem.moveAsync({
+  //   from: fileUri,
+  //   to: newFileUri,
   // });
 
-  // htmlContent += `
-  //     </tbody>
-  //   </table>
-  // `;
+    await MediaLibrary.createAssetAsync(fileUri);
+    Alert.alert("CSV Exported", "Your transactions have been exported to CSV and saved in your media library.");
+  };
 
-  // // Generate PDF
-  // const options = {
-  //   html: htmlContent,
-  //   fileName: 'transactions',
-  //   directory: 'Documents',
-  // };
-
-  // let file = await RNHTMLtoPDF.convert(options);
-  // Alert.alert("PDF Created", `Your transactions have been exported to PDF: ${file.filePath}`);
-  // }
+  const generateHtml = (transactionsData) => {
+    if (!Array.isArray(transactionsData) || transactionsData.length === 0) {
+      return `<html><body><h1>No transactions available</h1></body></html>`;
+    }
+  
+    let transactionHtml = transactionsData.map((transaction) => `
+      <tr>
+        <td style="padding: 10px;">${transaction.category || 'N/A'}</td>
+        <td style="padding: 10px;">${transaction.type || 'N/A'}</td>
+        <td style="padding: 10px;">${transaction.date || 'N/A'}</td>
+        <td style="padding: 10px;">${transaction.description || 'N/A'}</td>
+        <td style="padding: 10px;">${transaction.amount || 'N/A'}</td>
+      </tr>
+    `).join('');
+  
+    return `
+      <html>
+        <head>
+          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        </head>
+        <body style="text-align: center; font-family: Helvetica Neue;">
+          <h1 style="font-size: 40px; font-weight: normal;">Transaction Report</h1>
+          <table style="width: 80%; margin: 0 auto; border-collapse: collapse;">
+            <thead>
+              <tr>
+                <th style="padding: 10px;">Date</th>
+                <th style="padding: 10px;">Type</th>
+                <th style="padding: 10px;">Description</th>
+                <th style="padding: 10px;">Amount</th>
+                <th style="padding: 10px;">Category</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${transactionHtml}
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `;
+  };
 
   const print = async ()=> {
     const html = generateHtml(initialTransactionsData);
@@ -385,8 +355,8 @@ const TransactionScreen = () => {
   }
 
   const printToFile = async () => {
-    const html = generateHtml(initialTransactionsData);
     try {
+      const html = generateHtml(transactionsData);
       const { uri } = await Print.printToFileAsync({ html });
       console.log('File has been saved to:', uri);
       await shareAsync(uri, { UTI: '.pdf', mimeType: 'application/pdf' });
@@ -407,6 +377,7 @@ const TransactionScreen = () => {
   };
 
   const handleExportOption = (option) => {
+    console.log("Selected export option:", option); // Debugging line
     setSelectedExportOption(option);
     if (option === "CSV") {
       exportToCSV();
@@ -417,56 +388,45 @@ const TransactionScreen = () => {
 
   return (
     <Provider>
-      <View style={[ styles.container,  { backgroundColor: themes[theme].background },]}>
+      <View style={[styles.container, { backgroundColor: themes[theme].background }]}>
         
         {/* Header Section */}
-        <Header
-          isDarkMode={theme === "dark"}
-          toggleTheme={toggleTheme}
-          navigation={navigation}
-        />
-
-        <Text style={[styles.headerTitle, { color: themes[theme].text }]}>
-          Transactions History
-        </Text>
+        <Header isDarkMode={theme === "dark"} toggleTheme={toggleTheme} navigation={navigation} />
+        <View style={styles.transactionsContainer}>
+        <Text style={[styles.headerTitle, { color: themes[theme].text }]}> Transactions History</Text>
 
         {/* Filter Section */}
-        <View style={styles.filterContainer}>
-          <View style={styles.pickerContainer}>
-            <Picker
-              selectedValue={selectedCategory}
-              onValueChange={(itemValue) => setSelectedCategory(itemValue)}
-              style={[
-                styles.picker,
-                {
+          <View style={styles.filterContainer}>
+            <View style={styles.pickerContainer}>
+              <Picker  selectedValue={selectedCategory} onValueChange={(itemValue) => setSelectedCategory(itemValue)}
+                style={[ styles.picker,
+                  { 
                   backgroundColor: themes[theme].buttonBackground,
-                  borderColor: themes[theme].buttonBorder,
-                  color: themes[theme].text,
-                },
-              ]}
-            >
-              {categories.map((category) => (
-                <Picker.Item key={category} label={category} value={category} />
-              ))}
-            </Picker>
-          </View>
+                  borderColor: themes[theme].buttonBorder,color: themes[theme].text
+                }]}
+                dropdownIconColor={theme === 'dark' ? 'white' : 'black'}
+                >
+                <Picker.Item label="Categories" value="Category" />
+                {categories.map((category) => (
+                  <Picker.Item
+                   key={category} label={category} value={category} />
+                ))}
+              </Picker>
+            </View>
 
           <View style={styles.pickerContainer}>
-            <Picker
-              selectedValue={selectedType}
-              onValueChange={(itemValue) => setSelectedType(itemValue)}
-              style={[
-                styles.picker,
-                {
+            <Picker selectedValue={selectedType} onValueChange={(itemValue) => setSelectedType(itemValue)}
+              style={[ styles.picker, {
                   backgroundColor: themes[theme].buttonBackground,
                   borderColor: themes[theme].buttonBorder,
                   color: themes[theme].text,
                 },
               ]}
+              dropdownIconColor={theme === 'dark' ? 'white' : 'black'}
             >
               {transactionTypes.map((type) => (
-                <Picker.Item key={type} label={type} value={type} />
-              ))}
+                <Picker.Item key={type} label={type} value={type} /> 
+                ))}
             </Picker>
           </View>
         </View>
@@ -474,9 +434,7 @@ const TransactionScreen = () => {
         <View style={styles.filterContainer}>
           {/* Export Options Picker */}
           <View style={styles.pickerContainer}>
-            <Picker
-              selectedValue={selectedExportOption}
-              onValueChange={handleExportOption}
+            <Picker selectedValue={selectedExportOption} onValueChange={handleExportOption}
               style={[
                 styles.picker,
                 {
@@ -485,6 +443,7 @@ const TransactionScreen = () => {
                   color: themes[theme].text,
                 },
               ]}
+              dropdownIconColor={theme === 'dark' ? 'white' : 'black'}
             >
               <Picker.Item label="Export" value="" />
               <Picker.Item label="CSV" value="CSV" />
@@ -503,12 +462,7 @@ const TransactionScreen = () => {
             ]}
             onPress={showDatePicker}
           >
-            <Text
-              style={[
-                styles.datePickerText,
-                { color: themes[theme].buttonText },
-              ]}
-            >
+            <Text style={[  styles.datePickerText, { color: themes[theme].buttonText }]}>
               {selectedDate ? `Selected Date: ${selectedDate}` : "Select Date"}
             </Text>
           </TouchableOpacity>
@@ -521,119 +475,58 @@ const TransactionScreen = () => {
         </View>
 
         {/* No Transactions Message */}
-        {noTransactionsMessage && !transactionsFound ? (
-          <View style={styles.noTransactionsContainer}>
-            <Text style={[styles.noTransactionsText, { color: themes[theme].text }]} >
-              {noTransactionsMessage}
-            </Text>
-            <TouchableOpacity style={styles.refreshButton} onPress={handleRefresh} >
-              <Text style={styles.refreshButtonText}>Refresh</Text>
-            </TouchableOpacity>
-          </View>
-        ) : null}
+        {/* {noTransactionsMessage && !transactionsFound ? (
+            <View style={styles.noTransactionsContainer}>
+              <Text style={[styles.noTransactionsText, { color: themes[theme].text }]}>
+                {noTransactionsMessage}
+              </Text>
+            </View>
+          ) : null} */}
 
         {/* Transactions Table Header */}
         <View style={[ styles.tableHeader,  { backgroundColor: themes[theme].tableHeaderBackground }]}>
-          <Text
-            style={[
-              styles.headerText,
-              { color: themes[theme].tableHeaderText },
-            ]}
-          >
-            Category
-          </Text>
-          <Text
-            style={[
-              styles.headerText,
-              { color: themes[theme].tableHeaderText },
-            ]}
-          >
-            Description
-          </Text>
-          <Text
-            style={[
-              styles.headerText,
-              { color: themes[theme].tableHeaderText },
-            ]}
-          >
-            Date
-          </Text>
-          <Text
-            style={[
-              styles.headerText,
-              { color: themes[theme].tableHeaderText },
-            ]}
-          >
-            Type
-          </Text>
-          <Text
-            style={[
-              styles.headerText,
-              { color: themes[theme].tableHeaderText },
-            ]}
-          >
-            Amount
-          </Text>
+          <Text style={[  styles.headerText,{ color: themes[theme].tableHeaderText }, ]}>Category</Text>
+          <Text style={[ styles.headerText,{ color: themes[theme].tableHeaderText }, ]}>Description</Text>
+          <Text  style={[ styles.headerText, { color: themes[theme].tableHeaderText }, ]}> Date </Text>
+          <Text  style={[ styles.headerText,  { color: themes[theme].tableHeaderText },  ]}>Type </Text>
+          <Text  style={[ styles.headerText,   { color: themes[theme].tableHeaderText },]}>Amount </Text>
           <TouchableOpacity>
-            <Icon
-              name="more-horiz"
-              size={24}
-              color={themes[theme].tableHeaderText}
-            />
+            <Icon name="more-horiz"size={24} color={themes[theme].tableHeaderText}/>
           </TouchableOpacity>
         </View>
 
         {/* Transactions List */}
-        {userEmail === "roopashree_v@bullbox.in" ? (
-        filterTransactions().length > 0 ? (
+        {filterTransactions().length > 0 ? (
         <FlatList
           data={filterTransactions()}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <View
-              style={[
-                styles.transactionItem,
-                { backgroundColor: themes[theme].transactionBackground },
-              ]}
-            >
-              <Text
-                style={[
-                  styles.transactionCategory,
-                  { color: themes[theme].transactionText },
-                ]}
-              >
+          renderItem={renderTransactionItem}
+          contentContainerStyle={styles.listContainer}
+        />
+      ) : (
+        <View style={styles.noTransactionsContainer}>
+        <Text style={[styles.noTransactionsText, { color: themes[theme].text }]}>
+          No transactions found.
+        </Text>
+      </View>
+      )}
+        {/* {userEmail === "roopashree_v@bullbox.in" ? (
+        filterTransactions().length > 0 ? (
+        <FlatList  data={filterTransactions()} keyExtractor={(item) => item.id}  renderItem={({ item }) => (
+            <View style={[ styles.transactionItem,{ backgroundColor: themes[theme].transactionBackground },]}>
+              <Text  style={[ styles.transactionCategory,{ color: themes[theme].transactionText },]} >
                 {item.category}
               </Text>
-              <Text
-                style={[
-                  styles.transactionDescription,
-                  { color: themes[theme].transactionText },
-                ]}
-              >
+              <Text  style={[  styles.transactionDescription,{ color: themes[theme].transactionText },]} >
                 {item.description}
               </Text>
-              <Text
-                style={[
-                  styles.transactionDate,
-                  { color: themes[theme].transactionText },
-                ]}
-              >
+              <Text  style={[ styles.transactionDate,{ color: themes[theme].transactionText },]} >
                 {item.date}
               </Text>
-              <Text
-                style={[
-                  styles.transactionType,
-                  { color: themes[theme].transactionText },
-                ]}
-              >
+              <Text style={[  styles.transactionType, { color: themes[theme].transactionText },]} >
                 {item.type}
               </Text>
-              <Text
-                style={[
-                  styles.transactionAmount,
-                  { color: themes[theme].transactionText },
-                ]}
-              >
+              <Text style={[ styles.transactionAmount, { color: themes[theme].transactionText },]}>
                 {item.amount}
               </Text>
               <TouchableOpacity onPress={() => deleteTransaction(item.id)}>
@@ -657,7 +550,8 @@ const TransactionScreen = () => {
         <Text style={styles.noAccessMessage}>
           You do not have access to view transactions.
         </Text>
-      )}
+      )} */}
+        </View>
       </View>
     </Provider>
   );
@@ -666,15 +560,8 @@ const TransactionScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 15,
-    // backgroundColor: "#000",
+    padding: 15
   },
-  // header: {
-  //   flexDirection: "row",
-  //   justifyContent: "space-between",
-  //   alignItems: "center",
-  //   // marginBottom: 10,
-  // },
   headerTitle: {
     fontSize: 24,
     color: "#fff",
@@ -685,7 +572,7 @@ const styles = StyleSheet.create({
     right: 10,
 },
 avatar: {
-  backgroundColor: '#6200ee', // Customize avatar color
+  backgroundColor: '#6200ee',
 },
 logo: {
   marginTop:10,
@@ -703,35 +590,35 @@ logo: {
   pickerContainer: {
     flex: 1,
     marginHorizontal: 3,
-    // borderRadius: 5,
-    borderWidth: 1, 
+    borderWidth: 1,
   },  
   picker: {
-    height: 50,
+    height: 20,
     backgroundColor: "#333",
     borderWidth: 1, 
+    height:40
   },
   datePickerButton: {
     flex: 1,
     height: 52,
     marginLeft:5,
     backgroundColor: "#333",
-    // padding: 10,
     justifyContent: "center",
     alignItems: "center",
-    // borderRadius: 5,
     borderWidth: 1, 
-    // marginBottom: 10,
   },
   datePickerText: {
     color: "#fff",
     fontSize: 16,
   },
+  transactionsContainer: {
+    flex: 5.5,
+    paddingTop: 16,
+  },
   noTransactionsContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 20,
   },
   noTransactionsText: {
     fontSize: 18,
@@ -759,7 +646,6 @@ logo: {
     flex: 1,
     textAlign: "center",
     minWidth: 50,
-    // paddingLeft: 5,
     paddingRight: 5,
   },
   transactionItem: {
@@ -820,7 +706,7 @@ logo: {
     color: "#fff",
     textAlign: "center",
     fontSize: 16,
-    width:150,
+    width:100,
   },
   exportButton: {
     height: 50,

@@ -1,5 +1,5 @@
 import React, { useState,useEffect  } from "react";
-import { StyleSheet, Modal } from "react-native";
+import { StyleSheet, Modal, ActivityIndicator } from "react-native";
 import {
   View,
   Text,
@@ -220,6 +220,7 @@ import {collection, getDocs, query, where,doc, setDoc } from "firebase/firestore
 
     const onGoogleButtonPress = async () => {
       try {
+        setLoading(true);
         // Check Google services and sign in
         await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
         
@@ -251,10 +252,12 @@ import {collection, getDocs, query, where,doc, setDoc } from "firebase/firestore
         // Save the user to Firestore
         await saveUserToFirestore(firebaseUser);
         
-        setUserInfo(userInfo);
+        setUserInfo(firebaseUser);
         navigation.navigate("main");
       } catch (error) {
         console.error("Google Sign-In Error: ", error);
+      }finally {
+        setLoading(false); // Stop loading after the sign-in process
       }
     };
 
@@ -342,6 +345,7 @@ import {collection, getDocs, query, where,doc, setDoc } from "firebase/firestore
 
             {/* Password Input - shown only if email is entered */}
             {emailEntered && (
+               <>
               <TextInput
                 style={styles.input}
                 placeholder="Enter password*"
@@ -352,12 +356,13 @@ import {collection, getDocs, query, where,doc, setDoc } from "firebase/firestore
                 autoCapitalize="none"
                 autoCorrect={false}
               />
-            )}
-
+               {/* Forgot Password Text */}
               <TouchableOpacity onPress={handlePasswordReset}>
               <Text style={styles.resetPasswordText}>Forgot Password?</Text>
               </TouchableOpacity>
-          
+              </>
+           )}
+
             {/* Sign In Button - shown only after entering password */}
             {emailEntered && (
               <TouchableOpacity style={styles.phoneButton} onPress={handleSignIn}>
@@ -386,12 +391,13 @@ import {collection, getDocs, query, where,doc, setDoc } from "firebase/firestore
                 style={styles.googleIcon}
               />
             </TouchableOpacity>
-            {loading && <Text style={styles.loadingText}>Loading...</Text>}
+            {loading && <ActivityIndicator size="large" color="#0000ff" />}
+            {/* {loading && <Text style={styles.loadingText}>Loading...</Text>} */}
           </View>
         ) : (
           <View style={styles.input}>
             {/* <Text>Welcome, {user.name}</Text> */}
-            <Text style={styles.text}>{user.email}</Text>
+            <Text  style={[styles.text, { color: 'white' }]} >{userInfo?.email}</Text>
           </View>
         )}
 
@@ -462,7 +468,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#000",
     borderColor: "#808080",
     borderWidth: 1,
-    color: "#fff",
+    color: "#ffff",
     padding: 10,
     borderRadius: 9,
     width: 290,
@@ -470,6 +476,10 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     fontFamily: "Poppins, Arial",
     justifyContent:"center"
+  },
+  text:{
+    fontSize: 16,
+    color: 'white',
   },
   logo: {
     width: 150, 
