@@ -14,7 +14,7 @@ import { auth,db } from "../../config/firebaseConfig";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import "expo-dev-client";
-import { useSQLiteContext } from 'expo-sqlite/next';
+
 import { signInWithEmailAndPassword, sendPasswordResetEmail, fetchSignInMethodsForEmail  } from "firebase/auth";
 import {GoogleAuthProvider, signInWithCredential } from "firebase/auth";
 import {collection, getDocs, query, where,doc, setDoc } from "firebase/firestore";
@@ -39,11 +39,7 @@ import {collection, getDocs, query, where,doc, setDoc } from "firebase/firestore
       return emailRegex.test(input);
     };
     
-    const isValidPhoneNumber = (input) => {
-      const phoneRegex = /^\+(\d{1,3})(\d{6,14})$/; 
-      return phoneRegex.test(input);
-    };
-    
+  
     // Function to show alert with a custom message
     const showAlertMessage = (message) => {
       setAlertMessage(message);
@@ -220,69 +216,115 @@ import {collection, getDocs, query, where,doc, setDoc } from "firebase/firestore
 
     const onGoogleButtonPress = async () => {
       try {
-        setLoading(true);
-        // Check Google services and sign in
-        await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
-        
-        await GoogleSignin.signOut();
-        
-        const userInfo = await GoogleSignin.signIn();
-        console.log("User Info: ", userInfo);
-
-        
-        // Get the ID token from Google
-        const { idToken } = await GoogleSignin.getTokens();
-        const googleCredential = GoogleAuthProvider.credential(idToken);
-
-        // Authenticate with Firebase using the Google credentials
-        const userCredential = await signInWithCredential(auth, googleCredential);
-        const firebaseUser = userCredential.user;
-
-        await AsyncStorage.setItem("userId", firebaseUser.uid);
-        await AsyncStorage.setItem("userEmail", firebaseUser.email);
-        await AsyncStorage.setItem("userInfo", JSON.stringify(firebaseUser));
-
-        // await AsyncStorage.setItem("userEmail", email); useEffect(() => {
-        // const fetchUserEmail = async () => {
-        //     const email = await AsyncStorage.getItem("userEmail");
-        //     setUserEmail(email)
-        // };
-        // });
-
-        // Save the user to Firestore
-        await saveUserToFirestore(firebaseUser);
-        
-        setUserInfo(firebaseUser);
-        navigation.navigate("main");
+          // Check Google services availability
+          await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+  
+          // Check if a user is already logged in
+          const existingUser = await GoogleSignin.getCurrentUser();
+  
+          if (existingUser) {
+              console.log("Existing user found. Attempting silent login...");
+              try {
+                  // Refresh the ID token before silent login
+                  const refreshedTokens = await GoogleSignin.getTokens();
+                  const { idToken } = refreshedTokens;
+  
+                  // Authenticate with Firebase using the refreshed token
+                  const googleCredential = GoogleAuthProvider.credential(idToken);
+                  const userCredential = await signInWithCredential(auth, googleCredential);
+                  const firebaseUser = userCredential.user;
+  
+                  // console.log("Silent sign-in successful:", firebaseUser);
+  
+                  // Save user info in AsyncStorage
+                  await AsyncStorage.setItem("userId", firebaseUser.uid);
+                  await AsyncStorage.setItem("userEmail", firebaseUser.email);
+                  await AsyncStorage.setItem("userInfo", JSON.stringify(firebaseUser));
+  
+                  // Save the user to Firestore
+                  await saveUserToFirestore(firebaseUser);
+  
+                  // Navigate to the main screen
+                  navigation.navigate("main", { userInfo: firebaseUser });
+              } catch (error) {
+                  console.error("Silent login failed, showing account picker...", error);
+  
+                  // If silent login fails, show account picker
+                  const userInfo = await GoogleSignin.signIn();
+                  handleNewGoogleSignIn(userInfo);
+              }
+          } else {
+              console.log("No existing user found. Showing account picker...");
+              // Show account picker
+              const userInfo = await GoogleSignin.signIn();
+              handleNewGoogleSignIn(userInfo);
+          }
       } catch (error) {
-        console.error("Google Sign-In Error: ", error);
-      }finally {
-        setLoading(false); // Stop loading after the sign-in process
+          console.error("Google Sign-In Error:", error);
+  
+          // Handle specific error cases
+          if (error.code === "SIGN_IN_CANCELLED") {
+              console.log("User canceled the sign-in process.");
+          } else if (error.code === "IN_PROGRESS") {
+              console.log("Google Sign-In is already in progress.");
+          } else {
+              console.error("Google Sign-In failed:", error);
+          }
       }
-    };
-
-    const saveUserToFirestore = async (user) => {
+  };
+  
+  const handleNewGoogleSignIn = async (userInfo) => {
       try {
-        const userRef = doc(db, "users", user.uid); 
-        // Set user data in Firestore with proper field references
+          // Retrieve fresh ID token
+          const tokens = await GoogleSignin.getTokens();
+          const { idToken } = tokens;
+  
+          // Authenticate with Firebase using the Google credentials
+          const googleCredential = GoogleAuthProvider.credential(idToken);
+          const userCredential = await signInWithCredential(auth, googleCredential);
+          const firebaseUser = userCredential.user;
+  
+          console.log("Google Sign-In successful:", firebaseUser);
+  
+          // Save user info in AsyncStorage
+          await AsyncStorage.setItem("userId", firebaseUser.uid);
+          await AsyncStorage.setItem("userEmail", firebaseUser.email);
+          await AsyncStorage.setItem("userInfo", JSON.stringify(firebaseUser));
+  
+          // Save the user to Firestore
+          await saveUserToFirestore(firebaseUser);
+  
+          // Navigate to the main screen
+          navigation.navigate("main", { userInfo: firebaseUser });
+      } catch (error) {
+          console.error("Google Sign-In failed:", error);
+      }
+  };
+  
+  
+  
+  
+  
+
+  const saveUserToFirestore = async (user, email) => {
+    try {
+        const userRef = doc(db, "users", user.uid);
         await setDoc(
-          userRef,
-          {
-            id: user.uid, // Firebase UID
-            email: user.email,
-            name: user.displayName, // Display name, if available
-            givenName: userInfo?.data?.user?.givenName || "", // Handle any missing fields
-            familyName: userInfo?.data?.user?.familyName || "",
-            photo: user.photoURL || "", // Ensure this field exists in user object
-            createdAt: new Date(),
-          },
-          { merge: true }
+            userRef,
+            {
+                id: user.uid,
+                email: user.email || "No Email Found",
+                name: user.displayName || "No Name",
+                photo: user.photoURL || "No Photo",
+                createdAt: new Date(),
+            },
+            { merge: true }
         );
         console.log("User data saved to Firestore successfully!");
-      } catch (error) {
+    } catch (error) {
         console.error("Error saving user data to Firestore: ", error);
-      }
-    };
+    }
+};
 
     const user = userInfo?.data?.user;
     

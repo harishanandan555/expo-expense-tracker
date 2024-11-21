@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -7,27 +7,24 @@ import {
     TouchableOpacity,
     Modal,
     TextInput,
-    Dimensions, Image
+    Dimensions, Image,
+    FlatList,
 
 } from 'react-native';
 import { auth, db } from "../../config/firebaseConfig";
+import { ProgressBar } from "react-native-paper"; // For a Progress bar
 
 import { useRoute } from '@react-navigation/native';
-import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
-
+import DropDownPicker from "react-native-dropdown-picker";
+import { getUserById } from '../services/firebaseSettings';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Avatar, Menu, Divider, Provider } from 'react-native-paper';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { format } from 'date-fns'; // Use date-fns for formatting dates
-import { Picker } from '@react-native-picker/picker'; // Import Picker from @react-native-picker/picker
-import EmojiSelector from 'react-native-emoji-selector'; // For emoji picking
 import { useNavigation } from '@react-navigation/native'; // Import useNavigation hook
-import { useSQLiteContext } from 'expo-sqlite/next'; // Assuming you're using expo-sqlite context
-import * as Progress from 'react-native-progress';
-import { BarChart } from 'react-native-chart-kit';
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc, collection } from "firebase/firestore";
 const DashboardScreen = () => {
 
     const [theme, setTheme] = useState('dark'); // Set default theme to dark
@@ -46,118 +43,137 @@ const DashboardScreen = () => {
     const [selectedIcon, setSelectedIcon] = useState(null);
     const [newCategory, setNewCategory] = useState('');
     const [selectedCategory, setSelectedCategory] = useState(null);
-    const [totalIncome, setTotalIncome] = useState(0); // State to store total income
-    const [totalExpense, settotalExpense] = useState(0);
-    const [newExpenseCategory, setNewExpenseCategory] = useState('');
-    const [selectedExpenseIcon, setSelectedExpenseIcon] = useState(null);
+    const [totalIncome, setTotalIncome] = useState(0);
+    const [totalExpense, setTotalExpense] = useState(0);
+    const [balance, setBalance] = useState(0);
+    const [lastUpdated, setLastUpdated] = useState("");
     const [isExpenseEmojiPickerVisible, setExpenseEmojiPickerVisible] = useState(false);
-    const [expenseCategories, setExpenseCategories] = useState([]);
-    const [selectedExpenseCategory, setSelectedExpenseCategory] = useState(null);
-    const [balance, setBalance] = useState(0); // State for balance
-    const [expensesByCategory, setExpensesByCategory] = useState([]);
-    const [incomeByCategory, setIncomeByCategory] = useState([]);
-    const [userInfos, setUserInfos] = useState(null);
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1); // Default to current month
-    const [isMonthPickerVisible, setMonthPickerVisible] = useState(false); // State to toggle Picker visibility
+
+
+
+    const [userInfos, setUserInfos] = useState(null);
+  
     const route = useRoute();
     const [expenses, setExpenses] = useState([]);
-    const barFillColor = isDarkMode ? '#FF6A00' : '#FF8C00';
+    
     const navigation = useNavigation();
-    const sqldb = useSQLiteContext(); // Your SQLite context
+    const [firebaseBalance, setFirebaseBalance] = useState(0);
+    const [firebaseTotalIncome, setFirebaseTotalIncome] = useState(0);
+    const [firebaseTotalExpense, setFirebaseTotalExpense] = useState(0);
+    const [firebaseLastUpdated, setFirebaseLastUpdated] = useState("");
+    const [isModalVisible, setModalVisible] = useState(false);
     const barBackgroundColor = isDarkMode ? '#333' : '#e0e0e0';
-    const months = [
-        { label: 'January', value: 1 },
-        { label: 'February', value: 2 },
-        { label: 'March', value: 3 },
-        { label: 'April', value: 4 },
-        { label: 'May', value: 5 },
-        { label: 'June', value: 6 },
-        { label: 'July', value: 7 },
-        { label: 'August', value: 8 },
-        { label: 'September', value: 9 },
-        { label: 'October', value: 10 },
-        { label: 'November', value: 11 },
-        { label: 'December', value: 12 },
-    ];
+    const [IncomeCategory, setIncomeCategory] = useState([]); // State to store the income data
 
+    const [open, setOpen] = useState(false);
+    const [value, setValue] = useState(null);
+    const [items, setItems] = useState([
+        { label: "January", value: "January" },
+        { label: "February", value: "February" },
+        { label: "March", value: "March" },
+        { label: "April", value: "April" },
+        { label: "May", value: "May" },
+        { label: "June", value: "June" },
+        { label: "July", value: "July" },
+        { label: "August", value: "August" },
+        { label: "September", value: "September" },
+        { label: "October", value: "October" },
+        { label: "November", value: "November" },
+        { label: "December", value: "December" },
+    ]);
+ 
     // Function to handle theme switching
     const handleThemeSwitch = (mode) => {
         setTheme(mode);
     };
-
-    const colors = {
-        background: isDarkMode ? '#000' : '#fff',
-        cardBackground: isDarkMode ? '#121212' : '#f4f4f4',
-        text: isDarkMode ? '#fff' : '#000',
-        progressBarBackground: isDarkMode ? '#333' : '#e0e0e0',
-        progressBarFill: isDarkMode ? '#FF6A00' : '#FF8C00',
-    };
-
-    useEffect(() => {
-        setBalance(totalIncome - totalExpense);
-        saveDataToFirebase();
-    }, [totalIncome, totalExpense]);
-
-
-
-    const toggleIncomeModal = () => {
-        setIncomeModalVisible(true);
-        setExpenseModalVisible(false);
-        setActiveButton('income');
-    };
     useEffect(() => {
         const fetchUserInfo = async () => {
             try {
-                const storedUserInfo = await AsyncStorage.getItem('userInfo');
+                const storedUserInfo = await AsyncStorage.getItem("userInfo");
                 if (storedUserInfo) {
-                    setUserInfos(JSON.parse(storedUserInfo));
-                    console.log("UserInfo retrieved from AsyncStorage:", storedUserInfo);
+                    setUserInfos(storedUserInfo ? JSON.parse(storedUserInfo) : {});
                 } else {
-                    console.log("No UserInfo found in AsyncStorage");
+                    console.log("No User Info found.");
                 }
             } catch (error) {
-                console.error("Failed to retrieve UserInfo from AsyncStorage:", error);
+                console.error("Error retrieving user info:", error);
             }
         };
 
         fetchUserInfo();
     }, []);
 
-    useEffect(() => {
-        if (userInfo) {
-            console.log("User Info in Dashboard:", userInfo); // Should log the user object
-        } else {
-            console.log("No User Info received");
-        }
-    }, [userInfo]);
 
-
-    const saveDataToFirebase = async () => {
+ 
+const fetchIncomeData = async () => {
         try {
-            const userId = await AsyncStorage.getItem("userId"); // Retrieve user ID from AsyncStorage
-            if (!userId) {
-                console.error("No user ID found. Cannot save data.");
+            const id = auth.currentUser?.uid; // Get the user ID
+
+
+            if (!id) {
+                console.error("User ID is required.");
                 return;
             }
-    
-            const userDocRef = doc(db, "users", userId);
-    
-            // Prepare the data to be saved
-            const data = {
-                totalIncome,
-                totalExpense,
-                balance,
-                lastUpdated: new Date().toISOString(), // Add a timestamp
-            };
-    
-            // Save the data to Firestore
-            await setDoc(userDocRef, { financialData: data }, { merge: true });
-    
-            console.log("Income, expense, and balance saved to Firebase.");
+
+            // Fetch user data from Firebase
+            const userInfo = await getUserById(id);
+
+            if (userInfo && userInfo.income) {
+                // Transform income data into a usable structure
+                const incomeData = userInfo.income.map((item) => ({
+                    category: item.category,
+                    amount: item.amount,
+                    date: item.date,
+                    description: item.description,
+                    icon: item.icon || "💰", // Default icon if none is provided
+                }));
+
+                // Store the income data in the state
+                setIncomeCategory(incomeData);
+
+            } else {
+                console.error("No income data found for this user.");
+            }
         } catch (error) {
-            console.error("Error saving data to Firebase:", error);
+            console.error("Error fetching income data:", error);
         }
     };
+
+    const fetchExpenseData = async () => {
+        try {
+            const id = auth.currentUser?.uid; // Get the user ID
+
+            if (!id) {
+                console.error("User ID is required.");
+                return;
+            }
+
+            // Fetch user data from Firebase
+            const userInfo = await getUserById(id);
+
+            if (userInfo && userInfo.expenses) {
+                // Transform expenses data into a usable structure
+                const expenseData = userInfo.expenses.map((item) => ({
+                    category: item.category,
+                    amount: item.amount,
+                    date: item.date,
+                    description: item.description,
+                    icon: item.icon || "💸", // Default icon if none is provided
+                }));
+
+                // Store the expenses data in the state
+                setExpenses(expenseData);
+
+            } else {
+                console.error("No expense data found for this user.");
+            }
+        } catch (error) {
+            console.error("Error fetching expense data:", error);
+        }
+    };
+
+
     const handleGoogleLogout = async () => {
         try {
             await GoogleSignin.signOut();
@@ -169,49 +185,16 @@ const DashboardScreen = () => {
             console.error('Error signing out from Google:', error);
         }
     };
-    useEffect(() => {
-        const loadIncomeByCategory = async () => {
-            try {
-                const result = await fetchTotalIncomeByCategory(); // Fetch income by category
-                console.log("Fetched income by category:", result); // Debug: Log fetched data
-                setIncomeByCategory(result || []); // Ensure data is set or an empty array
-            } catch (error) {
-                console.error("Error loading income by category:", error);
-            }
-        };
-
-        loadIncomeByCategory();
-    }, []);
-    const chartData = {
-        labels: expensesByCategory.map(item => item.category), // Categories as labels
-        datasets: [
-            {
-                data: expensesByCategory.map(item => item.totalAmount), // Total amounts as data
-            },
-        ],
-    };
-    const incomeChartData = {
-        labels: incomeByCategory.map(item => item.category), // Categories as labels
-        datasets: [
-            {
-                data: incomeByCategory.map(item => item.totalAmount), // Total amounts as data
-            },
-        ],
-    };
-    console.log('User Infos:', userInfos);
 
 
-    const handleSaveExpenseCategory = () => {
-        if (newExpenseCategory && selectedExpenseIcon) {
-            setExpenseCategories([...expenseCategories, { id: expenseCategories.length + 1, name: newExpenseCategory, icon: selectedExpenseIcon }]);
-            setCreateCategoryModalVisible(false);
-            setSelectedExpenseCategory(newExpenseCategory);
-        }
-    };
+
+
+
+
 
 
     const toggleIncomeModals = () => {
-        navigation.navigate('NewIncome');
+        navigation.navigate('NewIncome', { type: 'income' });
     };
 
     // Navigate to NewExpense screen
@@ -229,14 +212,7 @@ const DashboardScreen = () => {
     };
 
 
-    const fetchExpensesByCategory = async () => {
-        try {
-            const result = await fetchTotalExpenseByCategory(); // Fetch grouped expenses
-            setExpensesByCategory(result); // Update state with grouped expenses
-        } catch (error) {
-            console.error('Error fetching expenses by category:', error);
-        }
-    };
+
 
     const handleSaveCategory = () => {
         if (newCategory && selectedIcon) {
@@ -246,11 +222,7 @@ const DashboardScreen = () => {
     };
 
 
-    const toggleExpenseModal = () => {
-        setExpenseModalVisible(true);
-        setIncomeModalVisible(false);
-        setActiveButton('expense');
-    };
+
 
     const closeModals = () => {
         setIncomeModalVisible(false);
@@ -259,181 +231,15 @@ const DashboardScreen = () => {
         setCreateCategoryModalVisible(false);
     };
 
-    const handleDateConfirm = (date) => {
-        setTransactionDate(date);
-        setDatePickerVisible(false);
-    };
-
-    const fetchTotalIncome = async () => {
-        try {
-            const result = await sqldb.getAllAsync('SELECT SUM(amount) as totalIncome FROM incomes');
-            console.log('Query Result:', result);
-
-            if (result && result.length > 0) {
-                const totalIncome = result[0]?.totalIncome || 0;
-                console.log('Total Income:', totalIncome);
-                setTotalIncome(totalIncome);
-            } else {
-                console.log('No data found in the incomes table.');
-                setTotalIncome(0);
-            }
-        } catch (error) {
-            console.error('Error fetching total income:', error);
-            setTotalIncome(0); // Set to 0 on error
-        }
-    };
-    const getData = async () => {
-        try {
-            const result = await sqldb.getAllAsync('SELECT * FROM transactions');
-            console.log("Query Result Structure:", result);
-            console.log("Fetched transaction data:", result.rows ? result.rows._array : result); // Check if result.rows exists and has _array
-        } catch (error) {
-            console.error('Error fetching data:', error);
-        }
-    };
-    
-
-    const initializeDatabase = async () => {
-        try {
-            // Create incomes table
-            await sqldb.runAsync(`
-                CREATE TABLE IF NOT EXISTS incomes (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    description TEXT,
-                    amount REAL,
-                    category TEXT,
-                    date TEXT
-                )
-            `);
-    
-            // Create expenses table
-            await sqldb.runAsync(`
-                CREATE TABLE IF NOT EXISTS expenses (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    description TEXT,
-                    amount REAL,
-                    category TEXT,
-                    date TEXT
-                )
-            `);
-    
-            // Create transactions table by combining incomes and expenses
-            await sqldb.runAsync(`
-                CREATE TABLE IF NOT EXISTS transactions AS
-                SELECT 
-                    'income' AS type, 
-                    id AS transaction_id, 
-                    description, 
-                    amount, 
-                    category, 
-                    date
-                FROM incomes
-                UNION ALL
-                SELECT 
-                    'expense' AS type, 
-                    id AS transaction_id, 
-                    description, 
-                    amount, 
-                    category, 
-                    date
-                FROM expenses
-            `);
-    
-          
-        } catch (error) {
-            console.error('Error initializing database:', error);
-        }
-    };
-    
-    useEffect(() => {
-        const initializeAndCheckSchema = async () => {
-            await initializeDatabase();
-            await getData();
-        };
-    
-        initializeAndCheckSchema();
-    }, [db]);
-    
-
-    const fetchTotalExpense = async () => {
-        try {
-            const result = await sqldb.getAllAsync('SELECT SUM(amount) as totalExpense FROM expenses');
-            console.log('Query Result:', result);
-
-            if (result && result.length > 0) {
-                const totalExpense = result[0]?.totalExpense || 0;
-                console.log('Total Expense:', totalExpense);
-                settotalExpense(totalExpense);
-            } else {
-                console.log('No data found in the expense table.');
-                settotalExpense(0);
-            }
-        } catch (error) {
-            console.error('Error fetching total expense:', error);
-            settotalExpense(0); // Set to 0 on error
-        }
-    };
 
 
-    const fetchTotalExpenseByCategory = async () => {
-        try {
-            const query = `
-                SELECT category, icon, SUM(amount) as totalAmount
-                FROM expenses
-                GROUP BY category, icon
-            `;
-            const result = await sqldb.getAllAsync(query);
-            console.log('Expense:', result);
-            return result;
-        } catch (error) {
-            console.error('Error fetching expenses by category:', error);
-            return [];
-        }
-    };
 
 
-    const fetchTotalIncomeByCategory = async () => {
-        try {
-            const query = `
-                SELECT category, icon, SUM(amount) as totalAmount
-                FROM incomes
-                GROUP BY category, icon
-            `;
-            const result = await sqldb.getAllAsync(query);
-            console.log('income:', result);
-            return result;
-        } catch (error) {
-            console.error('Error fetching income by category:', error);
-            return [];
-        }
-    };
 
-    useEffect(() => {
-        fetchTotalIncome();
-        fetchTotalExpense();
-        fetchExpensesByCategory();
-        fetchTotalIncomeByCategory();
-        // Fetch total income when the component mounts
-    }, []);
 
     const formatDate = (date) => format(date, 'yyyy-MM-dd');
 
-    const fetchExpensesForDate = async () => {
-        const formattedStartDate = formatDate(startDate);
-        const formattedEndDate = formatDate(endDate);
 
-        try {
-            const result = await sqldb.getAllAsync(
-                `SELECT * FROM expense WHERE date BETWEEN ? AND ?`,
-                [formattedStartDate, formattedEndDate]
-            );
-            setExpenses(result || []);
-            console.log('Filtered Expenses:', result);
-        } catch (error) {
-            console.error('Error fetching expenses for date:', error);
-            Alert.alert('Error', 'Could not fetch expenses for the selected date range.');
-        }
-    };
     useEffect(() => {
         GoogleSignin.configure({
             webClientId:
@@ -441,9 +247,7 @@ const DashboardScreen = () => {
         });
     }, []);
 
-    useEffect(() => {
-        fetchExpensesForDate();
-    }, [startDate, endDate]);
+
 
     const userInfo = route.params?.userInfo;
 
@@ -457,30 +261,75 @@ const DashboardScreen = () => {
 
     // Fetch income and expense data
 
-    useEffect(() => {
-        // Set up the focus listener
-        const unsubscribe = navigation.addListener('focus', () => {
-            if (route.params?.refresh) {
-                fetchData();
-                // Reset the refresh flag after fetching data
-                navigation.setParams({ refresh: false });
+    
+
+
+    const calculateAndSaveFinancialData = async () => {
+        try {
+            // Get the user ID from the authenticated user
+            const userId = auth.currentUser?.uid;
+
+
+            if (!userId) {
+                console.error("User ID is required. Cannot update financial data.");
+                return;
             }
-        });
 
-        // Clean up the listener on component unmount
-        return unsubscribe;
-    }, [navigation, route.params?.refresh]);
+            // Fetch user data from Firebase
+            const userInfo = await getUserById(userId);
 
 
-    useEffect(() => {
-        const loadExpensesByCategory = async () => {
-            const result = await fetchTotalExpenseByCategory();
-            setExpensesByCategory(result); // Store the result in the state
-        };
+            if (!userInfo) {
+                console.error("User information could not be retrieved.");
+                return;
+            }
 
-        loadExpensesByCategory();
-    }, []);
+            // Calculate total income
+            const calculatedTotalIncome = (userInfo.income || []).reduce(
+                (sum, incomeItem) => sum + (incomeItem.amount || 0),
+                0
+            );
 
+            // Calculate total expenses
+            const calculatedTotalExpense = (userInfo.expenses || []).reduce(
+                (sum, expenseItem) => sum + (expenseItem.amount || 0),
+                0
+            );
+
+            // Calculate the balance
+            const calculatedBalance = calculatedTotalIncome - calculatedTotalExpense;
+
+            // Prepare financial data to be saved
+            const financialData = {
+                totalIncome: calculatedTotalIncome,
+                totalExpense: calculatedTotalExpense,
+                balance: calculatedBalance,
+                lastUpdated: new Date().toISOString(),
+            };
+
+            // Reference to the user's document in Firestore
+            const userDocRef = doc(db, "users", userId);
+
+            // Save the financial data to Firestore
+            await setDoc(
+                userDocRef,
+                { financialData },
+                { merge: true } // Merge with existing data
+            );
+
+
+
+            // Update the state variables
+            setTotalIncome(calculatedTotalIncome);
+            setTotalExpense(calculatedTotalExpense);
+            setBalance(calculatedBalance);
+            setLastUpdated(financialData.lastUpdated);
+
+            console.log("date", lastUpdated)
+        } catch (error) {
+            console.error("Error calculating and saving financial data:", error);
+        }
+    };
 
 
 
@@ -489,6 +338,16 @@ const DashboardScreen = () => {
 
     // Extracting user initials
 
+    useEffect(() => {
+        const fetchData = async () => {
+            await fetchIncomeData();
+            await fetchExpenseData();
+            await calculateAndSaveFinancialData();
+        };
+        fetchData();
+    }, []);
+    
+    
 
     // Determine colors based on the theme
     const isDarkMode = theme === 'dark';
@@ -503,11 +362,11 @@ const DashboardScreen = () => {
     return (
         <Provider>
             <ScrollView
-            contentContainerStyle={[
-                styles.scrollContent,
-                { backgroundColor: backgroundColor },
-            ]}
-        >
+                contentContainerStyle={[
+                    styles.scrollContent,
+                    { backgroundColor: backgroundColor },
+                ]}
+            >
                 {/* Header Section */}
                 <View style={styles.header}>
                     {/* Right-aligned Avatar */}
@@ -516,19 +375,31 @@ const DashboardScreen = () => {
                         onDismiss={closeMenu}
                         anchor={
                             <View style={styles.header}>
-        <TouchableOpacity onPress={openMenu} style={styles.avatarContainer}>
-        {userInfos?.data?.user?.photo ? (
-                                        <Avatar.Image size={40} source={{ uri: userInfos.data.user.photo }} />
+                                <TouchableOpacity onPress={openMenu} style={styles.avatarContainer}>
+
+                                    {userInfos?.photoURL ? (
+                                        <Avatar.Image
+                                            size={40}
+                                            source={{ uri: userInfos.photoURL }}
+                                            style={styles.avatar}
+                                        />
                                     ) : (
-                                        <Avatar.Icon size={40} icon="account" />
+                                        <Avatar.Text
+                                            size={40}
+                                            label={userInfos?.displayName ? userInfos.displayName[0] : '?'}
+                                            style={styles.avatar}
+                                        />
                                     )}
+
+
+
                                 </TouchableOpacity>
                             </View>
                         }
                         style={[
                             styles.menuItem,
                             {
-                               
+
                                 paddingVertical: 0,
                                 marginVertical: 0,
                                 // Remove height to allow dynamic sizing
@@ -543,11 +414,11 @@ const DashboardScreen = () => {
                             title="Light"
                             icon="weather-sunny"
                             style={{
-                              
+
                                 paddingVertical: 4, // Slight padding adjustment
                                 marginVertical: 0,
                             }}
-                          
+
                         />
                         <Menu.Item
                             onPress={() => {
@@ -557,10 +428,10 @@ const DashboardScreen = () => {
                             title="Dark"
                             icon="weather-night"
                             style={{
-                                
+
                                 paddingVertical: 4,
                             }}
-                            
+
                         />
                         <Divider style={{ height: 1, backgroundColor: isDarkMode ? '#444' : '#e0e0e0' }} />
                         <Menu.Item
@@ -568,10 +439,10 @@ const DashboardScreen = () => {
                             title="Logout"
                             icon="logout"
                             style={{
-                               
+
                                 paddingVertical: 4,
                             }}
-                            
+
                         />
                     </Menu>
 
@@ -662,100 +533,148 @@ const DashboardScreen = () => {
                     onCancel={() => setEndDatePickerVisible(false)}
                 />
                 {/* Income, Expense, Balance Cards */}
-                <View style={[styles.overviewCard, { backgroundColor: cardBackgroundColor }]}>
-                    <MaterialIcons name="trending-up" size={32} color="green" />
-                    <View>
-                        <Text style={[styles.overviewLabel, { color: textColor }]}>Income</Text>
-                        <Text style={[styles.overviewValue, { color: theme === 'dark' ? '#fff' : '#000' }]}>
-                            ${totalIncome.toFixed(2)}
-                        </Text>
-                    </View>
-                </View>
+               
+                        <View style={[styles.overviewCard, { backgroundColor: cardBackgroundColor }]}>
+                            <MaterialIcons name="trending-up" size={32} color="green" />
+                            <View>
+                                <Text style={[styles.overviewLabel, { color: textColor }]}>Income</Text>
+                                <Text style={[styles.overviewValue, { color: theme === 'dark' ? '#fff' : '#000' }]}>
+                                    ${totalIncome}
+                                </Text>
+                            </View>
+                        </View>
 
-                <View style={[styles.overviewCard, { backgroundColor: cardBackgroundColor }]}>
-                    <MaterialIcons name="trending-down" size={32} color="red" />
-                    <View>
-                        <Text style={[styles.overviewLabel, { color: textColor }]}>Expense</Text>
-                        <Text style={[styles.overviewValue, { color: theme === 'dark' ? '#fff' : '#000' }]}>
-                            ${totalExpense.toFixed(2)}
-                        </Text>
-                    </View>
-                </View>
+                        <View style={[styles.overviewCard, { backgroundColor: cardBackgroundColor }]}>
+                            <MaterialIcons name="trending-down" size={32} color="red" />
+                            <View>
+                                <Text style={[styles.overviewLabel, { color: textColor }]}>Expense</Text>
+                                <Text style={[styles.overviewValue, { color: theme === 'dark' ? '#fff' : '#000' }]}>
+                                    ${totalExpense}
+                                </Text>
+                            </View>
+                        </View>
 
-                <View style={[styles.overviewCard, { backgroundColor: cardBackgroundColor }]}>
-                    <MaterialIcons name="account-balance-wallet" size={32} color="blue" />
-                    <View>
-                        <Text style={[styles.overviewLabel, { color: textColor }]}>Balance</Text>
-                        <Text style={[styles.overviewValue, { color: textColor }]}>${balance.toFixed(2)}</Text>
-                    </View>
-                </View>
+                        <View style={[styles.overviewCard, { backgroundColor: cardBackgroundColor }]}>
+                            <MaterialIcons name="account-balance-wallet" size={32} color="blue" />
+                            <View>
+                                <Text style={[styles.overviewLabel, { color: textColor }]}>Balance</Text>
+                                <Text style={[styles.overviewValue, { color: textColor }]}>${balance}</Text>
+                            </View>
+                        </View>
+                   
+               
 
                 {/* Income and Expense Section */}
 
                 <Text style={[styles.sectionTitle, { color: textColor }]}>Income</Text>
+                {/* <TouchableOpacity style={styles.button} onPress={fetchIncomeData}>
+                    <Text style={styles.buttonText}>Fetch Income Data</Text>
+                </TouchableOpacity> */}
+
                 <View style={[styles.noDataCard, { backgroundColor: cardBackgroundColor }]}>
-                    {incomeByCategory.length === 0 ? (
-                        // Display this message if there is no data
+                    {IncomeCategory.length === 0 ? (
                         <>
-                            <Text style={[styles.noDataText, { color: textColor }]}>No data for the selected period.</Text>
-                            <Text style={styles.noDataSubtext}>Try to select a different period or add income.</Text>
+                            <Text style={[styles.noDataText, { color: textColor }]}>No income data available.</Text>
+                            <Text style={styles.noDataSubtext}>Add new income to see details.</Text>
                         </>
                     ) : (
-                        // Display the income items if there is data
-                        incomeByCategory.map((item, index) => {
-                            const percentage = totalIncome ? (item.totalAmount / totalIncome) * 100 : 0;
-                            return (
-                                <View key={index} style={styles.expenseItem}>
-                                    <View style={styles.iconAndLabel}>
-                                        <Text style={[styles.categoryEmoji, { color: isDarkMode ? '#fff' : '#000' }]}>{item.icon}</Text>
-                                        <Text style={[styles.categoryLabel, { color: isDarkMode ? '#fff' : '#000' }]}>
-                                            {item.category} ({percentage.toFixed(0)}%)
-                                        </Text>
-                                    </View>
-                                    <View style={[styles.progressBarContainer, { backgroundColor: isDarkMode ? '#333' : '#e0e0e0' }]}>
-                                        <View style={[
-                                            styles.progressBarFill,
-                                            { width: `${percentage}%`, backgroundColor: isDarkMode ? '#FF6A00' : '#FF8C00' }
-                                        ]} />
-                                    </View>
-                                    <Text style={[styles.amountText, { color: isDarkMode ? '#fff' : '#000' }]}>${item.totalAmount.toFixed(2)}</Text>
-                                </View>
-                            );
-                        })
+
+                        <ScrollView style={styles.scrollArea}>
+                            <View style={[styles.sectionContainer, { backgroundColor: cardBackgroundColor }]}>
+                                {Object.values(
+                                    IncomeCategory.reduce((acc, curr) => {
+                                        if (!acc[curr.category]) {
+                                            acc[curr.category] = { ...curr, amount: 0 }; // Initialize with category data
+                                        }
+                                        acc[curr.category].amount += curr.amount; // Aggregate the amounts
+                                        return acc;
+                                    }, {})
+                                ).map((item, index) => {
+                                    const totalIncome = IncomeCategory.reduce((sum, income) => sum + income.amount, 0);
+
+                                    const amount = item.amount || 0;
+                                    const percentage = totalIncome ? (amount / totalIncome) * 100 : 0;
+
+                                    return (
+                                        <View key={index} style={styles.listItem}>
+                                            <View style={styles.itemHeader}>
+                                                <Text style={[styles.emoji, { color: textColor }]}>{item.icon}</Text>
+                                                    <Text style={[styles.itemCategory, { color: textColor } ]} > {item.category}{" "}</Text>
+                                                    <Text style={[styles.percentageText, { color: textColor }]}>
+                                                        ({percentage.toFixed(0)}%)
+                                                    </Text>
+                                                
+                                                <Text style={[styles.amountText, { color: textColor }]}>
+                                                    ${amount.toFixed(2)}
+                                                </Text>
+                                            </View>
+                                            <ProgressBar
+                                                progress={percentage / 100}
+                                                color="#10B981" // Green for income
+                                                style={styles.fullWidthProgressBar}
+                                            />
+                                        </View>
+                                    );
+                                })}
+
+                            </View>
+                        </ScrollView>
+
                     )}
                 </View>
 
+
                 <Text style={[styles.sectionTitle, { color: textColor }]}>Expense</Text>
                 <View style={[styles.noDataCard, { backgroundColor: cardBackgroundColor }]}>
-                    {expensesByCategory.length === 0 ? (
+                    {expenses.length === 0 ? (
                         // Display this message if there is no data
                         <>
                             <Text style={[styles.noDataText, { color: textColor }]}>No data for the selected period.</Text>
                             <Text style={styles.noDataSubtext}>Try to select a different period or add expenses.</Text>
                         </>
                     ) : (
-                        // Display the expense items if there is data
-                        expensesByCategory.map((item, index) => {
-                            const percentage = totalExpense ? (item.totalAmount / totalExpense) * 100 : 0;
-                            return (
-                                <View key={index} style={styles.expenseItem}>
-                                    <View style={styles.iconAndLabel}>
-                                        <Text style={[styles.categoryEmoji, { color: isDarkMode ? '#fff' : '#000' }]}>{item.icon}</Text>
-                                        <Text style={[styles.categoryLabel, { color: isDarkMode ? '#fff' : '#000' }]}>
-                                            {item.category} ({percentage.toFixed(0)}%)
-                                        </Text>
-                                    </View>
-                                    <View style={[styles.progressBarContainer, { backgroundColor: isDarkMode ? '#333' : '#e0e0e0' }]}>
-                                        <View style={[
-                                            styles.progressBarFill,
-                                            { width: `${percentage}%`, backgroundColor: isDarkMode ? '#FF6A00' : '#FF8C00' }
-                                        ]} />
-                                    </View>
-                                    <Text style={[styles.amountText, { color: isDarkMode ? '#fff' : '#000' }]}>${item.totalAmount.toFixed(2)}</Text>
-                                </View>
-                            );
-                        })
+                        <ScrollView style={styles.scrollArea}>
+                            <View style={styles.listContainer}>
+                                {Object.values(
+                                    expenses.reduce((acc, curr) => {
+                                        if (!acc[curr.category]) {
+                                            acc[curr.category] = { ...curr, amount: 0 }; // Initialize with category data
+                                        }
+                                        acc[curr.category].amount += curr.amount; // Aggregate the amounts
+                                        return acc;
+                                    }, {})
+                                ).map((item, index) => {
+                                    const totalIncome = expenses.reduce((sum, income) => sum + income.amount, 0);
+
+                                    const amount = item.amount || 0;
+                                    const percentage = totalIncome ? (amount / totalIncome) * 100 : 0;
+
+                                    return (
+                                        <View key={index} style={styles.listItem}>
+                                            <View style={styles.itemHeader}>
+                                            <Text style={[styles.emoji, { color: textColor }]}>{item.icon}</Text>
+                                                    <Text style={[styles.itemCategory, { color: textColor } ]} > {item.category}{" "}</Text>
+                                                    <Text style={[styles.percentageText, { color: textColor }]}>
+                                                        ({percentage.toFixed(0)}%)
+                                                    </Text>
+                                                
+                                                <Text style={[styles.amountText, { color: textColor }]}>
+                                                    ${amount.toFixed(2)}
+                                                </Text>
+                                            </View>
+                                            <ProgressBar
+                                                progress={percentage / 100}
+                                                color="#FF0000" // Green color for progress
+                                                style={styles.fullWidthProgressBar}
+                                            />
+                                        </View>
+
+                                    );
+                                })}
+                            </View>
+                        </ScrollView>
                     )}
+
                 </View>
 
 
@@ -765,46 +684,49 @@ const DashboardScreen = () => {
                 <View style={[styles.historyContainer, { backgroundColor: cardBackgroundColor }]}>
                     {/* Switch between Year and Month */}
                     <View style={styles.switchContainer}>
-                        <TouchableOpacity style={[styles.switchButton, { backgroundColor: cardBackgroundColor }]}>
-                            <Text style={[styles.switchButtonText, { color: textColor }]}>Year</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={[styles.switchButton, styles.activeSwitch]}>
-                       
-            <Text style={styles.label}>Select Month:</Text>
+                        <View>
+                            <TouchableOpacity style={[styles.switchButton, { backgroundColor: cardBackgroundColor }]}>
+                                <Text style={[styles.switchButtonText, { color: textColor }]}>2024</Text>
+                            </TouchableOpacity>
 
-            {/* Month Selection Dropdown */}
-            <TouchableOpacity
-                style={[styles.switchButton, styles.activeSwitch]}
-                onPress={() => setMonthPickerVisible(!isMonthPickerVisible)} // Toggle Picker visibility
-            >
-                <Text style={styles.switchButtonText}>
-                    {months.find((month) => month.value === selectedMonth)?.label || 'Select Month'}
-                </Text>
-            </TouchableOpacity>
 
-            {isMonthPickerVisible && (
-                <Picker
-                    selectedValue={selectedMonth}
-                    onValueChange={(value) => {
-                        setSelectedMonth(value);
-                        setMonthPickerVisible(false); // Close Picker after selection
-                    }}
-                    style={styles.picker}
-                >
-                    {months.map((month) => (
-                        <Picker.Item key={month.value} label={month.label} value={month.value} />
-                    ))}
-                </Picker>
-            )}
-       
-                        </TouchableOpacity>
+
+                            {/* Month Selection Dropdown */}
+                            <View style={styles.dropdownWrapper}>
+                                <DropDownPicker
+                                    open={open}
+                                    value={value}
+                                    items={items}
+                                    setOpen={setOpen}
+                                    setValue={setValue}
+                                    setItems={setItems}
+                                    placeholder="Select Month"
+                                    placeholderStyle={styles.dropdownPlaceholder}
+                                    style={styles.dropdown}
+                                    dropDownContainerStyle={styles.dropdownContainer}
+                                    textStyle={styles.dropdownText}
+                                    arrowIconStyle={styles.arrowIcon}
+                                    listMode="SCROLLVIEW" // Enables scrolling
+                                    scrollViewProps={{
+                                        nestedScrollEnabled: true, // Ensure smooth scrolling within parent ScrollView
+                                    }}
+                                    maxHeight={300} // Set an appropriate max height for the dropdown
+                                    zIndex={5000} // Ensure dropdown is displayed above other components
+                                    zIndexInverse={1000}
+                                    onChangeValue={(selectedMonth) => {
+                                        console.log("Selected Month:", selectedMonth);
+                                        setSelectedMonth(selectedMonth); // Update state
+                                    }}
+                                />
+
+                            </View>
+
+
+                        </View>
                     </View>
 
                     {/* Date Picker */}
-                    <View style={styles.datePicker}>
-                        <Text style={[styles.pickerText, { color: textColor }]}>2024</Text>
-                        <Text style={[styles.pickerText, { color: textColor }]}>October</Text>
-                    </View>
+
 
                     {/* Income and Expense Toggle */}
                     <View style={styles.toggleContainer}>
@@ -815,6 +737,23 @@ const DashboardScreen = () => {
                             <Text style={styles.toggleText}>Expense</Text>
                         </View>
                     </View>
+                    {/* <BarChart
+    data={chartData}
+    width={Dimensions.get("window").width - 40} // Full width
+    height={220}
+    chartConfig={{
+        backgroundGradientFrom: "#fff",
+        backgroundGradientTo: "#fff",
+        decimalPlaces: 2,
+        color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+        labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+        barPercentage: 0.5,
+    }}
+    style={{
+        marginVertical: 8,
+        borderRadius: 10,
+    }}
+/> */}
                 </View>
 
                 {/* Modal for New Income */}
@@ -1123,9 +1062,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
     },
-    arrowIcon: {
-        marginLeft: 5,
-    },
+
     overviewCard: {
         flexDirection: 'row',
         padding: 20,
@@ -1223,9 +1160,7 @@ const styles = StyleSheet.create({
     noDataText: {
         fontSize: 16,
     },
-    progressBar: {
-        marginTop: 5,
-    },
+
     noDataSubtext: {
         color: '#888',
         fontSize: 12,
@@ -1418,14 +1353,123 @@ const styles = StyleSheet.create({
     activeSwitch: {
         backgroundColor: '#FF6A00',
     },
-    switchButtonText: {
+    container: {
+        padding: 20,
+    },
+    dropdownButton: {
+        borderWidth: 1,
+        borderColor: '#ccc',
+        borderRadius: 5,
+        padding: 10,
+        backgroundColor: '#FF6A00',
+        alignItems: 'center',
+    },
+    dropdownText: {
         color: '#fff',
         fontWeight: 'bold',
     },
-    picker: {
-        marginTop: 10,
+    modalOverlay: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0,0,0,0.5)',
+    },
+    modalContent: {
+        width: '80%',
         backgroundColor: '#fff',
         borderRadius: 10,
+        padding: 20,
+    },
+    listItem: {
+        marginBottom: 20,
+        paddingHorizontal: 10,
+    },
+    itemHeader: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: 8, // Space between header and progress bar
+    },
+    itemCategory: {
+        fontSize: 16,
+        fontWeight: "bold",
+    },
+    emoji: {
+        fontSize: 20,
+        marginRight: 5,
+    },
+    percentageText: {
+        fontSize: 14,
+        color: "#888",
+
+    },
+    amountText: {
+        fontSize: 16,
+        fontWeight: "bold",
+        marginLeft: 15,
+    },
+    fullWidthProgressBar: {
+        height: 12, // Increase height for better visibility
+        borderRadius: 6, // Rounded corners for better design
+        backgroundColor: "#333", // Background for unfilled part
+    },
+    monthItem: {
+        padding: 15,
+        borderBottomWidth: 1,
+        borderBottomColor: '#ccc',
+    },
+    monthText: {
+        fontSize: 16,
+    },
+    closeButton: {
+        backgroundColor: '#FF6A00',
+        padding: 10,
+        borderRadius: 5,
+        marginTop: 10,
+        alignItems: 'center',
+    },
+    closeButtonText: {
+        color: '#fff',
+        fontWeight: 'bold',
+    },
+    historyContainer: {
+        padding: 20,
+        borderRadius: 10,
+        backgroundColor: "#121212", // Match your app theme
+        marginBottom: 20,
+    },
+    dropdownWrapper: {
+        width: "100%",
+        alignSelf: "center",
+        zIndex: 5000, // Ensure the dropdown is displayed above other components
+        marginBottom: 20,
+    },
+    dropdown: {
+        backgroundColor: "#1F1F1F",
+        borderColor: "#FF6A00",
+        borderRadius: 8,
+        height: 50,
+        paddingHorizontal: 15,
+        justifyContent: "center",
+    },
+    dropdownContainer: {
+        backgroundColor: "#2C2C2C",
+        borderColor: "#FF6A00",
+        borderRadius: 8,
+        maxHeight: 500, // Ensure sufficient height for scrolling
+    },
+    dropdownPlaceholder: {
+        color: "#A6A6A6",
+        fontSize: 16,
+        fontWeight: "bold",
+    },
+    dropdownText: {
+        color: "#FFFFFF",
+        fontSize: 16,
+        fontWeight: "bold",
+    },
+    arrowIcon: {
+        tintColor: "#FF6A00",
     },
 });
 export default DashboardScreen;
