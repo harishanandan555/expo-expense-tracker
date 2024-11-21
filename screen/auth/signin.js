@@ -14,7 +14,7 @@ import { auth,db } from "../../config/firebaseConfig";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import "expo-dev-client";
-import { useSQLiteContext } from 'expo-sqlite/next';
+
 import { signInWithEmailAndPassword, sendPasswordResetEmail, fetchSignInMethodsForEmail  } from "firebase/auth";
 import {GoogleAuthProvider, signInWithCredential } from "firebase/auth";
 import {collection, getDocs, query, where,doc, setDoc } from "firebase/firestore";
@@ -39,11 +39,7 @@ import {collection, getDocs, query, where,doc, setDoc } from "firebase/firestore
       return emailRegex.test(input);
     };
     
-    const isValidPhoneNumber = (input) => {
-      const phoneRegex = /^\+(\d{1,3})(\d{6,14})$/; 
-      return phoneRegex.test(input);
-    };
-    
+  
     // Function to show alert with a custom message
     const showAlertMessage = (message) => {
       setAlertMessage(message);
@@ -238,7 +234,7 @@ import {collection, getDocs, query, where,doc, setDoc } from "firebase/firestore
                   const userCredential = await signInWithCredential(auth, googleCredential);
                   const firebaseUser = userCredential.user;
   
-                  console.log("Silent sign-in successful:", firebaseUser);
+                  // console.log("Silent sign-in successful:", firebaseUser);
   
                   // Save user info in AsyncStorage
                   await AsyncStorage.setItem("userId", firebaseUser.uid);
@@ -317,7 +313,7 @@ import {collection, getDocs, query, where,doc, setDoc } from "firebase/firestore
             userRef,
             {
                 id: user.uid,
-                email: email || "No Email Found",
+                email: user.email || "No Email Found",
                 name: user.displayName || "No Name",
                 photo: user.photoURL || "No Photo",
                 createdAt: new Date(),

@@ -15,7 +15,9 @@ import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { format } from 'date-fns'; // For date formatting
 import EmojiSelector from 'react-native-emoji-selector'; // For emoji picking
 import { useSQLiteContext } from 'expo-sqlite/next'; // Import SQLite context
-
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { collection, doc, getDoc, setDoc } from 'firebase/firestore';
+import { db } from '../../config/firebaseConfig';
 
 
 
@@ -44,37 +46,15 @@ const NewExpenseScreen = ({ navigation }) => {
     const cancelButtonColor = isDarkMode ? '#444' : '#ddd';
 
 
-    const db = useSQLiteContext();
+    
 
     const handleDateConfirm = (date) => {
         setTransactionDate(date);
         setDatePickerVisible(false);
     };
-    const fetchExpenses = async () => {
-        try {
-            const result = await db.getAllAsync('SELECT * FROM expenses');
-            setExpenses(result);
-            console.log("expense in table", result)
-        } catch (error) {
-            console.error('Error fetching data:', error);
-        }
-    };
-    const deleteExpense = async (id) => {
-        try {
-            await db.runAsync('DELETE FROM expenses WHERE id = ?', [id]);
-            Alert.alert('Success', 'Expense deleted successfully');
-            fetchExpenses();
-            navigation.navigate('main', { refresh: true }); // Refresh the list after deleting
-        } catch (error) {
-            console.error('Error deleting expense:', error);
-            Alert.alert('Error', 'Could not delete expense');
-        }
-    };
-
-    const checkTableSchema = async () => {
-        const result = await db.getAllAsync("PRAGMA table_info(expenses)");
-        console.log("Table Schema:", result);
-    };
+    
+ 
+    
 
     const toggleDarkMode = () => setIsDarkMode(!isDarkMode);
 
@@ -92,91 +72,74 @@ const NewExpenseScreen = ({ navigation }) => {
         }
     };
 
-    const getData = async () => {
-        try {
-            const result = await db.getAllAsync('SELECT * FROM expenses');
-            console.log(result);
-        } catch (error) {
-            console.error('Error fetching data:', error);
-        }
-    };
-
-    const initializeDatabase = async () => {
-        try {
-            // Drop the table if it exists (only in development)
-            await db.runAsync(`DROP TABLE IF EXISTS expenses`);
-    
-            // Create the table with the correct schema
-            await db.runAsync(`
-                CREATE TABLE IF NOT EXISTS expenses (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    description TEXT,
-                    amount REAL,
-                    category TEXT,
-                    icon TEXT,
-                    date TEXT
-                )
-            `);
-            console.log('Table created or already exists');
-            setDbLoaded(true);
-        } catch (error) {
-            console.error('Error creating table:', error);
-        }
-    };
     
 
 
 
-    useEffect(() => {
-        const initializeAndCheckSchema = async () => {
-            await initializeDatabase();
-
-            await getData();
-            await checkTableSchema();
-        };
-
-        initializeAndCheckSchema();
-        fetchExpenses();
-    }, [db]);
-
-    if (!dbLoaded) {
-        return <Text>Loading database...</Text>;
-    }
+    
 
 
-
-    const handleSaveIncome = async () => {
+    const handleSaveExpense = async () => {
         if (!transactionAmount || !selectedCategory || !transactionDate) {
             Alert.alert('Error', 'Please fill out all required fields: amount, category, and date.');
             return;
         }
     
         try {
-            const result = await db.runAsync(
-                'INSERT INTO expenses (description, amount, category, icon, date) VALUES (?, ?, ?, ?, ?)',
-                [
-                    transactionDescription,
-                    parseFloat(transactionAmount),
-                    selectedCategory,
-                    selectedIcon,
-                    transactionDate.toISOString(),
-                ]
-            );
-    
-            console.log('Database result:', result); // Log the result here
-    
-            if (result && result.rowsAffected > 0) {
-                Alert.alert('Success', 'Expense transaction saved successfully!');
-                setTransactionDescription('');
-                setTransactionAmount('');
-                setSelectedCategory(null);
-                setSelectedIcon(null);
-    
-                // Navigate back to DashboardScreen with a refresh flag
-                navigation.navigate('main', { refresh: true });
-            } else {
-                navigation.navigate('main', { refresh: true });
+            // Retrieve userId from AsyncStorage
+            const userId = await AsyncStorage.getItem('userId');
+            if (!userId) {
+                Alert.alert('Error', 'User ID not found. Please sign in again.');
+                return;
             }
+    
+            console.log('Retrieved userId:', userId);
+    
+            // Get a reference to the "users" collection in Firebase
+            const usersCollection = collection(db, 'users');
+            const userRef = doc(usersCollection, userId);
+    
+            // Prepare new expense transaction
+            const newExpense = {
+                description: transactionDescription,
+                amount: parseFloat(transactionAmount),
+                category: selectedCategory,
+                icon: selectedIcon,
+                date: transactionDate.toISOString(),
+            };
+    
+            // Fetch existing user data
+            const userDoc = await getDoc(userRef);
+            if (userDoc.exists()) {
+                const existingExpenses = userDoc.data()?.expenses || [];
+                await setDoc(
+                    userRef,
+                    {
+                        expenses: [...existingExpenses, newExpense], // Append the new expense to existing data
+                    },
+                    { merge: true }
+                );
+            } else {
+                await setDoc(
+                    userRef,
+                    {
+                        expenses: [newExpense], // Initialize 'expenses' field if it doesn't exist
+                    },
+                    { merge: true }
+                );
+            }
+    
+            console.log('Expense transaction saved to Firebase.');
+            Alert.alert('Success', 'Expense transaction saved successfully!');
+    
+            // Reset input fields
+            setTransactionDescription('');
+            setTransactionAmount('');
+            setSelectedCategory(null);
+            setSelectedIcon(null);
+    
+            // Navigate back to the main screen with a refresh flag
+            navigation.navigate('main', { refresh: true });
         } catch (error) {
             console.error('Error saving expense transaction:', error);
             Alert.alert('Error', `Could not save expense transaction: ${error.message}`);
@@ -274,7 +237,7 @@ const NewExpenseScreen = ({ navigation }) => {
             />
 
             {/* Save and Cancel Buttons */}
-            <TouchableOpacity style={[styles.saveButton, { backgroundColor: buttonBackgroundColor }]} onPress={handleSaveIncome}>
+            <TouchableOpacity style={[styles.saveButton, { backgroundColor: buttonBackgroundColor }]} onPress={handleSaveExpense}>
                 <Text style={styles.saveButtonText}>Save</Text>
             </TouchableOpacity>
             <TouchableOpacity style={[styles.cancelButton, { backgroundColor: cancelButtonColor }]}>
