@@ -55,9 +55,10 @@ const SettingsScreen = () => {
           {/* <BillingSection /> */}
 
           {/* Categories Lists */}
-          <CategoriesList type="income" />
-          <CategoriesList type="expense" />
-          
+          <Card>
+            <CategoriesList type="income" />
+            <CategoriesList type="expense" />
+          </Card>
         </ScrollView>
       </View>
     </QueryClientProvider>
