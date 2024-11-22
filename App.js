@@ -24,10 +24,13 @@ export default function App() {
   return (
     // <ThemeProvider>
         <NavigationContainer>
+
           {/* testing settingScreen */}
           {/* <Stack.Navigator initialRouteName="Settings">
             <Stack.Screen name="Settings" options={{ headerShown: false }} component={SettingScreen} />
           </Stack.Navigator> */}
+          {/* testing settingScreen */}
+
           {/* main */}
           <Stack.Navigator initialRouteName="signin">
             <Stack.Screen name="landing" options={{ headerShown: false }} component={Landing} />
@@ -43,6 +46,8 @@ export default function App() {
             <Stack.Screen name="PhoneAuthentication" options={{ headerShown: false }} component={PhoneAuth} />
             <Stack.Screen name="EmailAuthentication" options={{ headerShown: false }} component={EmailAuth} />
           </Stack.Navigator>
+          {/* main */}
+
         </NavigationContainer>
         // </ThemeProvider>
   );

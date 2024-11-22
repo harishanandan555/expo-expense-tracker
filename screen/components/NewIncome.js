@@ -311,7 +311,8 @@ const NewIncomeScreen = ({ navigation, route }) => {
             <FlatList
                 data={Categories} // Display categories here
                 keyExtractor={(item) => item.id}
-                
+                numColumns={1}
+               
                 renderItem={({ item }) => (
                     <TouchableOpacity
                         style={styles.categoryItem}
@@ -483,18 +484,7 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: '#fff',
     },
-    categoryItem: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        margin: 5,
-        padding: 10,
-        borderRadius: 10,
-        borderWidth: 1,
-        borderColor: '#CCC',
-        height: 180, // Adjusted height for smaller items
-        maxWidth: '40%', // Ensure 3 items per row
-    },
+   
 
     modalContainer: {
         flex: 1,
@@ -503,11 +493,13 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
     },
     modalContent: {
-        width: '100%',
+        width: '90%', // Reduce the width to make it smaller
+        maxWidth: 400, // Optional: Set a maximum width for larger screens
         padding: 20,
         backgroundColor: '#1C1C1E',
         borderRadius: 10,
         alignItems: 'center',
+        maxHeight: '70%', // Set a maximum height to prevent overflow
     },
     searchInput: {
         borderWidth: 1,
