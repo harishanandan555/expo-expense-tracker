@@ -19,6 +19,7 @@ const CreateCategorySchema = Yup.object().shape({
 });
 
 export const CreateCategoryDialog = ({ type, onSuccessCallback }) => {
+  
     const [open, setOpen] = useState(false);
     const [userId, setUserId] = useState(null);
     const [userEmail, setUserEmail] = useState(null);
