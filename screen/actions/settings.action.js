@@ -1,35 +1,35 @@
 import { Alert } from 'react-native';
 
 // import { SettingsSchema } from "../schemas/settings.schema";
-import { getCurrentUser } from "../services/user.services";
-import { updateCurrencyUser } from "../services/firebaseSettings";
-// const { updateCurrencyUser } = require("../screen/services/firebaseSettings");
+// import { getCurrentUser } from "../services/user.services";
 
-
+import { auth } from '../../config/firebaseConfig';
+import { updateSettingCurrencyUser } from "../services/firebaseSettings";
 
 export async function updateUserCurrency(currency) {
   
-  const parsedBody = SettingsSchema.validate({ currency })
-    .then(() => true)
-    .catch((error) => {
-      Alert.alert("Validation Error", error.errors.join(", "));
-      return false;
-    });
+  // const parsedBody = SettingsSchema.validate({ currency })
+  //   .then(() => true)
+  //   .catch((error) => {
+  //     Alert.alert("Validation Error", error.errors.join(", "));
+  //     return false;
+  //   });
 
-  if (!(await parsedBody)) {
-    return; // Stop execution if validation fails
-  }
+  // if (!(await parsedBody)) {
+  //   return; // Stop execution if validation fails
+  // }
 
-  const user = await getCurrentUser();
+  // const user = await getCurrentUser();
 
-  if (!user) {
-    Alert.alert("Error", "You must be signed in to update currency.");
-    return;
-  }
+  // if (!user) {
+  //   Alert.alert("Error", "You must be signed in to update currency.");
+  //   return;
+  // }
 
   try {
+    const userId = auth.currentUser?.uid;
     // Update the user's currency in Firestore
-    const updatedSettings = await updateCurrencyUser(user.id, currency);
+    const updatedSettings = await updateSettingCurrencyUser(userId, currency);
 
     if (!updatedSettings) {
       throw new Error("Failed to update user currency in Firestore.");
