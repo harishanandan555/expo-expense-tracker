@@ -253,7 +253,7 @@ export function CurrencyComboBox() {
     getSettings();
   }, []);
 
-  const onSelectOption = useCallback((currency) => {
+  const onSelectOption = useCallback((currency) => {clea
     if (!currency) {
       Toast.show({ text1: "Please select currency!", type: "error" });
       return;
