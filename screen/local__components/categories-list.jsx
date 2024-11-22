@@ -351,22 +351,95 @@ export const CategoriesList = ({ type }) => {
   );
 };
 
+// const styles = StyleSheet.create({
+//   card: {
+//     backgroundColor: "white",
+//     borderRadius: 8,
+//     margin: 10,
+//   },
+//   cardHeader: { padding: 10 },
+//   cardTitle: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+//   iconWrapper: { flexDirection: "row", alignItems: "center", gap: 10 },
+//   icon: { width: 48, height: 48, borderRadius: 12, padding: 8 },
+//   expenseIcon: { backgroundColor: "rgba(248, 56, 56, 0.1)", color: "#f83838" },
+//   incomeIcon: { backgroundColor: "rgba(0, 204, 118, 0.1)", color: "#00cc76" },
+//   categoryText: { fontSize: 18, fontWeight: "bold" },
+//   sortedText: { fontSize: 12, color: "gray" },
+//   noDataContainer: { alignItems: "center", marginTop: 20 },
+//   errorContainer: { padding: 10, backgroundColor: "#f8d7da", borderRadius: 5 },
+//   errorText: { color: "#721c24", fontWeight: "bold" },
+//   categoryList: { flexDirection: "row", flexWrap: "wrap", padding: 10 },
+// });
+
+// const styles = StyleSheet.create({
+//   categoryList: {
+//     flexDirection: "row",
+//     flexWrap: "wrap",
+//     justifyContent: "space-between", // Ensures proper spacing for three items per row
+//     padding: 10,
+//   },
+// });
+
+
+
 const styles = StyleSheet.create({
+  categoryList: {
+    flexDirection: "row",
+    flexWrap: "wrap", // Allows categories to wrap to the next line
+    justifyContent: "space-between", // Ensures proper spacing for three items per row
+    padding: 10,
+  },
   card: {
     backgroundColor: "white",
     borderRadius: 8,
     margin: 10,
   },
-  cardHeader: { padding: 10 },
-  cardTitle: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  iconWrapper: { flexDirection: "row", alignItems: "center", gap: 10 },
-  icon: { width: 48, height: 48, borderRadius: 12, padding: 8 },
-  expenseIcon: { backgroundColor: "rgba(248, 56, 56, 0.1)", color: "#f83838" },
-  incomeIcon: { backgroundColor: "rgba(0, 204, 118, 0.1)", color: "#00cc76" },
-  categoryText: { fontSize: 18, fontWeight: "bold" },
-  sortedText: { fontSize: 12, color: "gray" },
-  noDataContainer: { alignItems: "center", marginTop: 20 },
-  errorContainer: { padding: 10, backgroundColor: "#f8d7da", borderRadius: 5 },
-  errorText: { color: "#721c24", fontWeight: "bold" },
-  categoryList: { flexDirection: "row", flexWrap: "wrap", padding: 10 },
+  cardHeader: {
+    padding: 10,
+  },
+  cardTitle: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  iconWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  icon: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    padding: 8,
+  },
+  expenseIcon: {
+    backgroundColor: "rgba(248, 56, 56, 0.1)",
+    color: "#f83838",
+  },
+  incomeIcon: {
+    backgroundColor: "rgba(0, 204, 118, 0.1)",
+    color: "#00cc76",
+  },
+  categoryText: {
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  sortedText: {
+    fontSize: 12,
+    color: "gray",
+  },
+  noDataContainer: {
+    alignItems: "center",
+    marginTop: 20,
+  },
+  errorContainer: {
+    padding: 10,
+    backgroundColor: "#f8d7da",
+    borderRadius: 5,
+  },
+  errorText: {
+    color: "#721c24",
+    fontWeight: "bold",
+  },
 });

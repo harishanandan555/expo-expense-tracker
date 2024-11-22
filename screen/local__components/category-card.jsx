@@ -98,14 +98,29 @@ export const CategoryCard = ({ category, isDefault, onDeleteSuccess }) => {
   );
 };
 
+// const styles = StyleSheet.create({
+//   card: {
+//     width: 100,
+//     height: 100,
+//     borderRadius: 8,
+//     alignItems: "center",
+//     justifyContent: "center",
+//     margin: 10,
+//     backgroundColor: "#f9fafb",
+//   },
+//   icon: { fontSize: 32 },
+//   categoryName: { fontSize: 14, marginTop: 5 },
+//   button: { marginTop: 10 },
+// });
+
 const styles = StyleSheet.create({
   card: {
-    width: 100,
+    width: "30%", // Adjust percentage width to ensure three items per row
     height: 100,
     borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
-    margin: 10,
+    marginBottom: 10, // Adjust spacing between rows
     backgroundColor: "#f9fafb",
   },
   icon: { fontSize: 32 },
