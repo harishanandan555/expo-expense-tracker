@@ -8,21 +8,27 @@ import {
     Switch,
     Modal,
     Alert,
-    ScrollView
+    ScrollView,
+    FlatList
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons'; // For icons
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { format } from 'date-fns'; // For date formatting
 import EmojiSelector from 'react-native-emoji-selector'; // For emoji picking
 import { useSQLiteContext } from 'expo-sqlite/next'; // Import SQLite context
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { collection, doc, getDoc, setDoc } from 'firebase/firestore';
+import { db } from '../../config/firebaseConfig';
+import { getDefaultCategories } from '../services/firebaseSettings';
 
 
 
-
-const NewExpenseScreen = ({ navigation }) => {
+const NewExpenseScreen = ({ navigation, route }) => {
     const [transactionDate, setTransactionDate] = useState(new Date());
     const [isDatePickerVisible, setDatePickerVisible] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState(null);
+    const [Categories, setCategories] = useState(null);
+
     const [newCategory, setNewCategory] = useState('');
     const [transactionAmount, setTransactionAmount] = useState('');
     const [transactionDescription, setTransactionDescription] = useState('');
@@ -44,32 +50,19 @@ const NewExpenseScreen = ({ navigation }) => {
     const cancelButtonColor = isDarkMode ? '#444' : '#ddd';
 
 
-    const db = useSQLiteContext();
+
+
+    const { type } = route.params || {}; // Extract the 'type' parameter
+    console.log("Type:", type);
+
 
     const handleDateConfirm = (date) => {
         setTransactionDate(date);
         setDatePickerVisible(false);
     };
-    const fetchExpenses = async () => {
-        try {
-            const result = await db.getAllAsync('SELECT * FROM expenses');
-            setExpenses(result);
-            console.log("expense in table", result)
-        } catch (error) {
-            console.error('Error fetching data:', error);
-        }
-    };
-    const deleteExpense = async (id) => {
-        try {
-            await db.runAsync('DELETE FROM expenses WHERE id = ?', [id]);
-            Alert.alert('Success', 'Expense deleted successfully');
-            fetchExpenses();
-            navigation.navigate('main', { refresh: true }); // Refresh the list after deleting
-        } catch (error) {
-            console.error('Error deleting expense:', error);
-            Alert.alert('Error', 'Could not delete expense');
-        }
-    };
+
+
+
 
     const toggleDarkMode = () => setIsDarkMode(!isDarkMode);
 
@@ -87,101 +80,123 @@ const NewExpenseScreen = ({ navigation }) => {
         }
     };
 
-    const getData = async () => {
-        try {
-            const result = await db.getAllAsync('SELECT * FROM expenses');
-            console.log(result);
-        } catch (error) {
-            console.error('Error fetching data:', error);
-        }
-    };
-
-    const initializeDatabase = async () => {
-        try {
-            await db.runAsync(`
-                CREATE TABLE IF NOT EXISTS expenses (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    description TEXT,
-                    amount REAL,
-                    category TEXT,
-                    icon TEXT,
-                    date TEXT
-                )`
-            );
-            setDbLoaded(true);
-            console.log('Table created or already exists');
-        } catch (error) {
-            console.error('Error creating table:', error);
-        }
-    };
 
 
 
-    useEffect(() => {
-        const initializeAndCheckSchema = async () => {
-            await initializeDatabase();
-
-            await getData();
-
-        };
-
-        initializeAndCheckSchema();
-        fetchExpenses();
-    }, [db]);
-
-    if (!dbLoaded) {
-        return <Text>Loading database...</Text>;
-    }
 
 
 
-    const handleSaveIncome = async () => {
+
+    const handleSaveExpense = async () => {
         if (!transactionAmount || !selectedCategory || !transactionDate) {
             Alert.alert('Error', 'Please fill out all required fields: amount, category, and date.');
             return;
         }
-    
+
         try {
-            const result = await db.runAsync(
-                'INSERT INTO expenses (description, amount, category, icon, date) VALUES (?, ?, ?, ?, ?)',
-                [
-                    transactionDescription,
-                    parseFloat(transactionAmount),
-                    selectedCategory,
-                    selectedIcon,
-                    transactionDate.toISOString(),
-                ]
-            );
-    
-            console.log('Database result:', result); // Log the result here
-    
-            if (result && result.rowsAffected > 0) {
-                Alert.alert('Success', 'Expense transaction saved successfully!');
-                setTransactionDescription('');
-                setTransactionAmount('');
-                setSelectedCategory(null);
-                setSelectedIcon(null);
-    
-                // Navigate back to DashboardScreen with a refresh flag
-                navigation.navigate('main', { refresh: true });
-            } else {
-                navigation.navigate('main', { refresh: true });
+            // Retrieve userId from AsyncStorage
+            const userId = await AsyncStorage.getItem('userId');
+            if (!userId) {
+                Alert.alert('Error', 'User ID not found. Please sign in again.');
+                return;
             }
+
+            console.log('Retrieved userId:', userId);
+
+            // Get a reference to the "users" collection in Firebase
+            const usersCollection = collection(db, 'users');
+            const userRef = doc(usersCollection, userId);
+
+            // Prepare new expense transaction
+            const newExpense = {
+                description: transactionDescription,
+                amount: parseFloat(transactionAmount),
+                category: selectedCategory,
+                icon: selectedIcon,
+                date: transactionDate.toISOString(),
+            };
+
+            // Fetch existing user data
+            const userDoc = await getDoc(userRef);
+            if (userDoc.exists()) {
+                const existingExpenses = userDoc.data()?.expenses || [];
+                await setDoc(
+                    userRef,
+                    {
+                        expenses: [...existingExpenses, newExpense], // Append the new expense to existing data
+                    },
+                    { merge: true }
+                );
+            } else {
+                await setDoc(
+                    userRef,
+                    {
+                        expenses: [newExpense], // Initialize 'expenses' field if it doesn't exist
+                    },
+                    { merge: true }
+                );
+            }
+
+            console.log('Expense transaction saved to Firebase.');
+            Alert.alert('Success', 'Expense transaction saved successfully!');
+
+            // Reset input fields
+            setTransactionDescription('');
+            setTransactionAmount('');
+            setSelectedCategory(null);
+            setSelectedIcon(null);
+
+            // Navigate back to the main screen with a refresh flag
+            navigation.navigate('main', { refresh: true });
         } catch (error) {
             console.error('Error saving expense transaction:', error);
             Alert.alert('Error', `Could not save expense transaction: ${error.message}`);
         }
     };
-    
-    
-    
+
+
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                console.log("Fetching categories for type:", type);
+
+                // Replace this with the actual fetching logic
+                const userCategories = []; // Assuming this would fetch user-specific categories
+                const defaultCategories = await getDefaultCategories(type) || [];
+
+                console.log("Default Categories:", defaultCategories); // Log default categories
+
+                const combinedCategories = [
+                    ...defaultCategories.map(category => ({
+                        ...category,
+                        isDefault: true,
+                    })),
+                    ...userCategories.map(category => ({
+                        ...category,
+                        isDefault: false,
+                    })),
+                ];
+
+                setCategories(combinedCategories);
+            } catch (err) {
+                console.error('Error fetching categories:', err);
+                setError(err.message || 'Failed to fetch categories');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        if (type) { // Ensure `type` exists before fetching categories
+            fetchCategories();
+        } else {
+            console.error("Type is undefined or null");
+            setIsLoading(false);
+        }
+    }, [type]);
 
 
     return (
-        <ScrollView 
-            style={[styles.container1, { backgroundColor }]}
-            contentContainerStyle={{ padding: 20,  justifyContent: 'center'  }}  // Applying padding through contentContainerStyle
-        >
+
         <View style={[styles.container, { backgroundColor }]}>
             {/* Header with Dark/Light Mode Toggle */}
             <View style={styles.header}>
@@ -223,7 +238,7 @@ const NewExpenseScreen = ({ navigation }) => {
             <Text style={[styles.requiredText, { color: placeholderTextColor }]}>Transaction Amount (Required)</Text>
 
             {/* Category and Date Picker */
-            }<Text style={[styles.categoryText, { color: textColor }]}>
+            }<Text style={[{ color: textColor }]}>
                 {selectedCategory ? `Category: ${selectedCategory}` : 'Select a category'}
             </Text>
 
@@ -264,7 +279,7 @@ const NewExpenseScreen = ({ navigation }) => {
             />
 
             {/* Save and Cancel Buttons */}
-            <TouchableOpacity style={[styles.saveButton, { backgroundColor: buttonBackgroundColor }]} onPress={handleSaveIncome}>
+            <TouchableOpacity style={[styles.saveButton, { backgroundColor: buttonBackgroundColor }]} onPress={handleSaveExpense}>
                 <Text style={styles.saveButtonText}>Save</Text>
             </TouchableOpacity>
             <TouchableOpacity style={[styles.cancelButton, { backgroundColor: cancelButtonColor }]}>
@@ -285,7 +300,24 @@ const NewExpenseScreen = ({ navigation }) => {
                             <MaterialIcons name="add" size={24} color={textColor} />
                             <Text style={[styles.createNewText, { color: textColor }]}>Create New</Text>
                         </TouchableOpacity>
+                        <FlatList
+                            data={Categories} // Display categories here
+                            keyExtractor={(item) => item.id}
 
+                            renderItem={({ item }) => (
+                                <TouchableOpacity
+                                    style={styles.categoryItem}
+                                    onPress={() => {
+                                        setSelectedCategory(item.name); // Set selected category
+                                        setCategoryModalVisible(false); // Close modal
+                                    }}
+                                >
+                                    <Text style={styles.categoryIcon}>{item.icon}</Text>
+                                    <Text style={[styles.categoryName, { color: textColor }]}>{item.name}</Text>
+                                </TouchableOpacity>
+                            )}
+                            contentContainerStyle={styles.categoryList}
+                        />
                         {/* Cancel Button */}
                         <TouchableOpacity onPress={closeCategoryModal} style={[styles.smallCancelButton, { backgroundColor: cancelButtonColor }]}>
                             <Text style={styles.smallCancelText}>Cancel</Text>
@@ -358,7 +390,7 @@ const NewExpenseScreen = ({ navigation }) => {
                 </View>
             ))}
         </View>
-        </ScrollView>
+
     );
 };
 
@@ -461,10 +493,31 @@ const styles = StyleSheet.create({
         backgroundColor: '#f9f9f9',
         borderRadius: 5,
     },
+    categoryItem: {
+        flexDirection: 'row', // Align icon and text side by side
+        alignItems: 'center',
+        justifyContent: 'flex-start',
+        margin: 5,
+        padding: 10,
+        borderRadius: 10,
+        marginVertical: 10,
+        borderWidth: 1,
+        borderColor: '#CCC',
+        backgroundColor: '#2C2C2E',
+        width: '90%', // Adjust to fit two items per row
+    },
+    categoryList: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'space-between',
+        paddingHorizontal: 10,
+
+
+    },
     expenseText: {
         fontSize: 16,
     },
-   
+
     cancelButton: {
         marginTop: 10,
         borderRadius: 10,
@@ -483,7 +536,7 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
     },
     modalContent: {
-        width: '80%',
+        width: '100%',
         padding: 20,
         backgroundColor: '#1C1C1E',
         borderRadius: 10,

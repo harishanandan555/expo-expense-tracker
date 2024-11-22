@@ -1,203 +1,3 @@
-// import React, { useCallback, useState } from 'react';
-// import { View, Text, TouchableOpacity, TextInput, Modal, StyleSheet, ActivityIndicator } from 'react-native';
-// import { useForm, Controller } from 'react-hook-form';
-// import EmojiSelector, { Categories } from 'react-native-emoji-selector';
-// import Toast from 'react-native-toast-message';
-
-// import { CreateCategory } from "../actions/categories.action";
-
-// export const CreateCategoryDialog = ({ type, onSuccessCallback }) => {
-//     const [open, setOpen] = useState(false);
-//     const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
-//     const { control, handleSubmit, formState: { isValid }, reset, watch } = useForm({
-//         defaultValues: {
-//             name: '',
-//             icon: '',
-//             type,
-//         },
-//     });
-
-//     const onSubmit = useCallback((values) => {
-//         Toast.show({
-//             type: 'info',
-//             text1: 'Creating Category...',
-//         });
-
-//         // Simulate API call with a timeout
-//         setTimeout(() => {
-//             Toast.show({
-//                 type: 'success',
-//                 text1: `Category ${values.name} created successfully!`,
-//             });
-
-//             onSuccessCallback(values);
-//             reset();
-//             setOpen(false); // Close dialog after success
-//         }, 1500);
-//     }, [onSuccessCallback, reset]);
-
-//     return (
-//         <>
-//             <TouchableOpacity style={styles.createButton} onPress={() => setOpen(true)}>
-//                 <Text style={styles.createButtonText}>Create New</Text>
-//             </TouchableOpacity>
-
-//             <Modal visible={open} transparent animationType="slide">
-//                 <View style={styles.modalBackground}>
-//                     <View style={styles.dialogContent}>
-//                         <Text style={styles.dialogTitle}>Create {type} Category</Text>
-//                         <Text style={styles.dialogDescription}>Categories help group your transactions.</Text>
-
-//                         {/* Form Fields */}
-//                         <Controller
-//                             control={control}
-//                             name="name"
-//                             render={({ field: { onChange, value } }) => (
-//                                 <View style={styles.formItem}>
-//                                     <Text style={styles.formLabel}>Name</Text>
-//                                     <TextInput
-//                                         style={styles.input}
-//                                         placeholder="Category"
-//                                         onChangeText={onChange}
-//                                         value={value}
-//                                     />
-//                                 </View>
-//                             )}
-//                         />
-
-//                         <Controller
-//                             control={control}
-//                             name="icon"
-//                             render={({ field: { onChange, value } }) => (
-//                                 <View style={styles.formItem}>
-//                                     <Text style={styles.formLabel}>Icon</Text>
-//                                     <TouchableOpacity style={styles.iconSelector} onPress={() => setIsEmojiPickerOpen(true)}>
-//                                         <Text style={styles.icon}>{value || "Select Icon"}</Text>
-//                                     </TouchableOpacity>
-//                                     {isEmojiPickerOpen && (
-//                                         <EmojiSelector
-//                                             onEmojiSelected={(emoji) => {
-//                                                 onChange(emoji);
-//                                                 setIsEmojiPickerOpen(false);
-//                                             }}
-//                                             showSearchBar={true}
-//                                             category={Categories.Smileys}
-//                                             columns={8}
-//                                         />
-//                                     )}
-//                                 </View>
-//                             )}
-//                         />
-
-//                         <View style={styles.buttonGroup}>
-//                             <TouchableOpacity style={styles.cancelButton} onPress={() => setOpen(false)}>
-//                                 <Text style={styles.buttonText}>Cancel</Text>
-//                             </TouchableOpacity>
-//                             <TouchableOpacity
-//                                 style={[styles.saveButton, !isValid && styles.disabledButton]}
-//                                 onPress={handleSubmit(onSubmit)}
-//                                 disabled={!isValid}
-//                             >
-//                                 {isValid ? <Text style={styles.buttonText}>Save</Text> : <ActivityIndicator color="#fff" />}
-//                             </TouchableOpacity>
-//                         </View>
-//                     </View>
-//                 </View>
-//             </Modal>
-
-//             <Toast />
-//         </>
-//     );
-// };
-
-// const styles = StyleSheet.create({
-//     createButton: {
-//         backgroundColor: '#e0e0e0',
-//         padding: 10,
-//         borderRadius: 5,
-//         alignItems: 'center',
-//     },
-//     createButtonText: {
-//         color: '#333',
-//         fontSize: 16,
-//     },
-//     modalBackground: {
-//         flex: 1,
-//         justifyContent: 'center',
-//         alignItems: 'center',
-//         backgroundColor: 'rgba(0, 0, 0, 0.5)',
-//     },
-//     dialogContent: {
-//         width: '80%',
-//         padding: 20,
-//         backgroundColor: '#fff',
-//         borderRadius: 10,
-//     },
-//     dialogTitle: {
-//         fontSize: 20,
-//         fontWeight: 'bold',
-//         marginBottom: 10,
-//     },
-//     dialogDescription: {
-//         fontSize: 14,
-//         color: '#666',
-//         marginBottom: 20,
-//     },
-//     formItem: {
-//         marginBottom: 15,
-//     },
-//     formLabel: {
-//         fontSize: 14,
-//         fontWeight: '600',
-//         marginBottom: 5,
-//     },
-//     input: {
-//         borderWidth: 1,
-//         borderColor: '#ccc',
-//         padding: 10,
-//         borderRadius: 5,
-//     },
-//     iconSelector: {
-//         height: 60,
-//         borderWidth: 1,
-//         borderColor: '#ccc',
-//         justifyContent: 'center',
-//         alignItems: 'center',
-//         borderRadius: 5,
-//     },
-//     icon: {
-//         fontSize: 24,
-//     },
-//     buttonGroup: {
-//         flexDirection: 'row',
-//         justifyContent: 'space-between',
-//         marginTop: 20,
-//     },
-//     cancelButton: {
-//         flex: 1,
-//         padding: 10,
-//         backgroundColor: '#ccc',
-//         borderRadius: 5,
-//         marginRight: 10,
-//         alignItems: 'center',
-//     },
-//     saveButton: {
-//         flex: 1,
-//         padding: 10,
-//         backgroundColor: '#4CAF50',
-//         borderRadius: 5,
-//         alignItems: 'center',
-//     },
-//     disabledButton: {
-//         backgroundColor: '#888',
-//     },
-//     buttonText: {
-//         color: '#fff',
-//         fontSize: 16,
-//     },
-// });
-
-
 import React, { useCallback, useState, useEffect  } from 'react';
 import { View, Text, TouchableOpacity, TextInput, Modal, StyleSheet, ActivityIndicator } from 'react-native';
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -240,7 +40,8 @@ export const CreateCategoryDialog = ({ type, onSuccessCallback }) => {
             const email = await AsyncStorage.getItem("userEmail");
             const userInfo = await AsyncStorage.getItem("userInfo");
             setUserId(userId); // Set email for later use in database
-            setUserEmail(email); // Set email for later use in database
+            setUserEmail(email)
+; // Set email for later use in database
             setUserInfo(userInfo); // Set email for later use in database
         };
         fetchUserEmail();
@@ -330,7 +131,7 @@ export const CreateCategoryDialog = ({ type, onSuccessCallback }) => {
   
     return (
       <>
-        {/* Trigger Button */}
+        {/ Trigger Button /}
         <TouchableOpacity
           style={styles.triggerButton}
           onPress={() => setOpen(true)}
@@ -338,7 +139,7 @@ export const CreateCategoryDialog = ({ type, onSuccessCallback }) => {
           <Text style={styles.triggerButtonText}>Create New</Text>
         </TouchableOpacity>
   
-        {/* Dialog Content */}
+        {/ Dialog Content /}
         <Modal visible={open} transparent animationType="slide">
           <View style={styles.modalOverlay}>
             <View style={styles.dialogContainer}>
@@ -360,9 +161,9 @@ export const CreateCategoryDialog = ({ type, onSuccessCallback }) => {
                 Categories are used to group your transactions.
               </Text>
   
-              {/* Form */}
+              {/ Form /}
               <View style={styles.formContainer}>
-                {/* Name Field */}
+                {/ Name Field /}
                 <Controller
                   control={control}
                   name="name"
@@ -382,7 +183,7 @@ export const CreateCategoryDialog = ({ type, onSuccessCallback }) => {
                   )}
                 />
   
-                {/* Icon Field */}
+                {/ Icon Field /}
                 <Controller
                   control={control}
                   name="icon"
@@ -424,7 +225,7 @@ export const CreateCategoryDialog = ({ type, onSuccessCallback }) => {
                 />
               </View>
   
-              {/* Dialog Footer */}
+              {/ Dialog Footer /}
               <View style={styles.footer}>
                 <TouchableOpacity
                   style={styles.cancelButton}
@@ -451,7 +252,7 @@ export const CreateCategoryDialog = ({ type, onSuccessCallback }) => {
           </View>
         </Modal>
   
-        {/* Toast Notifications */}
+        {/ Toast Notifications /}
         <Toast />
       </>
     );
@@ -578,233 +379,3 @@ const styles = StyleSheet.create({
         fontSize: 14,
     },
 });
-
-
-
-
-// import React, { useState, useCallback } from "react";
-// import {
-//   View,
-//   Text,
-//   TouchableOpacity,
-//   TextInput,
-//   Modal,
-//   StyleSheet,
-//   ActivityIndicator,
-// } from "react-native";
-// import { useForm, Controller } from "react-hook-form";
-// import EmojiSelector, { Categories } from "react-native-emoji-selector";
-// import Toast from "react-native-toast-message";
-// import { CreateCategory } from "../actions/categories.action";
-
-// export const CreateCategoryDialog = ({ type, onSuccessCallback }) => {
-//   const [open, setOpen] = useState(false);
-//   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
-
-//   const {
-//     control,
-//     handleSubmit,
-//     formState: { isValid, isSubmitting },
-//     reset,
-//   } = useForm({
-//     defaultValues: {
-//       name: "",
-//       icon: "",
-//       type,
-//     },
-//   });
-
-//   const onSubmit = useCallback(
-//     async (values) => {
-//       Toast.show({
-//         type: "info",
-//         text1: "Creating Category...",
-//       });
-
-//       try {
-//         const response = await CreateCategory(values);
-
-//         Toast.show({
-//           type: "success",
-//           text1: `Category ${response.name} created successfully!`,
-//         });
-
-//         onSuccessCallback(response);
-//         reset();
-//         setOpen(false);
-//       } catch (error) {
-//         Toast.show({
-//           type: "error",
-//           text1: "Failed to create category",
-//           text2: error?.message || "Please try again.",
-//         });
-//       }
-//     },
-//     [onSuccessCallback, reset]
-//   );
-
-//   return (
-//     <>
-//       <TouchableOpacity
-//         style={styles.triggerButton}
-//         onPress={() => setOpen(true)}
-//       >
-//         <Text style={styles.triggerButtonText}>Create New</Text>
-//       </TouchableOpacity>
-
-//       <Modal visible={open} transparent animationType="slide">
-//         <View style={styles.modalOverlay}>
-//           <View style={styles.dialogContainer}>
-//             <Text style={styles.dialogTitle}>
-//               Create{" "}
-//               <Text
-//                 style={[
-//                   styles.dialogType,
-//                   type === "income"
-//                     ? styles.incomeColor
-//                     : styles.expenseColor,
-//                 ]}
-//               >
-//                 {type}
-//               </Text>{" "}
-//               Category
-//             </Text>
-//             <Text style={styles.dialogDescription}>
-//               Categories help group your transactions.
-//             </Text>
-
-//             <View style={styles.formContainer}>
-//               <Controller
-//                 control={control}
-//                 name="name"
-//                 render={({ field: { onChange, value } }) => (
-//                   <View style={styles.formField}>
-//                     <Text style={styles.fieldLabel}>Name</Text>
-//                     <TextInput
-//                       style={styles.textInput}
-//                       placeholder="Category Name"
-//                       onChangeText={onChange}
-//                       value={value}
-//                     />
-//                   </View>
-//                 )}
-//               />
-//               <Controller
-//                 control={control}
-//                 name="icon"
-//                 render={({ field: { onChange, value } }) => (
-//                   <View style={styles.formField}>
-//                     <Text style={styles.fieldLabel}>Icon</Text>
-//                     <TouchableOpacity
-//                       style={styles.iconPicker}
-//                       onPress={() => setIsEmojiPickerOpen(true)}
-//                     >
-//                       <Text style={styles.iconText}>
-//                         {value || "⛔ Select Icon"}
-//                       </Text>
-//                     </TouchableOpacity>
-//                     {isEmojiPickerOpen && (
-//                       <EmojiSelector
-//                         onEmojiSelected={(emoji) => {
-//                           onChange(emoji);
-//                           setIsEmojiPickerOpen(false);
-//                         }}
-//                         category={Categories.Smileys}
-//                       />
-//                     )}
-//                   </View>
-//                 )}
-//               />
-//             </View>
-
-//             <View style={styles.footer}>
-//               <TouchableOpacity
-//                 style={styles.cancelButton}
-//                 onPress={() => setOpen(false)}
-//               >
-//                 <Text style={styles.cancelButtonText}>Cancel</Text>
-//               </TouchableOpacity>
-//               <TouchableOpacity
-//                 style={[
-//                   styles.saveButton,
-//                   (!isValid || isSubmitting) && styles.saveButtonDisabled,
-//                 ]}
-//                 onPress={handleSubmit(onSubmit)}
-//                 disabled={!isValid || isSubmitting}
-//               >
-//                 {isSubmitting ? (
-//                   <ActivityIndicator color="#fff" />
-//                 ) : (
-//                   <Text style={styles.saveButtonText}>Save</Text>
-//                 )}
-//               </TouchableOpacity>
-//             </View>
-//           </View>
-//         </View>
-//       </Modal>
-//       <Toast />
-//     </>
-//   );
-// };
-
-// const styles = StyleSheet.create({
-//   // Add or adjust styles here for better UI
-//   modalOverlay: {
-//     flex: 1,
-//     justifyContent: "center",
-//     alignItems: "center",
-//     backgroundColor: "rgba(0, 0, 0, 0.5)",
-//   },
-//   dialogContainer: {
-//     backgroundColor: "#fff",
-//     padding: 20,
-//     borderRadius: 10,
-//     width: "90%",
-//     alignItems: "center",
-//   },
-//   dialogTitle: {
-//     fontSize: 20,
-//     fontWeight: "bold",
-//     marginBottom: 10,
-//   },
-//   incomeColor: {
-//     color: "green",
-//   },
-//   expenseColor: {
-//     color: "red",
-//   },
-//   formContainer: {
-//     width: "100%",
-//   },
-//   textInput: {
-//     borderWidth: 1,
-//     borderColor: "#ccc",
-//     borderRadius: 5,
-//     padding: 10,
-//     marginBottom: 15,
-//   },
-//   footer: {
-//     flexDirection: "row",
-//     justifyContent: "space-between",
-//     marginTop: 20,
-//   },
-//   saveButton: {
-//     backgroundColor: "green",
-//     padding: 10,
-//     borderRadius: 5,
-//     flex: 1,
-//     marginLeft: 10,
-//     alignItems: "center",
-//   },
-//   saveButtonDisabled: {
-//     backgroundColor: "#ccc",
-//   },
-//   cancelButton: {
-//     backgroundColor: "red",
-//     padding: 10,
-//     borderRadius: 5,
-//     flex: 1,
-//     marginRight: 10,
-//     alignItems: "center",
-//   },
-// });

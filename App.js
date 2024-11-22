@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { SQLiteProvider } from 'expo-sqlite/next';
 import { ActivityIndicator, Text, View } from 'react-native';
-import * as FileSystem from 'expo-file-system';
-import { Asset } from 'expo-asset';
+;
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -19,43 +18,18 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import PhoneAuth from './screen/auth/phoneAuth';
 import EmailAuth from './screen/auth/emailAuth';
 
-const loadDatabase = async () => {
-  const dbName = 'Expense.db';
-  const dbAsset = require("./assets/Expense.db");
-  const dbUri = Asset.fromModule(dbAsset).uri;
-  const dbFilePath = `${FileSystem.documentDirectory}SQLite/${dbName}`;
 
-  const fileInfo = await FileSystem.getInfoAsync(dbFilePath);
-  if (!fileInfo.exists) {
-    await FileSystem.makeDirectoryAsync(`${FileSystem.documentDirectory}SQLite`, { intermediates: true });
-    await FileSystem.downloadAsync(dbUri, dbFilePath);
-  }
-};
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
 export default function App() {
-  const [dbLoaded, setDbLoaded] = useState(false);
 
-  useEffect(() => {
-    loadDatabase()
-      .then(() => setDbLoaded(true))
-      .catch((e) => console.error(e));
-  }, []);
-
-  if (!dbLoaded) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" />
-        <Text>Loading Database...</Text>
-      </View>
-    );
-  }
+  
+ 
 
   return (
-    <React.Suspense fallback={<LoadingScreen />}>
-      <SQLiteProvider databaseName="Expense.db" useSuspense>
+   
         <NavigationContainer>
 
           {/* testing settingScreen */}
@@ -82,19 +56,11 @@ export default function App() {
           {/* main */}
 
         </NavigationContainer>
-      </SQLiteProvider>
-    </React.Suspense>
+      
   );
 }
 
-function LoadingScreen() {
-  return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <ActivityIndicator size="large" />
-      <Text>Loading Database...</Text>
-    </View>
-  );
-}
+
 
 function MainTabNavigator({ route }) {
   const email = route.params?.email;

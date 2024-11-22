@@ -44,7 +44,8 @@ export async function getUserById(id) {
     console.error('Error getting user by ID: ', e);
     throw new Error(`Error retrieving user: ${e.message || e}`);
   }
-}
+}  
+
 
 export async function getUserByEmail(email) {
   const q = query(collection(db, 'users'), where('email', '==', email));
