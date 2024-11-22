@@ -14,7 +14,6 @@ import { auth,db } from "../../config/firebaseConfig";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import "expo-dev-client";
-
 import { signInWithEmailAndPassword, sendPasswordResetEmail, fetchSignInMethodsForEmail  } from "firebase/auth";
 import {GoogleAuthProvider, signInWithCredential } from "firebase/auth";
 import {collection, getDocs, query, where,doc, setDoc } from "firebase/firestore";
@@ -23,7 +22,6 @@ import {collection, getDocs, query, where,doc, setDoc } from "firebase/firestore
   WebBrowser.maybeCompleteAuthSession();
 
   export default function SignInPage({ navigation }) {
-    // const db = useSQLiteContext();
 
     const [input, setInput] = useState(""); 
     const [userInfo, setUserInfo] = useState(null);

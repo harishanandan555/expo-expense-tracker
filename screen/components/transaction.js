@@ -495,11 +495,11 @@ const TransactionScreen = () => {
   
     let transactionHtml = transactionsData.map((transaction) => `
       <tr>
-        <td style="padding: 10px;">${transaction.category || 'N/A'}</td>
+         <td style="padding: 10px;">${transaction.date|| 'N/A'}</td>
         <td style="padding: 10px;">${transaction.type || 'N/A'}</td>
-        <td style="padding: 10px;">${transaction.date || 'N/A'}</td>
         <td style="padding: 10px;">${transaction.description || 'N/A'}</td>
         <td style="padding: 10px;">${transaction.amount || 'N/A'}</td>
+        <td style="padding: 10px;">${transaction.category || 'N/A'}</td>
       </tr>
     `).join('');
   

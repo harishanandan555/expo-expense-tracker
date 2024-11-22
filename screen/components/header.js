@@ -3,6 +3,7 @@
     import { Menu, Provider, Avatar, Divider } from 'react-native-paper';
     import { auth } from '../../config/firebaseConfig';
     import { onAuthStateChanged, signOut } from 'firebase/auth';
+    import { GoogleSignin } from "@react-native-google-signin/google-signin";;
 
     const Header = ({ navigation, isDarkMode, toggleTheme }) => {
     const [menuVisible, setMenuVisible] = useState(false);
@@ -11,6 +12,11 @@
     const [userPhoto, setUserPhoto] = useState(null);
 
     useEffect(() => {
+         // Configure Google Sign-In
+         GoogleSignin.configure({
+              webClientId:  "622095554406-32i6saoa7sn60bu32n33f4um21ep2i65.apps.googleusercontent.com", // Replace with your Web Client ID
+           });
+
         const unsubscribe = onAuthStateChanged(auth, (user) => {
         if (user) {
             const displayName = user.displayName ? user.displayName : user.email?.split('@')[0] || 'User';
@@ -33,6 +39,12 @@
         setLoading(true); 
         console.log("logout clicked")
         try {
+            const currentUser = auth.currentUser;
+            if (currentUser.providerData.some(provider => provider.providerId === 'google.com')) {
+              // Revoke Google token and sign out
+              await GoogleSignin.revokeAccess();
+              await GoogleSignin.signOut();
+            }
         await signOut(auth);
         Alert.alert("Logged Out", "You have successfully logged out.");
         navigation.navigate("signin");
