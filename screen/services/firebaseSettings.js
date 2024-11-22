@@ -1,3 +1,4 @@
+import cuid from "cuid";
 import { collection, getDocs, query, where, doc, getFirestore, setDoc, getDoc, addDoc, deleteDoc, orderBy, updateDoc } from "firebase/firestore";
 
 import { db } from "../../config/firebaseConfig";
@@ -24,8 +25,7 @@ export async function storeUser(user) {
   }
 }
 
-export async function getUserById(id)
- {
+export async function getUserById(id) {
   if (!id) {
     throw new Error('User ID is required.');
   }
@@ -44,8 +44,7 @@ export async function getUserById(id)
     console.error('Error getting user by ID: ', e);
     throw new Error(`Error retrieving user: ${e.message || e}`);
   }
-}  
-
+}
 
 export async function getUserByEmail(email) {
   const q = query(collection(db, 'users'), where('email', '==', email));
@@ -214,7 +213,7 @@ export async function getSettingsByUserId(userId) {
   return null;
 }
 
-export async function updateUserCurrency(userId, currency) {
+export async function updateSettingCurrencyUser(userId, currency) {
   const settingsCollection = collection(db, 'Settings');
   const settingsQuery = query(settingsCollection, where('userId', '==', userId));
   const querySnapshot = await getDocs(settingsQuery);
@@ -343,40 +342,41 @@ export async function updateCategoryAttempts(userId, decrementValue) {
   }
 }
 
-export async function deleteCategoryByUserId(userId, data) {
+export async function deleteCategoryByUserId(id, userId, categoryData) {
   try {
-    const categoryRef = collection(db, 'UserCategories');
+    if (!id || !userId || !categoryData || !categoryData.name || !categoryData.type) {
+      throw new Error("Invalid input: All parameters (id, userId, categoryData) are required.");
+    }
+
+    const categoryRef = collection(db, "UserCategories");
+
+    // Query to find documents matching all criteria
     const q = query(
       categoryRef,
-      where('userId', '==', userId), // Match category by user ID
-      where('name', '==', data.name),
-      where('type', '==', data.type)
+      where("id", "==", id),
+      where("userId", "==", userId),
+      where("name", "==", categoryData.name),
+      where("type", "==", categoryData.type)
     );
 
     const querySnapshot = await getDocs(q);
 
-    if (!querySnapshot.empty) {
-      const deletePromises = querySnapshot.docs.map(docSnapshot =>
-        deleteDoc(doc(db, 'Category', docSnapshot.id))
-      );
-
-      await Promise.all(deletePromises);
-
-      console.log(`Category with name: ${data.name}, type: ${data.type}, userId: ${userId} deleted successfully.`);
-      return { success: true };
-    } else {
-      console.warn('No matching category found for deletion.');
-      return { success: false, message: 'No matching category found.' };
+    if (querySnapshot.empty) {
+      console.warn("No matching category found for deletion.");
+      return { success: false, message: "No matching category found." };
     }
+
+    // Delete all matching documents
+    const deletePromises = querySnapshot.docs.map((docSnapshot) =>
+      deleteDoc(doc(db, "UserCategories", docSnapshot.id)) // Delete using doc ID
+    );
+
+    await Promise.all(deletePromises);
+
+    console.log(`Category with id: ${id} deleted successfully.`);
+    return { success: true };
   } catch (error) {
-    console.error('Error deleting category:', error.message);
-    throw new Error(`Error deleting category: ${error.message}`);
+    console.error("Error deleting category:", error.message);
+    return { success: false, message: `Error deleting category: ${error.message}` };
   }
 }
-
-
-
-
-
-
-
