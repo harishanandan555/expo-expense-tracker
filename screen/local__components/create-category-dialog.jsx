@@ -204,13 +204,11 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useForm, Controller } from 'react-hook-form';
 import EmojiSelector, { Categories } from 'react-native-emoji-selector';
 import Toast from 'react-native-toast-message';
-
-import { getUserByEmail, storeCategory, updateCategoryAttempts, deleteCategoryByUserId } from "../services/firebaseSettings"
-// import { CreateCategory } from "../actions/categories.action";
-
 import * as Yup from 'yup';
 
-// import { getUserByEmail, storeCategory, updateCategoryAttempts, deleteCategoryByUserId } from "../services/firebaseSettings"
+import { db, auth } from "../../config/firebaseConfig";
+import { getUserByEmail, storeUserCategories, updateCategoryAttempts, deleteCategoryByUserId } from "../services/firebaseSettings"
+// import { CreateCategory } from "../actions/categories.action";
 import { hasSubscription } from "../services/stripe.services";
 
 // Define a schema using Yup for validation
@@ -220,243 +218,8 @@ const CreateCategorySchema = Yup.object().shape({
     type: Yup.string().oneOf(['income', 'expense'], 'Invalid category type').required('Type is required'),
 });
 
-
-const DeleteCategorySchema = Yup.object().shape({
-  name: Yup.string().min(3, 'Name must be at least 3 characters').max(20, 'Name must be less than 20 characters').required('Name is required'),
-  type: Yup.mixed().oneOf(['income', 'expense'], 'Type must be either "income" or "expense"').required('Type is required'),
-});
-
-// export const CreateCategoryDialog = ({ type, onSuccessCallback }) => {
-    
-//     const [open, setOpen] = useState(false);
-//     const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
-//     const { control, handleSubmit, formState: { isValid, isSubmitting }, watch, reset } = useForm({
-//         defaultValues: {
-//             name: "",
-//             icon: "",
-//             type,
-//         },
-//     });
-
-
-    
-//     const onSubmit = useCallback(
-//         async (values) => {
-
-//             Toast.show({
-//                 type: 'info',
-//                 text1: 'Creating Category...',
-//             });
-
-//             try {
-//                 console.log(values)
-//                 const response = await CreateCategory(values);
-
-//                 // Show success message
-//                 Toast.show({
-//                     type: 'success',
-//                     text1: `Category ${response.name} created successfully!`,
-//                 });
-
-//                 onSuccessCallback(response);
-//                 reset(); // Reset the form
-//                 setOpen(false); // Close the dialog
-
-//             } catch (error) {
-//                 // Show error message
-//                 Toast.show({
-//                     type: 'error',
-//                     text1: 'Failed to create category',
-//                     text2: error?.message || 'Please try again.',
-//                 });
-//             }
-//         },
-//         [onSuccessCallback, reset]
-//     );
-
-//     const createCategory = async (value) => {
-
-//         console.log("111 - Incoming value:", value); // Log the value before validation
-      
-//         try {
-
-//             // Validate the value
-//             const parsedBody = await CreateCategorySchema.validate(value, { abortEarly: false });
-            
-//             console.log("Validated value:", parsedBody);
-        
-//             if (!parsedBody.success) {
-//                 throw new Error(parsedBody.error.message);
-//             }
-        
-//             const { name, icon, type } = parsedBody;
-        
-//             console.log("Parsed and validated values:", { name, icon, type });
-        
-        
-//             // const user = await getCurrentUser();
-        
-//             // if (!user) {
-//             //   // Return an object indicating that the user should be redirected to sign in
-//             //   return { error: true, redirect: "/auth/sign-in" };
-//             // }
-        
-//             const hasAccess = await hasSubscription();
-        
-//             if (!hasAccess && user.categoriesAttemps === 0) {
-//                 return { error: true, redirect: "/upgrade?categoriesLimit=true" };
-//             }
-        
-//             let data = {
-//                 name: name,
-//                 icon: icon,
-//                 type: type,
-//             };
-        
-//             // Store category
-//             const categories = await storeCategory(userId, data);
-        
-//             // Update category attempts
-//             await updateCategoryAttempts(userId, hasAccess ? 0 : -1); // Pass -1 to decrement
-        
-//             return { categories };
-//         } catch (error) {
-//           console.error("Error during category creation:", error);
-//           throw error;
-//         }
-      
-//     }
-
-//     return (
-//         <>
-//             {/* Trigger Button */}
-//             <TouchableOpacity
-//                 style={styles.triggerButton}
-//                 onPress={() => setOpen(true)}
-//             >
-//                 <Text style={styles.triggerButtonText}>Create New</Text>
-//             </TouchableOpacity>
-
-//             {/* Dialog Content */}
-//             <Modal visible={open} transparent animationType="slide">
-//                 <View style={styles.modalOverlay}>
-//                     <View style={styles.dialogContainer}>
-//                         <Text style={styles.dialogTitle}>
-//                             Create{" "}
-//                             <Text
-//                                 style={[
-//                                     styles.dialogType,
-//                                     type === "income"
-//                                         ? styles.incomeColor
-//                                         : styles.expenseColor,
-//                                 ]}
-//                             >
-//                                 {type}
-//                             </Text>{" "}
-//                             Category
-//                         </Text>
-//                         <Text style={styles.dialogDescription}>
-//                             Categories are used to group your transactions.
-//                         </Text>
-
-//                         {/* Form */}
-//                         <View style={styles.formContainer}>
-//                             {/* Name Field */}
-//                             <Controller
-//                                 control={control}
-//                                 name="name"
-//                                 render={({ field: { onChange, value } }) => (
-//                                     <View style={styles.formField}>
-//                                         <Text style={styles.fieldLabel}>Name</Text>
-//                                         <TextInput
-//                                             style={styles.textInput}
-//                                             placeholder="Category"
-//                                             onChangeText={onChange}
-//                                             value={value}
-//                                         />
-//                                         <Text style={styles.fieldDescription}>
-//                                             This is how your category will appear.
-//                                         </Text>
-//                                     </View>
-//                                 )}
-//                             />
-
-//                             {/* Icon Field */}
-//                             <Controller
-//                                 control={control}
-//                                 name="icon"
-//                                 render={({ field: { onChange, value } }) => (
-//                                     <View style={styles.formField}>
-//                                         <Text style={styles.fieldLabel}>Icon</Text>
-//                                         <TouchableOpacity
-//                                             style={styles.iconPicker}
-//                                             onPress={() => setIsEmojiPickerOpen(true)}
-//                                         >
-//                                             {value ? (
-//                                                 <View style={styles.iconPreview}>
-//                                                     <Text style={styles.iconText}>{value}</Text>
-//                                                     <Text>Click To Select Icon</Text>
-//                                                 </View>
-//                                             ) : (
-//                                                 <View style={styles.iconPreview}>
-//                                                     <Text style={styles.iconPlaceholder}>⛔</Text>
-//                                                     <Text>Click To Select Icon</Text>
-//                                                 </View>
-//                                             )}
-//                                         </TouchableOpacity>
-//                                         {isEmojiPickerOpen && (
-//                                             <View style={styles.emojiSelectorContainer}>
-//                                                 <EmojiSelector
-//                                                     onEmojiSelected={(emoji) => {
-//                                                         onChange(emoji);
-//                                                         setIsEmojiPickerOpen(false);
-//                                                     }}
-//                                                     category={Categories.Smileys}
-//                                                 />
-//                                             </View>
-//                                         )}
-//                                         <Text style={styles.fieldDescription}>
-//                                             This Icon will appear in the category.
-//                                         </Text>
-//                                     </View>
-//                                 )}
-//                             />
-//                         </View>
-
-//                         {/* Dialog Footer */}
-//                         <View style={styles.footer}>
-//                             <TouchableOpacity
-//                                 style={styles.cancelButton}
-//                                 onPress={() => setOpen(false)}
-//                             >
-//                                 <Text style={styles.cancelButtonText}>Cancel</Text>
-//                             </TouchableOpacity>
-//                             <TouchableOpacity
-//                                 style={[
-//                                     styles.saveButton,
-//                                     (!isValid || isSubmitting) && styles.saveButtonDisabled,
-//                                 ]}
-//                                 onPress={handleSubmit(onSubmit)}
-//                                 disabled={!isValid || isSubmitting}
-//                             >
-//                                 {isSubmitting ? (
-//                                     <ActivityIndicator color="#fff" />
-//                                 ) : (
-//                                     <Text style={styles.saveButtonText}>Save</Text>
-//                                 )}
-//                             </TouchableOpacity>
-//                         </View>
-//                     </View>
-//                 </View>
-//             </Modal>
-
-//             {/* Toast Notifications */}
-//             <Toast />
-//         </>
-//     );
-// };
-
 export const CreateCategoryDialog = ({ type, onSuccessCallback }) => {
+  
     const [open, setOpen] = useState(false);
     const [userId, setUserId] = useState(null);
     const [userEmail, setUserEmail] = useState(null);
@@ -470,13 +233,12 @@ export const CreateCategoryDialog = ({ type, onSuccessCallback }) => {
       },
     });
 
-
+    
     useEffect(() => {
         const fetchUserEmail = async () => {
             const userId = await AsyncStorage.getItem("userId");
             const email = await AsyncStorage.getItem("userEmail");
             const userInfo = await AsyncStorage.getItem("userInfo");
-            console.log(userId, email, userInfo)
             setUserId(userId); // Set email for later use in database
             setUserEmail(email); // Set email for later use in database
             setUserInfo(userInfo); // Set email for later use in database
@@ -495,10 +257,7 @@ export const CreateCategoryDialog = ({ type, onSuccessCallback }) => {
   
         try {
 
-            console.log("Form values:", values); // Log form values
             const response = await createCategory(values); // Call the correct function to create category
-    
-            console.log("Response:", response); // Log the response from the createCategory function
     
             // Show success message with category name
             Toast.show({
@@ -514,7 +273,6 @@ export const CreateCategoryDialog = ({ type, onSuccessCallback }) => {
             setOpen(false);
   
         } catch (error) {
-          // Handle error during category creation
           console.error("Error:", error);
           Toast.show({
             type: 'error',
@@ -526,13 +284,10 @@ export const CreateCategoryDialog = ({ type, onSuccessCallback }) => {
     );
   
     const createCategory = async (value) => {
-        console.log("111 - Incoming value:", value); // Log the value before validation
     
         try {
             // Validate the value
             const parsedBody = await CreateCategorySchema.validate(value, { abortEarly: false });
-    
-            console.log("Validated value:", parsedBody);
     
             // Assuming the schema returns an object with an error property if invalid:
             if (parsedBody && parsedBody.errors && parsedBody.errors.length > 0) {
@@ -541,17 +296,11 @@ export const CreateCategoryDialog = ({ type, onSuccessCallback }) => {
     
             const { name, icon, type } = parsedBody;
     
-            console.log("Parsed and validated values:", { name, icon, type });
+            // const hasAccess = await hasSubscription();
     
-            const hasAccess = await hasSubscription();
-    
-            if (!hasAccess && user.categoriesAttemps === 0) {
-                return { error: true, redirect: "/upgrade?categoriesLimit=true" };
-            }
-            
-            console.log("data value:", data);
-
-
+            // if (!hasAccess && user.categoriesAttemps === 0) {
+            //     return { error: true, redirect: "/upgrade?categoriesLimit=true" };
+            // }
             
             let data = {
                 name: name,
@@ -559,20 +308,23 @@ export const CreateCategoryDialog = ({ type, onSuccessCallback }) => {
                 type: type,
             };
 
-            console.log("data and validated values:", { name, icon, type });
-
+            // let userid = "nVjoGRXNbUcaxDH5O5SNMhXc6rB2"
+            // let userid = "o3MEsCK23MN48AcgyYaMNwe0xYP2"
+            console.log("userId1: ", userId)
+            const userid = auth.currentUser?.uid;
+            console.log("userId2: ", userid)
             // Store category
-            const categories = await storeCategory(userId, data);
+            const categories = await storeUserCategories(userid, data);
     
             // Update category attempts
-            await updateCategoryAttempts(userId, hasAccess ? 0 : -1); // Pass -1 to decrement
+            // await updateCategoryAttempts(userId, hasAccess ? 0 : -1); // Pass -1 to decrement
     
             return { categories };
 
         } catch (error) {
             console.error("Error during category creation:", error);
             // Log detailed error message
-            throw new Error(error?.message || 'An unknown error occurred');
+            // throw new Error(error?.message || 'An unknown error occurred');
         }
     };
   

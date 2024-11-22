@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@expo/metro-runtime": "~3.2.3",
+    "@firebase/firestore": "^4.7.5",
     "@react-native-async-storage/async-storage": "1.23.1",
     "@react-native-community/datetimepicker": "8.0.1",
     "@react-native-community/masked-view": "^0.1.11",
@@ -53,7 +54,6 @@
     "firebase": "^11.0.1",
     "json2csv": "^6.0.0-alpha.2",
     "jsonwebtoken": "^9.0.2",
-    "lucide-react-native": "^0.456.0",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-hook-form": "^7.53.2",
@@ -85,6 +85,7 @@
     "react-query": "^3.39.3",
     "stripe": "^17.3.1",
     "tailwind-merge": "^2.5.4",
+    "text-encoding": "^0.7.0",
     "yup": "^1.4.0",
     "zod": "^3.23.8"
   },
