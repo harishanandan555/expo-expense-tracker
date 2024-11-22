@@ -793,8 +793,8 @@ const DashboardScreen = () => {
                     </View>
                     <View
                         style={{
-                            marginTop: 40, 
-                            padding: 20,
+                          marginRight:10,
+                            padding: 10,
                             borderRadius: 10,
                             backgroundColor: cardBackgroundColor, // Dark background for better contrast
                             alignItems: 'center',
@@ -821,30 +821,37 @@ const DashboardScreen = () => {
                                 );
                             }}
                             barBorderRadius={6}
-                            yAxisThickness={2} // Y-axis line thickness
+                            yAxisThickness={1.5} // Y-axis line thickness
                             yAxisColor="#fff" // Y-axis line color
-                            xAxisThickness={2} // X-axis line thickness
-                            xAxisColor="#fff" // X-axis line color
-                            noOfSections={5} // Divide y-axis into 5 sections
-                            maxValue={yAxisStep * 7} // Adjust the y-axis range
+                            xAxisThickness={1.5} // X-axis line thickness
+                            xAxisColor="#fff" 
+                            yAxisStepValue={5000} 
+                            // X-axis line color
+                            noOfSections={8} // Divide y-axis into 5 sections
+                            maxValue={Math.max(totalIncome, totalExpense, balance) + 5000} // Close to the highest value
                             yAxisTextStyle={{ color: textColor, fontSize: 12 }} // Customize y-axis labels
                             xAxisLabelTextStyle={{ color: textColor, fontSize: 12 }} // Customize x-axis labels
                             height={500} // Chart height
+                            yAxisLabelContainerStyle={{
+                                marginRight: 10, // Add a gap between the Y-axis line and labels
+                            }}
                             isAnimated
                             side="right"
                             barStyle={{
                               
 
-                                shadowColor: '#fc84ff',
-                                shadowOffset: { width: 0, height: 4 },
-                                shadowOpacity: 1,
-                                shadowRadius: 8,
-                                elevation: 10,
+                                borderWidth: 0,
+                                shadowColor: '#999',
+                                shadowOffset: { width: 0, height: 2 },
+                                shadowOpacity: 0.8,
+                                shadowRadius: 6,
+                                elevation: 8,
                             }}
-                            hideRules
+                           
                             initialSpacing={20}
-                            barMarginBottom={10}//
+                            barMarginBottom={5}//
                             Enable animation
+                            spacing={20}
              
                         />
                     </View>
