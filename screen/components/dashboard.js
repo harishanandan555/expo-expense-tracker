@@ -793,7 +793,7 @@ const DashboardScreen = () => {
                     </View>
                     <View
                         style={{
-                            marginTop: 60, 
+                            marginTop: 40, 
                             padding: 20,
                             borderRadius: 10,
                             backgroundColor: cardBackgroundColor, // Dark background for better contrast
@@ -825,13 +825,13 @@ const DashboardScreen = () => {
                             yAxisColor="#fff" // Y-axis line color
                             xAxisThickness={2} // X-axis line thickness
                             xAxisColor="#fff" // X-axis line color
-                            noOfSections={6} // Divide y-axis into 5 sections
+                            noOfSections={5} // Divide y-axis into 5 sections
                             maxValue={yAxisStep * 7} // Adjust the y-axis range
                             yAxisTextStyle={{ color: textColor, fontSize: 12 }} // Customize y-axis labels
                             xAxisLabelTextStyle={{ color: textColor, fontSize: 12 }} // Customize x-axis labels
-                            height={300} // Chart height
+                            height={500} // Chart height
                             isAnimated
-
+                            side="right"
                             barStyle={{
                               
 
@@ -841,7 +841,7 @@ const DashboardScreen = () => {
                                 shadowRadius: 8,
                                 elevation: 10,
                             }}
-
+                            hideRules
                             initialSpacing={20}
                             barMarginBottom={10}//
                             Enable animation
