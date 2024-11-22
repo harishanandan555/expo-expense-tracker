@@ -1,11 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { SQLiteProvider } from 'expo-sqlite/next';
-import { ActivityIndicator, Text, View } from 'react-native';
-;
+import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-
 import Landing from './screen/landing';
 import SignInPage from './screen/auth/signin';
 import DashboardScreen from './screen/components/dashboard';
@@ -18,18 +14,15 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import PhoneAuth from './screen/auth/phoneAuth';
 import EmailAuth from './screen/auth/emailAuth';
 
-
+// import ThemeProvider, { useTheme } from './context/ThemeContext';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
 export default function App() {
 
-  
- 
-
   return (
-   
+    // <ThemeProvider>
         <NavigationContainer>
           {/* testing settingScreen */}
           {/* <Stack.Navigator initialRouteName="Settings">
@@ -51,14 +44,14 @@ export default function App() {
             <Stack.Screen name="EmailAuthentication" options={{ headerShown: false }} component={EmailAuth} />
           </Stack.Navigator>
         </NavigationContainer>
-      
+        // </ThemeProvider>
   );
 }
 
-
-
 function MainTabNavigator({ route }) {
   const email = route.params?.email;
+
+  // const { isDarkMode } = useTheme();
 
   return (
     <Tab.Navigator
@@ -74,23 +67,9 @@ function MainTabNavigator({ route }) {
         },
       })}
     >
-      <Tab.Screen
-        name="Dashboard"
-        component={DashboardScreen}
-        options={{ headerShown: false }}
-        initialParams={{ email }} // Pass email to Dashboard
-      />
-      <Tab.Screen
-        name="Transactions"
-        component={TransactionScreen}
-        options={{ headerShown: false }}
-        initialParams={{ email }} // Pass email to Transactions
-      />
-      <Tab.Screen
-        name="Settings"
-        component={SettingScreen}
-        options={{ headerShown: false }}
-      />
+      <Tab.Screen name="Dashboard" component={DashboardScreen} options={{ headerShown: false }} initialParams={{ email }} />
+      <Tab.Screen name="Transactions" component={TransactionScreen} options={{ headerShown: false }} initialParams={{ email }} />
+      <Tab.Screen name="Settings"  component={SettingScreen} options={{ headerShown: false }} initialParams={{ email }}/>
     </Tab.Navigator>
   );
 }
@@ -109,7 +88,7 @@ const styles = StyleSheet.create({
     tintColor: '#fff',
   },
   tabLabel: {
-    color: '#fff',
+    // color: '#fff',
     fontSize: 12,
   },
 });

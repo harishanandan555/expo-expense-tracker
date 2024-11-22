@@ -12,7 +12,7 @@ import Icon from "react-native-vector-icons/MaterialIcons";
 import { useNavigation } from '@react-navigation/native';
 import { auth, db } from "../../config/firebaseConfig";
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { updateDoc, arrayRemove, doc, getDoc, collection, setDoc,getDocs,deleteDoc } from 'firebase/firestore';
 import Header from './header';
 
 const themes = {
@@ -79,11 +79,21 @@ const themes = {
 // `;
 // }
 
+export const isMatchingTransaction = (item, transaction) => {
+  return (
+    item.amount === transaction.amount &&
+    item.category === transaction.category &&
+    item.date === transaction.date &&
+    item.description === transaction.description &&
+    item.type === transaction.type
+  );
+};
+
+
 const TransactionScreen = () => {
   const [theme, setTheme] = useState('dark');
   const [selectedCategory, setSelectedCategory] = useState("Category");
   const [selectedType, setSelectedType] = useState("Type");
-  // const [transactionsData, setTransactionsData] = useState([]); 
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
   const [noTransactionsMessage, setNoTransactionsMessage] = useState("");
@@ -96,35 +106,19 @@ const TransactionScreen = () => {
   
   const navigation = useNavigation();
 
-  // useEffect(() => {
-  //   const unsubscribe = auth.onAuthStateChanged((user) => {
-  //     if (user) {
-  //       fetchTransactions(user.uid);
-  //     } else {
-  //       setTransactionsData([]);
-  //     }
-  //   });
-  
-  //   return () => unsubscribe();
-  // }, []);
-
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        fetchTransactions(user.uid);
-        if (userDoc.exists()) {
-          const transactions = userDoc.data().transactions || [];
-          setTransactionsData(transactions);
-        }
+        await fetchTransactions(user.uid);
+        // await copyDataToHistory(user.uid); // Call to copy data to History
       } else {
         setTransactionsData([]);
       }
     });
     return unsubscribe;
   }, []);
-
-
+  
+  
   const fetchTransactions = async (uid) => {
     try {
       const userDocRef = doc(db, 'users', uid);
@@ -141,18 +135,21 @@ const TransactionScreen = () => {
           ...expenseData.map(item => ({ ...item, type: 'Expense' })),
         ];
   
-      console.log("Fetched transactions in fetchTransactions fn:", allTransactions);
-      // Extract unique categories and transaction types
-      const uniqueCategories = [...new Set(allTransactions.map(item => item.category))];
-      const uniqueTransactionTypes = ['Type', 'Income', 'Expense'];
-      
-      setTransactionsData(allTransactions);
-      setCategories(uniqueCategories);
-      setTransactionTypes(uniqueTransactionTypes);
-        // const formattedTransactions = allTransactions.map(item => ({
-        //   ...item,
-        //   date: new Date(item.timestamp.seconds * 1000).toLocaleString(),
-        // }));
+        // Set transactions data only if it's not empty
+        if (allTransactions.length > 0) {
+          setTransactionsData(allTransactions);
+          console.log("Fetched transactions in fetchTransactions fn:", allTransactions);
+        } else {
+          setNoTransactionsMessage("No transactions found.");
+          setTransactionsFound(false);
+        }
+  
+        // Extract unique categories and transaction types
+        const uniqueCategories = [...new Set(allTransactions.map(item => item.category))];
+        const uniqueTransactionTypes = ['Type', 'Income', 'Expense'];
+  
+        setCategories(uniqueCategories);
+        setTransactionTypes(uniqueTransactionTypes);
   
         if (allTransactions.length === 0) {
           setNoTransactionsMessage("No transactions found.");
@@ -161,6 +158,8 @@ const TransactionScreen = () => {
           setNoTransactionsMessage("");
           setTransactionsFound(true);
         }
+
+
       } else {
         setNoTransactionsMessage("User data not found.");
         setTransactionsFound(false);
@@ -172,7 +171,49 @@ const TransactionScreen = () => {
     }
   };
   
-   // Determine colors based on the theme
+  // const copyDataToHistory = async (uid) => {
+  //   try {
+  //     const userDocRef = doc(db, 'users', uid);
+  //     const userDoc = await getDoc(userDocRef);
+  
+  //     if (userDoc.exists()) {
+  //       const userData = userDoc.data();
+  
+  //       if (!userData.income || !userData.expenses) {
+  //         console.log("No income or expenses data found.");
+  //         return;
+  //       }
+  
+  //       const historyData = [
+  //         ...userData.income.map(item => ({ ...item, type: 'Income' })),
+  //         ...userData.expenses.map(item => ({ ...item, type: 'Expense' })),
+  //       ];
+  
+  //       const historyCollectionRef = collection(db, 'History', uid, 'transactions');
+  
+  //       const querySnapshot = await getDocs(historyCollectionRef);
+  //       const deletePromises = querySnapshot.docs.map(doc => deleteDoc(doc.ref));
+  //       await Promise.all(deletePromises);
+  
+  //       const addPromises = historyData.map(async (transaction) => {
+  //         const docRef = doc(historyCollectionRef);
+  //         await setDoc(docRef, {
+  //           ...transaction,
+  //           id: docRef.id,
+  //         });
+  //       });
+  //       await Promise.all(addPromises);
+  
+  //       console.log("History collection updated successfully.");
+  //     } else {
+  //       console.log("No user data found.");
+  //     }
+  //   } catch (error) {
+  //     console.log("Error updating History collection: ", error);
+  //   }
+  // };
+  
+
    const isDarkMode = theme === 'dark';
    const backgroundColor = isDarkMode ? '#000' : '#fff';
    const textColor = isDarkMode ? '#fff' : '#000';
@@ -217,36 +258,182 @@ const TransactionScreen = () => {
     return filtered;
   };
 
-  const deleteTransaction = (id) => {
+  const deleteTransaction = async (transaction) => {
+    const user = auth.currentUser;
+    if (!user) {
+      Alert.alert("Error", "User not authenticated.");
+      return;
+    }
+  
+    const userDocRef = doc(db, 'users', user.uid);
+  
     Alert.alert(
-      "Delete Transaction",
-      "Are you sure you want to delete this transaction?",
+      "Confirm Deletion",
+      `Are you sure you want to delete this ${transaction.type}?`,
       [
-        { text: "Cancel", style: "cancel" },
         {
-          text: "OK",
-          onPress: () =>
-            setTransactionsData(transactionsData.filter((transaction) => transaction.id !== id)),
+          text: "Cancel",
+          style: "cancel"
         },
+        {
+          text: "Delete",
+          onPress: async () => {
+            try {
+              // Log the transaction to be deleted
+              console.log("Deleting transaction:", transaction);
+  
+              // Fetch the user's document
+              const userDocSnapshot = await getDoc(userDocRef);
+              if (userDocSnapshot.exists()) {
+                // Get the user's expenses and income arrays
+                const expenses = userDocSnapshot.data().expenses || [];
+                const income = userDocSnapshot.data().income || [];
+  
+                // Find the index of the transaction to be removed from the appropriate array
+                const transactionIndex = transaction.type === 'expense'
+                  ? expenses.findIndex(
+                      (item) =>
+                        item.amount === transaction.amount &&
+                        item.category === transaction.category &&
+                        item.date === transaction.date &&
+                        item.description === transaction.description &&
+                        item.icon === transaction.icon
+                    )
+                  : income.findIndex(
+                      (item) =>
+                        item.amount === transaction.amount &&
+                        item.category === transaction.category &&
+                        item.date === transaction.date &&
+                        item.description === transaction.description &&
+                        item.icon === transaction.icon
+                    );
+  
+                if (transactionIndex !== -1) {
+                  // Remove the transaction from the appropriate array
+                  if (transaction.type === 'expense') {
+                    expenses.splice(transactionIndex, 1);
+                    await updateDoc(userDocRef, { expenses });
+                  } else {
+                    income.splice(transactionIndex, 1);
+                    await updateDoc(userDocRef, { income });
+                  }
+  
+                  console.log("Transaction deleted successfully.");
+  
+                  // Update local state
+                  setTransactionsData(prevTransactions =>
+                    prevTransactions.filter(
+                      (item) =>
+                        !(
+                          item.amount === transaction.amount &&
+                          item.category === transaction.category &&
+                          item.date === transaction.date &&
+                          item.description === transaction.description &&
+                          item.icon === transaction.icon
+                        )
+                    )
+                  );
+  
+                  Alert.alert("Success", "Transaction deleted successfully.");
+                } else {
+                  // If the transaction is not found, update the local state to remove it
+                  setTransactionsData(prevTransactions =>
+                    prevTransactions.filter(
+                      (item) =>
+                        !(
+                          item.amount === transaction.amount &&
+                          item.category === transaction.category &&
+                          item.date === transaction.date &&
+                          item.description === transaction.description &&
+                          item.icon === transaction.icon
+                        )
+                    )
+                  );
+             
+                  Alert.alert("Error", "Transaction not found.");
+                }
+              } else {
+                console.error("User document not found in Firestore.");
+                Alert.alert("Error", "User document not found.");
+              }
+            } catch (error) {
+              console.error("Error deleting transaction: ", error);
+              Alert.alert("Error", "Could not delete transaction.");
+            }
+          }
+        }
       ]
     );
   };
-
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+  
+  // const deleteTransaction = async (transaction) => {
+  //   const user = auth.currentUser;
+  //   if (!user) {
+  //     Alert.alert("Error", "User not authenticated.");
+  //     return;
+  //   }
+  
+  //   const userDocRef = doc(db, 'users', user.uid);
+  //   Alert.alert(
+  //     "Confirm Deletion",
+  //     `Are you sure you want to delete this ${transaction.type}?`,
+  //     [
+  //       { text: "Cancel", style: "cancel" },
+  //       {
+  //         text: "Delete",
+  //         onPress: async () => {
+  //           try {
+  //             const userDocSnapshot = await getDoc(userDocRef);
+  //             if (userDocSnapshot.exists()) {
+  //               const userData = userDocSnapshot.data();
+  //               const transactions = transaction.type === 'Expense' ? userData.expenses : userData.income;
+  
+  //               const index = transactions.findIndex(item => isMatchingTransaction(item, transaction));
+  //               if (index !== -1) {
+  //                 transactions.splice(index, 1);
+  
+  //                 await updateDoc(userDocRef, {
+  //                   [transaction.type === 'Expense' ? 'expenses' : 'income']: transactions,
+  //                 });
+  
+  //                 setTransactionsData(prev =>
+  //                   prev.filter(item => !isMatchingTransaction(item, transaction))
+  //                 );
+  
+  //                 Alert.alert("Success", "Transaction deleted successfully.");
+  //               } else {
+  //                 Alert.alert("Error", "Transaction not found.");
+  //               }
+  //             } else {
+  //               Alert.alert("Error", "User document not found.");
+  //             }
+  //           } catch (error) {
+  //             console.error("Error deleting transaction:", error);
+  //             Alert.alert("Error", "Could not delete transaction.");
+  //           }
+  //         },
+  //       },
+  //     ]
+  //   );
+  // };
+  
+  
+  
+  const formatDate = (date) => {
+    return format(new Date(date), 'yyyy-MM-dd');
   };
 
   const renderTransactionItem = ({ item }) => (
-    <View style={styles.transactionItem}>
-      <Text style={styles.transactionCategory}>{item.category}</Text>
-      <Text style={styles.transactionDescription}>{item.description}</Text>
-      <Text style={styles.transactionDate}>{item.date}</Text>
-      <Text style={styles.transactionType}>{item.type}</Text>
-      <Text style={styles.transactionAmount}>{item.amount}</Text>
-      <TouchableOpacity onPress={() => deleteTransaction(item.id)}>
-        <Icon name="delete" size={24} color="#FF0000" />
-      </TouchableOpacity>
+    <View style={[styles.transactionItem, { backgroundColor: themes[theme].transactionBackground }]}>
+      <Text style={[styles.transactionCategory, { color: themes[theme].transactionText }]}>{item.category}</Text>
+      <Text style={[styles.transactionDescription, { color: themes[theme].transactionText }]}>{item.description}</Text>
+      <Text style={[styles.transactionDate, { color: themes[theme].transactionText }]}>{formatDate(item.date)}</Text>
+      <Text style={[styles.transactionType, { color: themes[theme].transactionText }]}>{item.type}</Text>
+      <Text style={[styles.transactionAmount, { color: themes[theme].transactionText }]}>{item.amount}</Text>
+      
+      <TouchableOpacity onPress={() => deleteTransaction(item)}>
+      <Icon name="delete" size={24} color="#FF0000" />
+     </TouchableOpacity>
     </View>
   );
 
@@ -486,7 +673,7 @@ const TransactionScreen = () => {
         {/* Transactions Table Header */}
         <View style={[ styles.tableHeader,  { backgroundColor: themes[theme].tableHeaderBackground }]}>
           <Text style={[  styles.headerText,{ color: themes[theme].tableHeaderText }, ]}>Category</Text>
-          <Text style={[ styles.headerText,{ color: themes[theme].tableHeaderText }, ]}>Description</Text>
+          <Text style={[ styles.headerText, { color: themes[theme].tableHeaderText }, ]}>Description</Text>
           <Text  style={[ styles.headerText, { color: themes[theme].tableHeaderText }, ]}> Date </Text>
           <Text  style={[ styles.headerText,  { color: themes[theme].tableHeaderText },  ]}>Type </Text>
           <Text  style={[ styles.headerText,   { color: themes[theme].tableHeaderText },]}>Amount </Text>
@@ -500,6 +687,7 @@ const TransactionScreen = () => {
         <FlatList
           data={filterTransactions()}
           keyExtractor={(item) => item.id}
+          // keyExtractor={(item) => `${item.category}-${item.amount}-${item.date}-${item.description}`}
           renderItem={renderTransactionItem}
           contentContainerStyle={styles.listContainer}
         />
