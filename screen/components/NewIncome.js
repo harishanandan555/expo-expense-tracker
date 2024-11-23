@@ -8,21 +8,23 @@ import {
     Switch,
     Modal,
     Alert,
+    FlatList
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons'; // For icons
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { format } from 'date-fns'; // For date formatting
 import EmojiSelector from 'react-native-emoji-selector'; // For emoji picking
-import { useSQLiteContext } from 'expo-sqlite/next'; // Import SQLite context
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getDefaultCategories } from '../services/firebaseSettings';
+import { collection, doc, getDoc, setDoc } from 'firebase/firestore';
+import { db } from '../../config/firebaseConfig';
 
 
-
-
-const NewIncomeScreen = ({ navigation }) => {
+const NewIncomeScreen = ({ navigation, route }) => {
     const [transactionDate, setTransactionDate] = useState(new Date());
     const [isDatePickerVisible, setDatePickerVisible] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState(null);
+    const [Categories, setCategories] = useState(null);
     const [newCategory, setNewCategory] = useState('');
     const [transactionAmount, setTransactionAmount] = useState('');
     const [transactionDescription, setTransactionDescription] = useState('');
@@ -44,13 +46,14 @@ const NewIncomeScreen = ({ navigation }) => {
     const buttonTextColor = '#fff';
     const cancelButtonColor = isDarkMode ? '#444' : '#ddd';
 
-
-    const db = useSQLiteContext();
+    const { type } = route.params || {}; // Extract the 'type' parameter
+    console.log("Type:", type); 
 
     const handleDateConfirm = (date) => {
         setTransactionDate(date);
         setDatePickerVisible(false);
     };
+
 
 
     const toggleDarkMode = () => setIsDarkMode(!isDarkMode);
@@ -69,63 +72,14 @@ const NewIncomeScreen = ({ navigation }) => {
         }
     };
 
-    const getData = async () => {
-        try {
-            const result = await db.getAllAsync('SELECT * FROM incomes');
-            console.log("Query Result Structure:", result);
-            console.log("Fetched income data:", result.rows ? result.rows._array : result); // Check if result.rows exists and has _array
-        } catch (error) {
-            console.error('Error fetching data:', error);
-        }
-    };
-    
-    
-    useEffect(() => {
-        const fetchUserEmail = async () => {
-            const email = await AsyncStorage.getItem("userEmail");
-            setUserEmail(email); // Set email for later use in database
-        };
-
-        const initializeDatabase = async () => {
-            try {
-                await db.runAsync(`
-                    CREATE TABLE IF NOT EXISTS incomes (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                       
-                        description TEXT,
-                        amount REAL,
-                        category TEXT,
-                        date TEXT
-                    )
-                `);
-                setDbLoaded(true);
-            } catch (error) {
-                console.error('Error initializing database:', error);
-            }
-        };
-
-        fetchUserEmail();
-        initializeDatabase();
-    }, [db]);
-  
-    
 
 
 
-    useEffect(() => {
-        const initializeAndCheckSchema = async () => {
-            await initializeDatabase();
 
-            await getData();
 
-        };
 
-        initializeAndCheckSchema();
-    }, [db]);
 
-    if (!dbLoaded) {
-        return <Text>Loading database...</Text>;
-    }
+
 
 
 
@@ -136,32 +90,114 @@ const NewIncomeScreen = ({ navigation }) => {
         }
 
         try {
-            const result = await db.runAsync(
-                'INSERT INTO incomes (email, description, amount, category, date) VALUES (?, ?, ?, ?)',
-                [
-                     // Insert the retrieved email directly into the table
-                    transactionDescription,
-                    parseFloat(transactionAmount),
-                    selectedCategory,
-                    transactionDate.toISOString(),
-                ]
-            );
-
-            if (result && result.rowsAffected > 0) {
-                Alert.alert('Success', 'Income transaction saved successfully!');
-                setTransactionDescription('');
-                setTransactionAmount('');
-                setSelectedCategory(null);
-                navigation.navigate('main', { refresh: true });
+            // Retrieve userId
+            const userId = await AsyncStorage.getItem('userId');
+            if (!userId) {
+                Alert.alert('Error', 'User ID not found. Please sign in again.');
+                return;
             }
+
+            console.log('Retrieved userId:', userId);
+
+            // Get a reference to the "users" collection
+            const usersCollection = collection(db, 'users');
+            console.log('Users Collection Reference:', usersCollection);
+
+            // Get a reference to the specific user document
+            const userRef = doc(usersCollection, userId);
+            console.log('User Document Reference:', userRef);
+            console.log('Firestore Instance:', db);
+
+            // Prepare new income transaction
+            const newIncome = {
+                description: transactionDescription,
+                amount: parseFloat(transactionAmount),
+                category: selectedCategory,
+                icon: selectedIcon,
+                date: transactionDate.toISOString(),
+            };
+
+            // Fetch existing user data
+            const userDoc = await getDoc(userRef);
+            if (userDoc.exists()) {
+                const existingIncome = userDoc.data()?.income || [];
+                console.log('Existing Income:', existingIncome);
+
+                const updatedIncome = [...existingIncome, newIncome];
+                console.log('Updated Income to Save:', updatedIncome);
+
+                await setDoc(
+                    userRef,
+                    { income: updatedIncome }, // Update 'income' field
+                    { merge: true }
+                );
+            } else {
+                console.log('No document found. Creating new user document with income.');
+                await setDoc(
+                    userRef,
+                    { income: [newIncome] }, // Initialize 'income' field
+                    { merge: true }
+                );
+            }
+
+
+            console.log('Income transaction saved to Firebase.');
+            Alert.alert('Success', 'Income transaction saved successfully!');
+
+            // Reset fields
+            setTransactionDescription('');
+            setTransactionAmount('');
+            setSelectedCategory(null);
+            setSelectedIcon(null);
+
+            // Navigate back with refresh flag
+            navigation.navigate('main', { refresh: true });
         } catch (error) {
             console.error('Error saving income transaction:', error);
             Alert.alert('Error', `Could not save income transaction: ${error.message}`);
         }
     };
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                console.log("Fetching categories for type:", type);
+
+                // Replace this with the actual fetching logic
+                const userCategories = []; // Assuming this would fetch user-specific categories
+                const defaultCategories = await getDefaultCategories(type) || [];
+
+                console.log("Default Categories:", defaultCategories); // Log default categories
+
+                const combinedCategories = [
+                    ...defaultCategories.map(category => ({
+                        ...category,
+                        isDefault: true,
+                    })),
+                    ...userCategories.map(category => ({
+                        ...category,
+                        isDefault: false,
+                    })),
+                ];
+
+                setCategories(combinedCategories);
+            } catch (err) {
+                console.error('Error fetching categories:', err);
+                setError(err.message || 'Failed to fetch categories');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        if (type) { // Ensure `type` exists before fetching categories
+            fetchCategories();
+        } else {
+            console.error("Type is undefined or null");
+            setIsLoading(false);
+        }
+    }, [type]);
 
     
-    
+
 
 
     return (
@@ -256,26 +292,50 @@ const NewIncomeScreen = ({ navigation }) => {
 
             {/* Modal for Category Selection */}
             <Modal visible={isCategoryModalVisible} animationType="slide" transparent={true}>
-                <View style={styles.modalContainer}>
-                    <View style={[styles.modalContent, { backgroundColor: modalBackgroundColor }]}>
-                        <TextInput
-                            style={[styles.searchInput, { borderColor: inputBorderColor, color: textColor, backgroundColor: inputBackgroundColor }]}
-                            placeholder="Search category..."
-                            placeholderTextColor={placeholderTextColor}
-                        />
-                        {/* Create New Button */}
-                        <TouchableOpacity style={styles.createNewButton} onPress={openCreateCategoryModal}>
-                            <MaterialIcons name="add" size={24} color={textColor} />
-                            <Text style={[styles.createNewText, { color: textColor }]}>Create New</Text>
-                        </TouchableOpacity>
+    <View style={styles.modalContainer}>
+        <View style={[styles.modalContent, { backgroundColor: modalBackgroundColor }]}>
+            <TextInput
+                style={[styles.searchInput, { borderColor: inputBorderColor, color: textColor, backgroundColor: inputBackgroundColor }]}
+                placeholder="Search category..."
+                placeholderTextColor={placeholderTextColor}
+                // Add a search handler if needed
+            />
 
-                        {/* Cancel Button */}
-                        <TouchableOpacity onPress={closeCategoryModal} style={[styles.smallCancelButton, { backgroundColor: cancelButtonColor }]}>
-                            <Text style={styles.smallCancelText}>Cancel</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-            </Modal>
+            {/* Create New Button */}
+            <TouchableOpacity style={styles.createNewButton} onPress={openCreateCategoryModal}>
+                <MaterialIcons name="add" size={24} color={textColor} />
+                <Text style={[styles.createNewText, { color: textColor }]}>Create New</Text>
+            </TouchableOpacity>
+
+            {/* Categories List */}
+            <FlatList
+                data={Categories} // Display categories here
+                keyExtractor={(item) => item.id}
+                numColumns={1}
+               
+                renderItem={({ item }) => (
+                    <TouchableOpacity
+                        style={styles.categoryItem}
+                        onPress={() => {
+                            setSelectedCategory(item.name); // Set selected category
+                            setCategoryModalVisible(false); // Close modal
+                        }}
+                    >
+                        <Text style={styles.categoryIcon}>{item.icon}</Text>
+                        <Text style={[styles.categoryName, { color: textColor }]}>{item.name}</Text>
+                    </TouchableOpacity>
+                )}
+                contentContainerStyle={styles.categoryList}
+            />
+
+            {/* Cancel Button */}
+            <TouchableOpacity onPress={closeCategoryModal} style={[styles.smallCancelButton, { backgroundColor: cancelButtonColor }]}>
+                <Text style={styles.smallCancelText}>Cancel</Text>
+            </TouchableOpacity>
+        </View>
+    </View>
+</Modal>
+
 
             {/* Modal for Creating New Category */}
             <Modal visible={isCreateCategoryModalVisible} animationType="slide" transparent={true}>
@@ -424,6 +484,8 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: '#fff',
     },
+   
+
     modalContainer: {
         flex: 1,
         justifyContent: 'center',
@@ -431,11 +493,13 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
     },
     modalContent: {
-        width: '80%',
+        width: '90%', // Reduce the width to make it smaller
+        maxWidth: 400, // Optional: Set a maximum width for larger screens
         padding: 20,
         backgroundColor: '#1C1C1E',
         borderRadius: 10,
         alignItems: 'center',
+        maxHeight: '70%', // Set a maximum height to prevent overflow
     },
     searchInput: {
         borderWidth: 1,
@@ -456,6 +520,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
         marginLeft: 10,
     },
+    
     smallCancelButton: {
         marginTop: 20,
         padding: 10,
@@ -501,6 +566,28 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontWeight: 'bold',
     },
+    categoryList: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'space-between',
+        paddingHorizontal: 10,
+       
+
+    },
+    categoryItem: {
+        flexDirection: 'row', // Align icon and text side by side
+        alignItems: 'center',
+        justifyContent: 'flex-start',
+        margin: 5,
+        padding: 10,
+        borderRadius: 10,
+        marginVertical: 10, 
+        borderWidth: 1,
+        borderColor: '#CCC',
+        backgroundColor: '#2C2C2E',
+        width: '90%', // Adjust to fit two items per row
+    },
+    
 });
 
 export default NewIncomeScreen;
