@@ -93,8 +93,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
-    "@types/react": "~18.0.14",
-    "@types/react-native": "~0.69.1"
+    "@types/react": "~18.2.79"
   },
   "private": true
 }
