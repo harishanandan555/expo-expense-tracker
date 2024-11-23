@@ -89,41 +89,44 @@ export const CategoryCard = ({ category, isDefault, onDeleteSuccess }) => {
       <Text style={styles.categoryName}>{category.name}</Text>
       {!isDefault && (
         <DeleteCategoryDialog category={category} onSuccessCallback={onDeleteSuccess}>
-          <TouchableOpacity style={styles.button}>
-            <Feather name="trash-2" size={20} color="#6b7280" />
-          </TouchableOpacity>
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity style={styles.button}>
+              <Feather name="trash-2" size={20} color="#6b7280" />
+            </TouchableOpacity>
+          </View>
         </DeleteCategoryDialog>
       )}
     </View>
   );
 };
 
-// const styles = StyleSheet.create({
-//   card: {
-//     width: 100,
-//     height: 100,
-//     borderRadius: 8,
-//     alignItems: "center",
-//     justifyContent: "center",
-//     margin: 10,
-//     backgroundColor: "#f9fafb",
-//   },
-//   icon: { fontSize: 32 },
-//   categoryName: { fontSize: 14, marginTop: 5 },
-//   button: { marginTop: 10 },
-// });
-
 const styles = StyleSheet.create({
   card: {
     width: "30%", // Adjust percentage width to ensure three items per row
-    height: 100,
+    height: 120, // Increase height slightly for better touchable area
     borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 10, // Adjust spacing between rows
+    marginBottom: 15, // Adjust spacing between rows
     backgroundColor: "#f9fafb",
   },
-  icon: { fontSize: 32 },
-  categoryName: { fontSize: 14, marginTop: 5 },
-  button: { marginTop: 10 },
+  icon: {
+    fontSize: 32,
+  },
+  categoryName: {
+    fontSize: 14,
+    marginTop: 5,
+    textAlign: "center", // Ensure text aligns properly
+  },
+  buttonContainer: {
+    marginTop: 10,
+    zIndex: 10, // Ensure button is on top of other components
+  },
+  button: {
+    padding: 8, // Increase touchable area of the button
+    backgroundColor: "#e5e7eb",
+    borderRadius: 5,
+    alignItems: "center",
+    justifyContent: "center",
+  },
 });
