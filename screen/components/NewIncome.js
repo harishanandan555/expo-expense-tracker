@@ -47,7 +47,7 @@ const NewIncomeScreen = ({ navigation, route }) => {
     const cancelButtonColor = isDarkMode ? '#444' : '#ddd';
 
     const { type } = route.params || {}; // Extract the 'type' parameter
-    console.log("Type:", type); 
+    console.log("Type:", type);
 
     const handleDateConfirm = (date) => {
         setTransactionDate(date);
@@ -196,7 +196,7 @@ const NewIncomeScreen = ({ navigation, route }) => {
         }
     }, [type]);
 
-    
+
 
 
 
@@ -292,49 +292,49 @@ const NewIncomeScreen = ({ navigation, route }) => {
 
             {/* Modal for Category Selection */}
             <Modal visible={isCategoryModalVisible} animationType="slide" transparent={true}>
-    <View style={styles.modalContainer}>
-        <View style={[styles.modalContent, { backgroundColor: modalBackgroundColor }]}>
-            <TextInput
-                style={[styles.searchInput, { borderColor: inputBorderColor, color: textColor, backgroundColor: inputBackgroundColor }]}
-                placeholder="Search category..."
-                placeholderTextColor={placeholderTextColor}
-                // Add a search handler if needed
-            />
+                <View style={styles.modalContainer}>
+                    <View style={[styles.modalContent, { backgroundColor: modalBackgroundColor }]}>
+                        <TextInput
+                            style={[styles.searchInput, { borderColor: inputBorderColor, color: textColor, backgroundColor: inputBackgroundColor }]}
+                            placeholder="Search category..."
+                            placeholderTextColor={placeholderTextColor}
+                        // Add a search handler if needed
+                        />
 
-            {/* Create New Button */}
-            <TouchableOpacity style={styles.createNewButton} onPress={openCreateCategoryModal}>
-                <MaterialIcons name="add" size={24} color={textColor} />
-                <Text style={[styles.createNewText, { color: textColor }]}>Create New</Text>
-            </TouchableOpacity>
+                        {/* Create New Button */}
+                        <TouchableOpacity style={styles.createNewButton} onPress={openCreateCategoryModal}>
+                            <MaterialIcons name="add" size={24} color={textColor} />
+                            <Text style={[styles.createNewText, { color: textColor }]}>Create New</Text>
+                        </TouchableOpacity>
 
-            {/* Categories List */}
-            <FlatList
-                data={Categories} // Display categories here
-                keyExtractor={(item) => item.id}
-                numColumns={1}
-               
-                renderItem={({ item }) => (
-                    <TouchableOpacity
-                        style={styles.categoryItem}
-                        onPress={() => {
-                            setSelectedCategory(item.name); // Set selected category
-                            setCategoryModalVisible(false); // Close modal
-                        }}
-                    >
-                        <Text style={styles.categoryIcon}>{item.icon}</Text>
-                        <Text style={[styles.categoryName, { color: textColor }]}>{item.name}</Text>
-                    </TouchableOpacity>
-                )}
-                contentContainerStyle={styles.categoryList}
-            />
+                        {/* Categories List */}
+                        <FlatList
+                            data={Categories} // Display categories here
+                            keyExtractor={(item) => item.id}
+                            numColumns={1}
 
-            {/* Cancel Button */}
-            <TouchableOpacity onPress={closeCategoryModal} style={[styles.smallCancelButton, { backgroundColor: cancelButtonColor }]}>
-                <Text style={styles.smallCancelText}>Cancel</Text>
-            </TouchableOpacity>
-        </View>
-    </View>
-</Modal>
+                            renderItem={({ item }) => (
+                                <TouchableOpacity
+                                    style={styles.categoryItem}
+                                    onPress={() => {
+                                        setSelectedCategory(item.name); // Set selected category
+                                        setCategoryModalVisible(false); // Close modal
+                                    }}
+                                >
+                                    <Text style={styles.categoryIcon}>{item.icon}</Text>
+                                    <Text style={[styles.categoryName, { color: textColor }]}>{item.name}</Text>
+                                </TouchableOpacity>
+                            )}
+                            contentContainerStyle={styles.categoryList}
+                        />
+
+                        {/* Cancel Button */}
+                        <TouchableOpacity onPress={closeCategoryModal} style={[styles.smallCancelButton, { backgroundColor: cancelButtonColor }]}>
+                            <Text style={styles.smallCancelText}>Cancel</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
 
 
             {/* Modal for Creating New Category */}
@@ -484,7 +484,7 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: '#fff',
     },
-   
+
 
     modalContainer: {
         flex: 1,
@@ -520,7 +520,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
         marginLeft: 10,
     },
-    
+
     smallCancelButton: {
         marginTop: 20,
         padding: 10,
@@ -571,7 +571,7 @@ const styles = StyleSheet.create({
         flexWrap: 'wrap',
         justifyContent: 'space-between',
         paddingHorizontal: 10,
-       
+
 
     },
     categoryItem: {
@@ -581,13 +581,13 @@ const styles = StyleSheet.create({
         margin: 5,
         padding: 10,
         borderRadius: 10,
-        marginVertical: 10, 
+        marginVertical: 10,
         borderWidth: 1,
         borderColor: '#CCC',
         backgroundColor: '#2C2C2E',
         width: '90%', // Adjust to fit two items per row
     },
-    
+
 });
 
 export default NewIncomeScreen;

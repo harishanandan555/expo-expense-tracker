@@ -24,7 +24,7 @@ import { Avatar, Menu, Divider, Provider } from 'react-native-paper';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { format } from 'date-fns'; // Use date-fns for formatting dates
 import { useNavigation } from '@react-navigation/native'; // Import useNavigation hook
-import { doc, setDoc, getDoc, collection } from "firebase/firestore";
+import { doc, setDoc, getDoc, collection, onSnapshot } from "firebase/firestore";
 import { BarChart } from 'react-native-gifted-charts';
 
 const DashboardScreen = () => {
@@ -45,6 +45,32 @@ const DashboardScreen = () => {
     const [selectedIcon, setSelectedIcon] = useState(null);
     const [newCategory, setNewCategory] = useState('');
     const [selectedCategory, setSelectedCategory] = useState(null);
+    const navigation = useNavigation();
+    const [firebaseBalance, setFirebaseBalance] = useState(0);
+    const [firebaseTotalIncome, setFirebaseTotalIncome] = useState(0);
+    const [firebaseTotalExpense, setFirebaseTotalExpense] = useState(0);
+    const [firebaseLastUpdated, setFirebaseLastUpdated] = useState("");
+    const [isModalVisible, setModalVisible] = useState(false);
+    const barBackgroundColor = isDarkMode ? '#333' : '#e0e0e0';
+    const [IncomeCategory, setIncomeCategory] = useState([]); // State to store the income data
+
+    const [open, setOpen] = useState(false);
+    const [value, setValue] = useState(null);
+    const [items, setItems] = useState([
+        { label: "January", value: "January" },
+        { label: "February", value: "February" },
+        { label: "March", value: "March" },
+        { label: "April", value: "April" },
+        { label: "May", value: "May" },
+        { label: "June", value: "June" },
+        { label: "July", value: "July" },
+        { label: "August", value: "August" },
+        { label: "September", value: "September" },
+        { label: "October", value: "October" },
+        { label: "November", value: "November" },
+        { label: "December", value: "December" },
+    ]);
+
     const [totalIncome, setTotalIncome] = useState(0);
     const [totalExpense, setTotalExpense] = useState(0);
     const [balance, setBalance] = useState(0);
@@ -53,7 +79,14 @@ const DashboardScreen = () => {
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1); // Default to current month
     const screenWidth = Dimensions.get('window').width;
     const [tooltip, setTooltip] = useState(null); // State to manage tooltip
+    const maxValue = Math.max(totalIncome, totalExpense, balance);
+    const yAxisStep = Math.ceil(maxValue / 5);
 
+
+    const [userInfos, setUserInfos] = useState(null);
+
+    const route = useRoute();
+    const [expenses, setExpenses] = useState([]);
     const data = {
         labels: ['Income', 'Expense', 'Balance'],
         datasets: [
@@ -102,41 +135,9 @@ const DashboardScreen = () => {
             frontColor: 'blue', // Blue
         },
     ];
-    const maxValue = Math.max(totalIncome, totalExpense, balance);
-    const yAxisStep = Math.ceil(maxValue / 5);
+    
 
-
-    const [userInfos, setUserInfos] = useState(null);
-
-    const route = useRoute();
-    const [expenses, setExpenses] = useState([]);
-
-    const navigation = useNavigation();
-    const [firebaseBalance, setFirebaseBalance] = useState(0);
-    const [firebaseTotalIncome, setFirebaseTotalIncome] = useState(0);
-    const [firebaseTotalExpense, setFirebaseTotalExpense] = useState(0);
-    const [firebaseLastUpdated, setFirebaseLastUpdated] = useState("");
-    const [isModalVisible, setModalVisible] = useState(false);
-    const barBackgroundColor = isDarkMode ? '#333' : '#e0e0e0';
-    const [IncomeCategory, setIncomeCategory] = useState([]); // State to store the income data
-
-    const [open, setOpen] = useState(false);
-    const [value, setValue] = useState(null);
-    const [items, setItems] = useState([
-        { label: "January", value: "January" },
-        { label: "February", value: "February" },
-        { label: "March", value: "March" },
-        { label: "April", value: "April" },
-        { label: "May", value: "May" },
-        { label: "June", value: "June" },
-        { label: "July", value: "July" },
-        { label: "August", value: "August" },
-        { label: "September", value: "September" },
-        { label: "October", value: "October" },
-        { label: "November", value: "November" },
-        { label: "December", value: "December" },
-    ]);
-
+   
     // Function to handle theme switching
     const handleThemeSwitch = (mode) => {
         setTheme(mode);
@@ -157,21 +158,78 @@ const DashboardScreen = () => {
 
         fetchUserInfo();
     }, []);
-
-
-
-    const fetchIncomeData = async () => {
-        try {
-            const id = auth.currentUser?.uid; // Get the user ID
-
-
-            if (!id) {
-                console.error("User ID is required.");
-                return;
+    const calculateAndSaveFinancialData = () => {
+        const userId = auth.currentUser?.uid;
+    
+        if (!userId) {
+            console.error("User ID is required. Cannot update financial data.");
+            return;
+        }
+    
+        // Reference to the user's document in Firestore
+        const userDocRef = doc(db, "users", userId);
+    
+        // Set up real-time listener
+        const unsubscribe = onSnapshot(userDocRef, (docSnapshot) => {
+            if (docSnapshot.exists()) {
+                const userInfo = docSnapshot.data();
+    
+                // Calculate total income
+                const calculatedTotalIncome = (userInfo.income || []).reduce(
+                    (sum, incomeItem) => sum + (incomeItem.amount || 0),
+                    0
+                );
+    
+                // Calculate total expenses
+                const calculatedTotalExpense = (userInfo.expenses || []).reduce(
+                    (sum, expenseItem) => sum + (expenseItem.amount || 0),
+                    0
+                );
+    
+                // Calculate the balance
+                const calculatedBalance = calculatedTotalIncome - calculatedTotalExpense;
+    
+                // Update the state variables
+                setTotalIncome(calculatedTotalIncome);
+                setTotalExpense(calculatedTotalExpense);
+                setBalance(calculatedBalance);
+                setLastUpdated(new Date().toISOString());
+    
+                console.log("Updated financial data:", {
+                    totalIncome: calculatedTotalIncome,
+                    totalExpense: calculatedTotalExpense,
+                    balance: calculatedBalance,
+                    lastUpdated: new Date().toISOString(),
+                });
+            } else {
+                console.error("User document does not exist.");
             }
+        }, (error) => {
+            console.error("Error listening to user financial data:", error);
+        });
+    
+        // Return unsubscribe function to clean up the listener when no longer needed
+        return unsubscribe;
+    };
 
-            // Fetch user data from Firebase
-            const userInfo = await getUserById(id);
+
+    
+
+const fetchIncomeData = () => {
+    const id = auth.currentUser?.uid; // Get the user ID
+
+    if (!id) {
+        console.error("User ID is required.");
+        return;
+    }
+
+    // Reference to the user's Firestore document
+    const userDocRef = doc(db, "users", id);
+
+    // Set up real-time listener
+    const unsubscribe = onSnapshot(userDocRef, (docSnapshot) => {
+        if (docSnapshot.exists()) {
+            const userInfo = docSnapshot.data();
 
             if (userInfo && userInfo.income) {
                 // Transform income data into a usable structure
@@ -183,28 +241,39 @@ const DashboardScreen = () => {
                     icon: item.icon || "💰", // Default icon if none is provided
                 }));
 
-                // Store the income data in the state
+                // Update the state with the new income data
                 setIncomeCategory(incomeData);
-
             } else {
                 console.error("No income data found for this user.");
+                setIncomeCategory([]); // Reset to empty if no data is found
             }
-        } catch (error) {
-            console.error("Error fetching income data:", error);
+        } else {
+            console.error("User document does not exist.");
         }
-    };
+    }, (error) => {
+        console.error("Error listening to user document:", error);
+    });
 
-    const fetchExpenseData = async () => {
-        try {
-            const id = auth.currentUser?.uid; // Get the user ID
+    // Return unsubscribe function to clean up the listener when no longer needed
+    return unsubscribe;
+};
 
-            if (!id) {
-                console.error("User ID is required.");
-                return;
-            }
+   
+const fetchExpenseData = () => {
+    const id = auth.currentUser?.uid; // Get the user ID
 
-            // Fetch user data from Firebase
-            const userInfo = await getUserById(id);
+    if (!id) {
+        console.error("User ID is required.");
+        return;
+    }
+
+    // Reference to the user's Firestore document
+    const userDocRef = doc(db, "users", id);
+
+    // Set up real-time listener
+    const unsubscribe = onSnapshot(userDocRef, (docSnapshot) => {
+        if (docSnapshot.exists()) {
+            const userInfo = docSnapshot.data();
 
             if (userInfo && userInfo.expenses) {
                 // Transform expenses data into a usable structure
@@ -216,16 +285,22 @@ const DashboardScreen = () => {
                     icon: item.icon || "💸", // Default icon if none is provided
                 }));
 
-                // Store the expenses data in the state
+                // Update the state with the new expense data
                 setExpenses(expenseData);
-
             } else {
                 console.error("No expense data found for this user.");
+                setExpenses([]); // Reset to empty if no data is found
             }
-        } catch (error) {
-            console.error("Error fetching expense data:", error);
+        } else {
+            console.error("User document does not exist.");
         }
-    };
+    }, (error) => {
+        console.error("Error listening to user document:", error);
+    });
+
+    // Return unsubscribe function to clean up the listener when no longer needed
+    return unsubscribe;
+};
 
 
     const handleGoogleLogout = async () => {
@@ -318,73 +393,7 @@ const DashboardScreen = () => {
 
 
 
-    const calculateAndSaveFinancialData = async () => {
-        try {
-            // Get the user ID from the authenticated user
-            const userId = auth.currentUser?.uid;
-
-
-            if (!userId) {
-                console.error("User ID is required. Cannot update financial data.");
-                return;
-            }
-
-            // Fetch user data from Firebase
-            const userInfo = await getUserById(userId);
-
-
-            if (!userInfo) {
-                console.error("User information could not be retrieved.");
-                return;
-            }
-
-            // Calculate total income
-            const calculatedTotalIncome = (userInfo.income || []).reduce(
-                (sum, incomeItem) => sum + (incomeItem.amount || 0),
-                0
-            );
-
-            // Calculate total expenses
-            const calculatedTotalExpense = (userInfo.expenses || []).reduce(
-                (sum, expenseItem) => sum + (expenseItem.amount || 0),
-                0
-            );
-
-            // Calculate the balance
-            const calculatedBalance = calculatedTotalIncome - calculatedTotalExpense;
-
-            // Prepare financial data to be saved
-            const financialData = {
-                totalIncome: calculatedTotalIncome,
-                totalExpense: calculatedTotalExpense,
-                balance: calculatedBalance,
-                lastUpdated: new Date().toISOString(),
-            };
-
-            // Reference to the user's document in Firestore
-            const userDocRef = doc(db, "users", userId);
-
-            // Save the financial data to Firestore
-            await setDoc(
-                userDocRef,
-                { financialData },
-                { merge: true } // Merge with existing data
-            );
-
-
-
-            // Update the state variables
-            setTotalIncome(calculatedTotalIncome);
-            setTotalExpense(calculatedTotalExpense);
-            setBalance(calculatedBalance);
-            setLastUpdated(financialData.lastUpdated);
-
-            console.log("date", lastUpdated)
-        } catch (error) {
-            console.error("Error calculating and saving financial data:", error);
-        }
-    };
-
+    
 
 
     const openMenu = () => setMenuVisible(true);
@@ -593,8 +602,7 @@ const DashboardScreen = () => {
                     <View>
                         <Text style={[styles.overviewLabel, { color: textColor }]}>Income</Text>
                         <Text style={[styles.overviewValue, { color: theme === 'dark' ? '#fff' : '#000' }]}>
-                            ${totalIncome}
-                        </Text>
+                            ${totalIncome || 0}                     </Text>
                     </View>
                 </View>
 
@@ -603,7 +611,7 @@ const DashboardScreen = () => {
                     <View>
                         <Text style={[styles.overviewLabel, { color: textColor }]}>Expense</Text>
                         <Text style={[styles.overviewValue, { color: theme === 'dark' ? '#fff' : '#000' }]}>
-                            ${totalExpense}
+                            ${totalExpense || 0}
                         </Text>
                     </View>
                 </View>
@@ -612,7 +620,7 @@ const DashboardScreen = () => {
                     <MaterialIcons name="account-balance-wallet" size={32} color="blue" />
                     <View>
                         <Text style={[styles.overviewLabel, { color: textColor }]}>Balance</Text>
-                        <Text style={[styles.overviewValue, { color: textColor }]}>${balance}</Text>
+                        <Text style={[styles.overviewValue, { color: textColor }]}>${balance || 0}</Text>
                     </View>
                 </View>
 

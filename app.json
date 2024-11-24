@@ -7,18 +7,7 @@
       "@react-native-google-signin/google-signin",
       "@react-native-firebase/app",
       "@react-native-firebase/auth",
-      [
-        "expo-file-system",
-        {
-          "android": {
-            "minSdkVersion": 21,
-            "compileSdkVersion": 33,
-            "targetSdkVersion": 33,
-            "buildToolsVersion": "33.0.0",
-            "gradleVersion": "8.3.0"
-          }
-        }
-      ],
+      "expo-file-system",
       "expo-media-library",
       "expo-router"
     ],
