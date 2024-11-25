@@ -51,8 +51,8 @@ const SettingsScreen = () => {
             </CardContent>
           </Card>
             
-          {/* Billing Section (optional) */}
-          {/* <BillingSection /> */}
+          {/* Billing Section */}
+          <BillingSection />
 
           {/* Categories Lists */}
           <Card>
