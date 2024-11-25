@@ -7,19 +7,12 @@
       "@react-native-google-signin/google-signin",
       "@react-native-firebase/app",
       "@react-native-firebase/auth",
-      [
-        "expo-file-system",
-        {
-          "android": {
-            "minSdkVersion": 21
-          }
-        }
-      ],
+      "expo-file-system",
       "expo-media-library",
       "expo-router"
     ],
     "orientation": "portrait",
-    "icon": "./assets/wallet_logo.png",
+    "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/splash.png",

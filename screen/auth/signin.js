@@ -13,7 +13,7 @@ import * as WebBrowser from "expo-web-browser";
 import { auth,db } from "../../config/firebaseConfig";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
-import "expo-dev-client";
+// import "expo-dev-client";
 import { signInWithEmailAndPassword, sendPasswordResetEmail, fetchSignInMethodsForEmail  } from "firebase/auth";
 import {GoogleAuthProvider, signInWithCredential } from "firebase/auth";
 import {collection, getDocs, query, where,doc, setDoc } from "firebase/firestore";

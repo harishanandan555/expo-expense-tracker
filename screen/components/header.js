@@ -14,7 +14,7 @@
     useEffect(() => {
          // Configure Google Sign-In
          GoogleSignin.configure({
-              webClientId:  "622095554406-32i6saoa7sn60bu32n33f4um21ep2i65.apps.googleusercontent.com", // Replace with your Web Client ID
+              webClientId:  "622095554406-32i6saoa7sn60bu32n33f4um21ep2i65.apps.googleusercontent.com",
            });
 
         const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -88,9 +88,9 @@
                 { backgroundColor: isDarkMode ? '#000' : '#fff' },
                 { marginLeft: -10 },
                 { position: 'absolute', top:5, zIndex: 1000 },
-            ]}
+            ]}  
             >
-            <View style={styles.menuItemContainer}>
+            <View style={[styles.menuItemContainer, { backgroundColor: isDarkMode ? '#333' : '#fff' }]}>
                 <Menu.Item
                 onPress={() => {
                     toggleTheme();
@@ -98,7 +98,7 @@
                 }}
                 title={isDarkMode ? 'Light' : 'Dark'}
                 icon={isDarkMode ? 'weather-sunny' : 'weather-night' }
-                titleStyle={styles.menuItemText}
+                titleStyle={[styles.menuItemText,{ color: isDarkMode ? '#fff' : '#000' },]}
                 />
             </View>
             {/* <Divider /> */}
@@ -114,12 +114,12 @@
                 />
             </View> */}
             {/* <Divider /> */}
-            <View style={styles.menuItemContainer}>
+            <View style={[styles.menuItemContainer, { backgroundColor: isDarkMode ? '#333' : '#fff' }]}>
                 <Menu.Item
                 onPress={handleLogout}
                 title="Logout"
                 icon="logout"
-                titleStyle={styles.menuItemText}
+                titleStyle={[ styles.menuItemText, { color: isDarkMode ? '#fff' : '#000' },]}
                 disabled={loading}
                 />
             </View>
@@ -153,11 +153,15 @@
         marginTop: 29,
         position: 'absolute',
         zIndex: 1001,
-        backgroundColor: (props) => props.isDarkMode ? '#000' : '#fff', 
+        // backgroundColor: (props) => props.isDarkMode ? '#000' : '#fff', 
     },
     menuItemText: {
         color: '#000',
     },
+    menuItemContainer: {
+        padding: 5,
+        borderRadius: 5,
+      },
     loadingIndicator: {
         position: 'absolute',
         right: 20,
