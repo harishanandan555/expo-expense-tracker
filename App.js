@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { SQLiteProvider } from 'expo-sqlite/next';
 import { ActivityIndicator, Text, View } from 'react-native';
-;
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
