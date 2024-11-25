@@ -41,6 +41,7 @@ const NewExpenseScreen = ({ navigation, route }) => {
     const inputBackgroundColor = isDarkMode ? '#333' : '#f4f4f4';
     const [dbLoaded, setDbLoaded] = useState(false);
     const [expenses, setExpenses] = useState([]);
+    const cardBackgroundColor = isDarkMode ? '#121212' : '#f4f4f4';
     const backgroundColor = isDarkMode ? '#1C1C1E' : '#fff';
     const textColor = isDarkMode ? '#fff' : '#000';
     const inputBorderColor = isDarkMode ? '#FF6A00' : '#ccc';
@@ -218,7 +219,7 @@ const NewExpenseScreen = ({ navigation, route }) => {
 
             {/* Transaction Description Input */}
             <TextInput
-                style={[styles.input, { borderColor: inputBorderColor, color: textColor }]}
+                style={[styles.input, { borderColor: inputBorderColor, color: textColor , backgroundColor: cardBackgroundColor}]}
                 placeholder="Your description..."
                 placeholderTextColor={placeholderTextColor}
                 value={transactionDescription}
@@ -228,7 +229,7 @@ const NewExpenseScreen = ({ navigation, route }) => {
 
             {/* Transaction Amount Input */}
             <TextInput
-                style={[styles.input, { borderColor: inputBorderColor, color: textColor }]}
+                style={[styles.input, { borderColor: inputBorderColor, color: textColor , backgroundColor: cardBackgroundColor}]}               
                 placeholder="Put the price"
                 placeholderTextColor={placeholderTextColor}
                 keyboardType="numeric"
@@ -303,7 +304,7 @@ const NewExpenseScreen = ({ navigation, route }) => {
                         <FlatList
                             data={Categories} // Display categories here
                             keyExtractor={(item) => item.id}
-
+                            numColumns={1}
                             renderItem={({ item }) => (
                                 <TouchableOpacity
                                     style={styles.categoryItem}
@@ -536,11 +537,13 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
     },
     modalContent: {
-        width: '100%',
+        width: '90%', // Reduce the width to make it smaller
+        maxWidth: 400, // Optional: Set a maximum width for larger screens
         padding: 20,
         backgroundColor: '#1C1C1E',
         borderRadius: 10,
         alignItems: 'center',
+        maxHeight: '70%', 
     },
     searchInput: {
         borderWidth: 1,

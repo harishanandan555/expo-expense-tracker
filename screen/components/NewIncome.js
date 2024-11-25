@@ -37,7 +37,7 @@ const NewIncomeScreen = ({ navigation, route }) => {
     const inputBackgroundColor = isDarkMode ? '#333' : '#f4f4f4';
     const [dbLoaded, setDbLoaded] = useState(false);
     const [userEmail, setUserEmail] = useState(null);
-
+    const cardBackgroundColor = isDarkMode ? '#121212' : '#f4f4f4';
     const backgroundColor = isDarkMode ? '#1C1C1E' : '#fff';
     const textColor = isDarkMode ? '#fff' : '#000';
     const inputBorderColor = isDarkMode ? '#FF6A00' : '#ccc';
@@ -47,7 +47,7 @@ const NewIncomeScreen = ({ navigation, route }) => {
     const cancelButtonColor = isDarkMode ? '#444' : '#ddd';
 
     const { type } = route.params || {}; // Extract the 'type' parameter
-    console.log("Type:", type); 
+    console.log("Type:", type);
 
     const handleDateConfirm = (date) => {
         setTransactionDate(date);
@@ -196,7 +196,7 @@ const NewIncomeScreen = ({ navigation, route }) => {
         }
     }, [type]);
 
-    
+
 
 
 
@@ -222,7 +222,7 @@ const NewIncomeScreen = ({ navigation, route }) => {
 
             {/* Transaction Description Input */}
             <TextInput
-                style={[styles.input, { borderColor: inputBorderColor, color: textColor }]}
+                style={[styles.input, { borderColor: inputBorderColor, color: textColor , backgroundColor: cardBackgroundColor}]}
                 placeholder="Your description..."
                 placeholderTextColor={placeholderTextColor}
                 value={transactionDescription}
@@ -232,8 +232,7 @@ const NewIncomeScreen = ({ navigation, route }) => {
 
             {/* Transaction Amount Input */}
             <TextInput
-                style={[styles.input, { borderColor: inputBorderColor, color: textColor }]}
-                placeholder="Put the price"
+ style={[styles.input, { borderColor: inputBorderColor, color: textColor , backgroundColor: cardBackgroundColor}]}                placeholder="Put the price"
                 placeholderTextColor={placeholderTextColor}
                 keyboardType="numeric"
                 value={transactionAmount}
@@ -292,56 +291,56 @@ const NewIncomeScreen = ({ navigation, route }) => {
 
             {/* Modal for Category Selection */}
             <Modal visible={isCategoryModalVisible} animationType="slide" transparent={true}>
-    <View style={styles.modalContainer}>
-        <View style={[styles.modalContent, { backgroundColor: modalBackgroundColor }]}>
-            <TextInput
-                style={[styles.searchInput, { borderColor: inputBorderColor, color: textColor, backgroundColor: inputBackgroundColor }]}
-                placeholder="Search category..."
-                placeholderTextColor={placeholderTextColor}
-                // Add a search handler if needed
-            />
+                <View style={styles.modalContainer}>
+                    <View style={[styles.modalContent, { backgroundColor: modalBackgroundColor }]}>
+                        <TextInput
+                            style={[styles.searchInput, { borderColor: inputBorderColor, color: textColor, backgroundColor: inputBackgroundColor }]}
+                            placeholder="Search category..."
+                            placeholderTextColor={placeholderTextColor}
+                        // Add a search handler if needed
+                        />
 
-            {/* Create New Button */}
-            <TouchableOpacity style={styles.createNewButton} onPress={openCreateCategoryModal}>
-                <MaterialIcons name="add" size={24} color={textColor} />
-                <Text style={[styles.createNewText, { color: textColor }]}>Create New</Text>
-            </TouchableOpacity>
+                        {/* Create New Button */}
+                        <TouchableOpacity style={styles.createNewButton} onPress={openCreateCategoryModal}>
+                            <MaterialIcons name="add" size={24} color={textColor} />
+                            <Text style={[styles.createNewText, { color: textColor }]}>Create New</Text>
+                        </TouchableOpacity>
 
-            {/* Categories List */}
-            <FlatList
-                data={Categories} // Display categories here
-                keyExtractor={(item) => item.id}
-                numColumns={1}
-               
-                renderItem={({ item }) => (
-                    <TouchableOpacity
-                        style={styles.categoryItem}
-                        onPress={() => {
-                            setSelectedCategory(item.name); // Set selected category
-                            setCategoryModalVisible(false); // Close modal
-                        }}
-                    >
-                        <Text style={styles.categoryIcon}>{item.icon}</Text>
-                        <Text style={[styles.categoryName, { color: textColor }]}>{item.name}</Text>
-                    </TouchableOpacity>
-                )}
-                contentContainerStyle={styles.categoryList}
-            />
+                        {/* Categories List */}
+                        <FlatList
+                            data={Categories} // Display categories here
+                            keyExtractor={(item) => item.id}
+                            numColumns={1}
 
-            {/* Cancel Button */}
-            <TouchableOpacity onPress={closeCategoryModal} style={[styles.smallCancelButton, { backgroundColor: cancelButtonColor }]}>
-                <Text style={styles.smallCancelText}>Cancel</Text>
-            </TouchableOpacity>
-        </View>
-    </View>
-</Modal>
+                            renderItem={({ item }) => (
+                                <TouchableOpacity
+                                    style={styles.categoryItem}
+                                    onPress={() => {
+                                        setSelectedCategory(item.name); // Set selected category
+                                        setCategoryModalVisible(false); // Close modal
+                                    }}
+                                >
+                                    <Text style={styles.categoryIcon}>{item.icon}</Text>
+                                    <Text style={[styles.categoryName, { color: textColor }]}>{item.name}</Text>
+                                </TouchableOpacity>
+                            )}
+                            contentContainerStyle={styles.categoryList}
+                        />
+
+                        {/* Cancel Button */}
+                        <TouchableOpacity onPress={closeCategoryModal} style={[styles.smallCancelButton, { backgroundColor: cancelButtonColor }]}>
+                            <Text style={styles.smallCancelText}>Cancel</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
 
 
             {/* Modal for Creating New Category */}
             <Modal visible={isCreateCategoryModalVisible} animationType="slide" transparent={true}>
                 <View style={styles.modalContainer}>
                     <View style={[styles.modalContent, { backgroundColor: modalBackgroundColor }]}>
-                        <Text style={[styles.modalTitle, { color: textColor }]}>Create Income category</Text>
+                        <Text style={[styles.modalTitle, { color: textColor }]}>Create Expense category</Text>
                         <Text style={[styles.subText, { color: placeholderTextColor }]}>Categories are used to group your transactions.</Text>
 
                         {/* Category Name Input */}
@@ -484,7 +483,7 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: '#fff',
     },
-   
+
 
     modalContainer: {
         flex: 1,
@@ -520,7 +519,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
         marginLeft: 10,
     },
-    
+
     smallCancelButton: {
         marginTop: 20,
         padding: 10,
@@ -571,7 +570,7 @@ const styles = StyleSheet.create({
         flexWrap: 'wrap',
         justifyContent: 'space-between',
         paddingHorizontal: 10,
-       
+
 
     },
     categoryItem: {
@@ -581,13 +580,13 @@ const styles = StyleSheet.create({
         margin: 5,
         padding: 10,
         borderRadius: 10,
-        marginVertical: 10, 
+        marginVertical: 10,
         borderWidth: 1,
         borderColor: '#CCC',
         backgroundColor: '#2C2C2E',
         width: '90%', // Adjust to fit two items per row
     },
-    
+
 });
 
 export default NewIncomeScreen;
