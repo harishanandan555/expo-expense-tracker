@@ -37,7 +37,7 @@ const NewIncomeScreen = ({ navigation, route }) => {
     const inputBackgroundColor = isDarkMode ? '#333' : '#f4f4f4';
     const [dbLoaded, setDbLoaded] = useState(false);
     const [userEmail, setUserEmail] = useState(null);
-
+    const cardBackgroundColor = isDarkMode ? '#121212' : '#f4f4f4';
     const backgroundColor = isDarkMode ? '#1C1C1E' : '#fff';
     const textColor = isDarkMode ? '#fff' : '#000';
     const inputBorderColor = isDarkMode ? '#FF6A00' : '#ccc';
@@ -222,7 +222,7 @@ const NewIncomeScreen = ({ navigation, route }) => {
 
             {/* Transaction Description Input */}
             <TextInput
-                style={[styles.input, { borderColor: inputBorderColor, color: textColor }]}
+                style={[styles.input, { borderColor: inputBorderColor, color: textColor , backgroundColor: cardBackgroundColor}]}
                 placeholder="Your description..."
                 placeholderTextColor={placeholderTextColor}
                 value={transactionDescription}
@@ -232,8 +232,7 @@ const NewIncomeScreen = ({ navigation, route }) => {
 
             {/* Transaction Amount Input */}
             <TextInput
-                style={[styles.input, { borderColor: inputBorderColor, color: textColor }]}
-                placeholder="Put the price"
+ style={[styles.input, { borderColor: inputBorderColor, color: textColor , backgroundColor: cardBackgroundColor}]}                placeholder="Put the price"
                 placeholderTextColor={placeholderTextColor}
                 keyboardType="numeric"
                 value={transactionAmount}
