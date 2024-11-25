@@ -341,7 +341,7 @@ const NewIncomeScreen = ({ navigation, route }) => {
             <Modal visible={isCreateCategoryModalVisible} animationType="slide" transparent={true}>
                 <View style={styles.modalContainer}>
                     <View style={[styles.modalContent, { backgroundColor: modalBackgroundColor }]}>
-                        <Text style={[styles.modalTitle, { color: textColor }]}>Create Income category</Text>
+                        <Text style={[styles.modalTitle, { color: textColor }]}>Create Expense category</Text>
                         <Text style={[styles.subText, { color: placeholderTextColor }]}>Categories are used to group your transactions.</Text>
 
                         {/* Category Name Input */}
