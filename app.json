@@ -11,11 +11,7 @@
         "expo-file-system",
         {
           "android": {
-            "minSdkVersion": 21,
-            "compileSdkVersion": 33,
-            "targetSdkVersion": 33,
-            "buildToolsVersion": "33.0.0",
-            "gradleVersion": "8.3.0"
+            "minSdkVersion": 21
           }
         }
       ],
@@ -23,7 +19,7 @@
       "expo-router"
     ],
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/wallet_logo.png",
     "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/splash.png",
