@@ -535,7 +535,7 @@ const fetchExpenseData = () => {
                                 { color: activeButton === 'income' ? backgroundColor : isDarkMode ? '#FF6A00' : '#FF8C00' },
                             ]}
                         >
-                            New Income
+                            New income
                         </Text>
                     </TouchableOpacity>
 
