@@ -117,7 +117,7 @@ const DashboardScreen = () => {
             fontWeight: 'bold',
         },
     };
-
+    const absoluteBalance = Math.abs(balance); 
     const barData = [
         {
             value: totalIncome,
@@ -130,7 +130,7 @@ const DashboardScreen = () => {
             frontColor: 'red', // Red
         },
         {
-            value: balance,
+            value: absoluteBalance,
             label: 'Balance',
             frontColor: 'blue', // Blue
         },
@@ -814,6 +814,7 @@ const fetchExpenseData = () => {
                             data={barData}
                             barWidth={40}
                             renderTooltip={(item, index) => {
+                                const value = item.label === 'Balance' ? balance : item.value;
                                 return (
                                     <View
                                         style={{
@@ -824,7 +825,7 @@ const fetchExpenseData = () => {
                                             paddingVertical: 4,
                                             borderRadius: 4,
                                         }}>
-                                        <Text>{item.value}</Text>
+                                        <Text>{value}</Text>
                                     </View>
                                 );
                             }}

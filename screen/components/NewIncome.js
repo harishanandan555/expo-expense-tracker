@@ -18,9 +18,10 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getDefaultCategories } from '../services/firebaseSettings';
 import { collection, doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../../config/firebaseConfig';
+import { useNavigation } from '@react-navigation/native';
 
 
-const NewIncomeScreen = ({ navigation, route }) => {
+const NewIncomeScreen = ({ route }) => {
     const [transactionDate, setTransactionDate] = useState(new Date());
     const [isDatePickerVisible, setDatePickerVisible] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState(null);
@@ -45,6 +46,7 @@ const NewIncomeScreen = ({ navigation, route }) => {
     const buttonBackgroundColor = isDarkMode ? '#FF6A00' : '#FF6A00';
     const buttonTextColor = '#fff';
     const cancelButtonColor = isDarkMode ? '#444' : '#ddd';
+    const navigation = useNavigation();
 
     const { type } = route.params || {}; // Extract the 'type' parameter
     console.log("Type:", type);
@@ -222,7 +224,7 @@ const NewIncomeScreen = ({ navigation, route }) => {
 
             {/* Transaction Description Input */}
             <TextInput
-                style={[styles.input, { borderColor: inputBorderColor, color: textColor , backgroundColor: cardBackgroundColor}]}
+                style={[styles.input, { borderColor: inputBorderColor, color: textColor, backgroundColor: cardBackgroundColor }]}
                 placeholder="Your description..."
                 placeholderTextColor={placeholderTextColor}
                 value={transactionDescription}
@@ -232,7 +234,7 @@ const NewIncomeScreen = ({ navigation, route }) => {
 
             {/* Transaction Amount Input */}
             <TextInput
- style={[styles.input, { borderColor: inputBorderColor, color: textColor , backgroundColor: cardBackgroundColor}]}                placeholder="Put the price"
+                style={[styles.input, { borderColor: inputBorderColor, color: textColor, backgroundColor: cardBackgroundColor }]} placeholder="Put the price"
                 placeholderTextColor={placeholderTextColor}
                 keyboardType="numeric"
                 value={transactionAmount}
@@ -285,7 +287,11 @@ const NewIncomeScreen = ({ navigation, route }) => {
             <TouchableOpacity style={[styles.saveButton, { backgroundColor: buttonBackgroundColor }]} onPress={handleSaveIncome}>
                 <Text style={styles.saveButtonText}>Save</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.cancelButton, { backgroundColor: cancelButtonColor }]}>
+            <TouchableOpacity onPress={() => {
+                navigation.navigate('main')
+                setCreateCategoryModalVisible(false); // Close the modal
+                // Navigate back to the main screen
+            }} style={[styles.cancelButton, { backgroundColor: cancelButtonColor }]}>
                 <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
 
@@ -328,9 +334,15 @@ const NewIncomeScreen = ({ navigation, route }) => {
                         />
 
                         {/* Cancel Button */}
-                        <TouchableOpacity onPress={closeCategoryModal} style={[styles.smallCancelButton, { backgroundColor: cancelButtonColor }]}>
+                        <TouchableOpacity
+                            onPress={() => {
+                                setCategoryModalVisible(false); // Close the modal correctly
+                            }}
+                            style={[styles.smallCancelButton, { backgroundColor: cancelButtonColor }]}
+                        >
                             <Text style={styles.smallCancelText}>Cancel</Text>
                         </TouchableOpacity>
+
                     </View>
                 </View>
             </Modal>
@@ -363,7 +375,12 @@ const NewIncomeScreen = ({ navigation, route }) => {
                         <TouchableOpacity style={[styles.saveButton, { backgroundColor: buttonBackgroundColor }]} onPress={handleSaveCategory}>
                             <Text style={[styles.saveButtonText, { color: buttonTextColor }]}>Save</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity style={[styles.cancelButton, { backgroundColor: cancelButtonColor }]} onPress={() => setCreateCategoryModalVisible(false)}>
+                        <TouchableOpacity style={[styles.cancelButton, { backgroundColor: cancelButtonColor }]}
+                            onPress={() => {
+
+                                setCreateCategoryModalVisible(false); // Close the modal
+                                // Navigate back to the main screen
+                            }}>
                             <Text style={styles.cancelButtonText}>Cancel</Text>
                         </TouchableOpacity>
                     </View>

@@ -219,7 +219,7 @@ const NewExpenseScreen = ({ navigation, route }) => {
 
             {/* Transaction Description Input */}
             <TextInput
-                style={[styles.input, { borderColor: inputBorderColor, color: textColor , backgroundColor: cardBackgroundColor}]}
+                style={[styles.input, { borderColor: inputBorderColor, color: textColor, backgroundColor: cardBackgroundColor }]}
                 placeholder="Your description..."
                 placeholderTextColor={placeholderTextColor}
                 value={transactionDescription}
@@ -229,7 +229,7 @@ const NewExpenseScreen = ({ navigation, route }) => {
 
             {/* Transaction Amount Input */}
             <TextInput
-                style={[styles.input, { borderColor: inputBorderColor, color: textColor , backgroundColor: cardBackgroundColor}]}               
+                style={[styles.input, { borderColor: inputBorderColor, color: textColor, backgroundColor: cardBackgroundColor }]}
                 placeholder="Put the price"
                 placeholderTextColor={placeholderTextColor}
                 keyboardType="numeric"
@@ -283,7 +283,10 @@ const NewExpenseScreen = ({ navigation, route }) => {
             <TouchableOpacity style={[styles.saveButton, { backgroundColor: buttonBackgroundColor }]} onPress={handleSaveExpense}>
                 <Text style={styles.saveButtonText}>Save</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.cancelButton, { backgroundColor: cancelButtonColor }]}>
+            <TouchableOpacity onPress={() => {
+                navigation.navigate('main')
+
+            }} style={[styles.cancelButton, { backgroundColor: cancelButtonColor }]}>
                 <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
 
@@ -320,7 +323,9 @@ const NewExpenseScreen = ({ navigation, route }) => {
                             contentContainerStyle={styles.categoryList}
                         />
                         {/* Cancel Button */}
-                        <TouchableOpacity onPress={closeCategoryModal} style={[styles.smallCancelButton, { backgroundColor: cancelButtonColor }]}>
+                        <TouchableOpacity onPress={() => {
+                            setCategoryModalVisible(false); // Close the modal correctly
+                        }} style={[styles.smallCancelButton, { backgroundColor: cancelButtonColor }]}>
                             <Text style={styles.smallCancelText}>Cancel</Text>
                         </TouchableOpacity>
                     </View>
@@ -379,17 +384,6 @@ const NewExpenseScreen = ({ navigation, route }) => {
             </Modal>
 
 
-            <Text style={[styles.sectionTitle, { color: textColor }]}>Expenses</Text>
-            {expenses.map((expense) => (
-                <View key={expense.id} style={styles.expenseItem}>
-                    <Text style={[styles.expenseText, { color: textColor }]}>
-                        {expense.description} - ${expense.amount}
-                    </Text>
-                    <TouchableOpacity onPress={() => deleteExpense(expense.id)}>
-                        <MaterialIcons name="delete" size={24} color="red" />
-                    </TouchableOpacity>
-                </View>
-            ))}
         </View>
 
     );
@@ -543,7 +537,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#1C1C1E',
         borderRadius: 10,
         alignItems: 'center',
-        maxHeight: '70%', 
+        maxHeight: '70%',
     },
     searchInput: {
         borderWidth: 1,

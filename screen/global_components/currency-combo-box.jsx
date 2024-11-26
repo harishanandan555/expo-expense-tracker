@@ -183,58 +183,6 @@ const UpdateUserCurrency = async (currencyValue) => {
   });
 };
 
-// export function CurrencyComboBox() {
-//   const [open, setOpen] = useState(false);
-//   const [selectedOption, setSelectedOption] = useState(null);
-//   const [settings, setSettings] = useState({ isFetching: true, data: null });
-
-//   useEffect(() => {
-//     const getSettings = async () => {
-//       const data = await fetchUserSettings();
-//       setSettings({ isFetching: false, data });
-
-//       const currency = mockCurrencies.find((currency) => currency.value === data.currency);
-//       if (currency) setSelectedOption(currency);
-//     };
-
-//     getSettings();
-//   }, []);
-
-//   const onSelectOption = useCallback((currency) => {
-//     if (!currency) {
-//       Toast.show({ text1: "Please select currency!", type: "error" });
-//       return;
-//     }
-
-//     Toast.show({ text1: "Updating Currency...", type: "info" });
-
-//     UpdateUserCurrency(currency.value)
-//       .then(() => {
-//         Toast.show({ text1: "Currency updated successfully!", type: "success" });
-//         setSelectedOption(mockCurrencies.find((c) => c.value === currency.value) || null);
-//       })
-//       .catch(() => {
-//         Toast.show({ text1: "Something went wrong!", type: "error" });
-//       });
-//   }, []);
-
-//   if (settings.isFetching) {
-//     return <Text>Loading...</Text>; // Simplified loading state for testing
-//   }
-
-//   return (
-//     <View style={{ padding: 16 }}>
-//       <Button
-//         title={selectedOption ? selectedOption.label : "Set Currency"}
-//         onPress={() => setOpen(!open)} // Toggle dropdown
-//       />
-//       {open && (
-//         <OptionList setOpen={setOpen} setSelectedOption={onSelectOption} />
-//       )}
-//       <Toast ref={(ref) => Toast.setRef(ref)} />
-//     </View>
-//   );
-// }
 
 export function CurrencyComboBox() {
   const [open, setOpen] = useState(false);
