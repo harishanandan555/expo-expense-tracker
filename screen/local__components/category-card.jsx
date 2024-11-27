@@ -77,21 +77,85 @@
 
 
 
+// import React from "react";
+// import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+// import Feather from "react-native-vector-icons/Feather";
+// import { DeleteCategoryDialog } from "./delete-category-dialog";
+
+// export const CategoryCard = ({ category, isDefault, onDeleteSuccess }) => {
+//   return (
+//     <View style={[styles.card, isDefault ? styles.defaultCard : null]}>
+//       <Text style={styles.icon}>{category.icon || "❓"}</Text>
+//       <Text style={styles.categoryName}>{category.name}</Text>
+//       {!isDefault && (
+//         <DeleteCategoryDialog category={category} onSuccessCallback={onDeleteSuccess}>
+//           <View style={styles.buttonContainer}>
+//             <TouchableOpacity style={styles.button}>
+//               <Feather name="trash-2" size={20} color="#6b7280" />
+//             </TouchableOpacity>
+//           </View>
+//         </DeleteCategoryDialog>
+//       )}
+//     </View>
+//   );
+// };
+
+// const styles = StyleSheet.create({
+//   card: {
+//     width: "30%", // Adjust percentage width to ensure three items per row
+//     height: 120, // Increase height slightly for better touchable area
+//     borderRadius: 8,
+//     alignItems: "center",
+//     justifyContent: "center",
+//     marginBottom: 15, // Adjust spacing between rows
+//     backgroundColor: "#f9fafb",
+//   },
+//   icon: {
+//     fontSize: 32,
+//   },
+//   categoryName: {
+//     fontSize: 14,
+//     marginTop: 5,
+//     textAlign: "center", // Ensure text aligns properly
+//   },
+//   buttonContainer: {
+//     marginTop: 10,
+//     zIndex: 10, // Ensure button is on top of other components
+//   },
+//   button: {
+//     padding: 8, // Increase touchable area of the button
+//     backgroundColor: "#e5e7eb",
+//     borderRadius: 5,
+//     alignItems: "center",
+//     justifyContent: "center",
+//   },
+// });
+
+
+
+
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import Feather from "react-native-vector-icons/Feather";
+
 import { DeleteCategoryDialog } from "./delete-category-dialog";
 
-export const CategoryCard = ({ category, isDefault, onDeleteSuccess }) => {
+export const CategoryCard = ({ category, isDefault, onDeleteSuccess, theme }) => {
+
   return (
-    <View style={[styles.card, isDefault ? styles.defaultCard : null]}>
-      <Text style={styles.icon}>{category.icon || "❓"}</Text>
-      <Text style={styles.categoryName}>{category.name}</Text>
+    <View
+      style={[
+        styles.card,
+        isDefault ? { backgroundColor: theme.defaultBackground } : { backgroundColor: theme.cardBackground },
+      ]}
+    >
+      <Text style={[styles.icon, { color: theme.icon }]}>{category.icon || "❓"}</Text>
+      <Text style={[styles.categoryName, { color: theme.text }]}>{category.name}</Text>
       {!isDefault && (
         <DeleteCategoryDialog category={category} onSuccessCallback={onDeleteSuccess}>
           <View style={styles.buttonContainer}>
-            <TouchableOpacity style={styles.button}>
-              <Feather name="trash-2" size={20} color="#6b7280" />
+            <TouchableOpacity style={[styles.button, { backgroundColor: theme.buttonBackground }]}>
+              <Feather name="trash-2" size={20} color={theme.buttonIcon} />
             </TouchableOpacity>
           </View>
         </DeleteCategoryDialog>
@@ -108,7 +172,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 15, // Adjust spacing between rows
-    backgroundColor: "#f9fafb",
   },
   icon: {
     fontSize: 32,
@@ -124,7 +187,6 @@ const styles = StyleSheet.create({
   },
   button: {
     padding: 8, // Increase touchable area of the button
-    backgroundColor: "#e5e7eb",
     borderRadius: 5,
     alignItems: "center",
     justifyContent: "center",

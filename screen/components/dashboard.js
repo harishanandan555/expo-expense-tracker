@@ -29,6 +29,7 @@ import { doc, setDoc, getDoc, collection, onSnapshot } from "firebase/firestore"
 import { BarChart } from 'react-native-gifted-charts';
 const DashboardScreen = () => {
 
+    const [theme, setTheme] = useState('dark');
     const [menuVisible, setMenuVisible] = useState(false);
     const [isIncomeModalVisible, setIncomeModalVisible] = useState(false);
     const [isExpenseModalVisible, setExpenseModalVisible] = useState(false);

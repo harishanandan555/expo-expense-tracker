@@ -277,7 +277,20 @@ export async function storeUserCategories(userId, data) {
       createdAt: new Date().toISOString(), // Track creation time in ISO format
     });
 
-    return { success: true, message: "Category created successfully." };
+    // Fetch all categories for the user
+    const userCategoriesQuery = query(
+      collection(db, "UserCategories"),
+      where("userId", "==", userId)
+    );
+
+    const querySnapshot = await getDocs(userCategoriesQuery);
+    const userCategories = querySnapshot.docs.map((doc) => doc.data());
+
+    return {
+      success: true,
+      message: "Category created successfully.",
+      categories: userCategories, // Return the updated user categories
+    };
   } catch (error) {
     console.error("Error creating category:", error.message);
     throw new Error(`Error creating category: ${error.message}`);
@@ -375,6 +388,7 @@ export async function deleteCategoryByUserId(id, userId, categoryData) {
 
     console.log(`Category with id: ${id} deleted successfully.`);
     return { success: true };
+    
   } catch (error) {
     console.error("Error deleting category:", error.message);
     return { success: false, message: `Error deleting category: ${error.message}` };
