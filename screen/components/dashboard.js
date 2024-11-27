@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, } from 'react';
 import {
     View,
     Text,
@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { auth, db } from "../../config/firebaseConfig";
 import { ProgressBar } from "react-native-paper"; // For a Progress bar
+import { useFocusEffect } from '@react-navigation/native';
 
 import { useRoute } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -26,10 +27,9 @@ import { format } from 'date-fns'; // Use date-fns for formatting dates
 import { useNavigation } from '@react-navigation/native'; // Import useNavigation hook
 import { doc, setDoc, getDoc, collection, onSnapshot } from "firebase/firestore";
 import { BarChart } from 'react-native-gifted-charts';
-
 const DashboardScreen = () => {
 
-    const [theme, setTheme] = useState('dark'); // Set default theme to dark
+    const [theme, setTheme] = useState('dark');
     const [menuVisible, setMenuVisible] = useState(false);
     const [isIncomeModalVisible, setIncomeModalVisible] = useState(false);
     const [isExpenseModalVisible, setExpenseModalVisible] = useState(false);
@@ -51,8 +51,9 @@ const DashboardScreen = () => {
     const [firebaseTotalExpense, setFirebaseTotalExpense] = useState(0);
     const [firebaseLastUpdated, setFirebaseLastUpdated] = useState("");
     const [isModalVisible, setModalVisible] = useState(false);
-    const barBackgroundColor = isDarkMode ? '#333' : '#e0e0e0';
+
     const [IncomeCategory, setIncomeCategory] = useState([]); // State to store the income data
+    const [currency, setCurrency] = useState({ value: 'USD', label: '$ Dollar', locale: 'en-US' });
 
     const [open, setOpen] = useState(false);
     const [value, setValue] = useState(null);
@@ -100,24 +101,27 @@ const DashboardScreen = () => {
             },
         ],
     };
+    useFocusEffect(
+        React.useCallback(() => {
+            const fetchCurrency = async () => {
+                try {
+                    const storedCurrency = await AsyncStorage.getItem('selectedCurrency');
+                    if (storedCurrency) {
+                        setCurrency(JSON.parse(storedCurrency));
+                    }
+                } catch (error) {
+                    console.error('Error fetching currency:', error);
+                }
+            };
+
+            fetchCurrency();
+        }, [])
+    );
+
 
     // Chart configuration
-    const chartConfig = {
-        backgroundGradientFrom: '#1e2923',
-        backgroundGradientTo: '#08130d',
-        decimalPlaces: 2,
-        color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-        labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-        barPercentage: 0.5,
-        fillShadowGradient: '#FFA726',
-        fillShadowGradientOpacity: 1,
 
-        propsForLabels: {
-            fontSize: 14,
-            fontWeight: 'bold',
-        },
-    };
-
+    const absoluteBalance = Math.abs(balance);
     const barData = [
         {
             value: totalIncome,
@@ -130,14 +134,14 @@ const DashboardScreen = () => {
             frontColor: 'red', // Red
         },
         {
-            value: balance,
+            value: absoluteBalance,
             label: 'Balance',
             frontColor: 'blue', // Blue
         },
     ];
-    
 
-   
+
+
     // Function to handle theme switching
     const handleThemeSwitch = (mode) => {
         setTheme(mode);
@@ -160,46 +164,49 @@ const DashboardScreen = () => {
     }, []);
     const calculateAndSaveFinancialData = () => {
         const userId = auth.currentUser?.uid;
-    
+
         if (!userId) {
             console.error("User ID is required. Cannot update financial data.");
             return;
         }
-    
+
         // Reference to the user's document in Firestore
         const userDocRef = doc(db, "users", userId);
-    
+
         // Set up real-time listener
         const unsubscribe = onSnapshot(userDocRef, (docSnapshot) => {
             if (docSnapshot.exists()) {
                 const userInfo = docSnapshot.data();
-    
+
+                const financialData = userInfo.financialData || {};
+                const lastUpdatedTime = financialData.lastUpdated || "Not Available";
+
                 // Calculate total income
                 const calculatedTotalIncome = (userInfo.income || []).reduce(
                     (sum, incomeItem) => sum + (incomeItem.amount || 0),
                     0
                 );
-    
+
                 // Calculate total expenses
                 const calculatedTotalExpense = (userInfo.expenses || []).reduce(
                     (sum, expenseItem) => sum + (expenseItem.amount || 0),
                     0
                 );
-    
+
                 // Calculate the balance
                 const calculatedBalance = calculatedTotalIncome - calculatedTotalExpense;
-    
+
                 // Update the state variables
                 setTotalIncome(calculatedTotalIncome);
                 setTotalExpense(calculatedTotalExpense);
                 setBalance(calculatedBalance);
-                setLastUpdated(new Date().toISOString());
-    
+                setLastUpdated(lastUpdatedTime);
+
                 console.log("Updated financial data:", {
                     totalIncome: calculatedTotalIncome,
                     totalExpense: calculatedTotalExpense,
                     balance: calculatedBalance,
-                    lastUpdated: new Date().toISOString(),
+                    lastUpdated: lastUpdatedTime,
                 });
             } else {
                 console.error("User document does not exist.");
@@ -207,100 +214,100 @@ const DashboardScreen = () => {
         }, (error) => {
             console.error("Error listening to user financial data:", error);
         });
-    
+
         // Return unsubscribe function to clean up the listener when no longer needed
         return unsubscribe;
     };
 
 
-    
 
-const fetchIncomeData = () => {
-    const id = auth.currentUser?.uid; // Get the user ID
 
-    if (!id) {
-        console.error("User ID is required.");
-        return;
-    }
+    const fetchIncomeData = () => {
+        const id = auth.currentUser?.uid; // Get the user ID
 
-    // Reference to the user's Firestore document
-    const userDocRef = doc(db, "users", id);
-
-    // Set up real-time listener
-    const unsubscribe = onSnapshot(userDocRef, (docSnapshot) => {
-        if (docSnapshot.exists()) {
-            const userInfo = docSnapshot.data();
-
-            if (userInfo && userInfo.income) {
-                // Transform income data into a usable structure
-                const incomeData = userInfo.income.map((item) => ({
-                    category: item.category,
-                    amount: item.amount,
-                    date: item.date,
-                    description: item.description,
-                    icon: item.icon || "💰", // Default icon if none is provided
-                }));
-
-                // Update the state with the new income data
-                setIncomeCategory(incomeData);
-            } else {
-                console.error("No income data found for this user.");
-                setIncomeCategory([]); // Reset to empty if no data is found
-            }
-        } else {
-            console.error("User document does not exist.");
+        if (!id) {
+            console.error("User ID is required.");
+            return;
         }
-    }, (error) => {
-        console.error("Error listening to user document:", error);
-    });
 
-    // Return unsubscribe function to clean up the listener when no longer needed
-    return unsubscribe;
-};
+        // Reference to the user's Firestore document
+        const userDocRef = doc(db, "users", id);
 
-   
-const fetchExpenseData = () => {
-    const id = auth.currentUser?.uid; // Get the user ID
+        // Set up real-time listener
+        const unsubscribe = onSnapshot(userDocRef, (docSnapshot) => {
+            if (docSnapshot.exists()) {
+                const userInfo = docSnapshot.data();
 
-    if (!id) {
-        console.error("User ID is required.");
-        return;
-    }
+                if (userInfo && userInfo.income) {
+                    // Transform income data into a usable structure
+                    const incomeData = userInfo.income.map((item) => ({
+                        category: item.category,
+                        amount: item.amount,
+                        date: item.date,
+                        description: item.description,
+                        icon: item.icon || "💰", // Default icon if none is provided
+                    }));
 
-    // Reference to the user's Firestore document
-    const userDocRef = doc(db, "users", id);
-
-    // Set up real-time listener
-    const unsubscribe = onSnapshot(userDocRef, (docSnapshot) => {
-        if (docSnapshot.exists()) {
-            const userInfo = docSnapshot.data();
-
-            if (userInfo && userInfo.expenses) {
-                // Transform expenses data into a usable structure
-                const expenseData = userInfo.expenses.map((item) => ({
-                    category: item.category,
-                    amount: item.amount,
-                    date: item.date,
-                    description: item.description,
-                    icon: item.icon || "💸", // Default icon if none is provided
-                }));
-
-                // Update the state with the new expense data
-                setExpenses(expenseData);
+                    // Update the state with the new income data
+                    setIncomeCategory(incomeData);
+                } else {
+                    console.error("No income data found for this user.");
+                    setIncomeCategory([]); // Reset to empty if no data is found
+                }
             } else {
-                console.error("No expense data found for this user.");
-                setExpenses([]); // Reset to empty if no data is found
+                console.error("User document does not exist.");
             }
-        } else {
-            console.error("User document does not exist.");
-        }
-    }, (error) => {
-        console.error("Error listening to user document:", error);
-    });
+        }, (error) => {
+            console.error("Error listening to user document:", error);
+        });
 
-    // Return unsubscribe function to clean up the listener when no longer needed
-    return unsubscribe;
-};
+        // Return unsubscribe function to clean up the listener when no longer needed
+        return unsubscribe;
+    };
+
+
+    const fetchExpenseData = () => {
+        const id = auth.currentUser?.uid; // Get the user ID
+
+        if (!id) {
+            console.error("User ID is required.");
+            return;
+        }
+
+        // Reference to the user's Firestore document
+        const userDocRef = doc(db, "users", id);
+
+        // Set up real-time listener
+        const unsubscribe = onSnapshot(userDocRef, (docSnapshot) => {
+            if (docSnapshot.exists()) {
+                const userInfo = docSnapshot.data();
+
+                if (userInfo && userInfo.expenses) {
+                    // Transform expenses data into a usable structure
+                    const expenseData = userInfo.expenses.map((item) => ({
+                        category: item.category,
+                        amount: item.amount,
+                        date: item.date,
+                        description: item.description,
+                        icon: item.icon || "💸", // Default icon if none is provided
+                    }));
+
+                    // Update the state with the new expense data
+                    setExpenses(expenseData);
+                } else {
+                    console.error("No expense data found for this user.");
+                    setExpenses([]); // Reset to empty if no data is found
+                }
+            } else {
+                console.error("User document does not exist.");
+            }
+        }, (error) => {
+            console.error("Error listening to user document:", error);
+        });
+
+        // Return unsubscribe function to clean up the listener when no longer needed
+        return unsubscribe;
+    };
 
 
     const handleGoogleLogout = async () => {
@@ -393,7 +400,7 @@ const fetchExpenseData = () => {
 
 
 
-    
+
 
 
     const openMenu = () => setMenuVisible(true);
@@ -564,18 +571,18 @@ const fetchExpenseData = () => {
 
                 {/* Overview Section */}
                 <Text style={[styles.sectionTitle, { color: textColor }]}>Overview</Text>
-                <View style={[styles.dateRange, { backgroundColor: cardBackgroundColor }]}>
-                    <TouchableOpacity onPress={() => setDatePickerVisible(true)} style={styles.datePickerWrapper}>
+
+                {/* <TouchableOpacity onPress={() => setDatePickerVisible(true)} style={styles.datePickerWrapper}>
                         <Text style={[styles.dateText, { color: textColor }]}>
                             {`${formatDate(startDate)} - ${formatDate(endDate)}`}
                         </Text>
                         <MaterialIcons name="arrow-drop-down" size={24} color={textColor} style={styles.arrowIcon} />
-                    </TouchableOpacity>
-                </View>
+                    </TouchableOpacity> */}
+
 
                 {/* Date Picker Modal */}
 
-                <DateTimePickerModal
+                {/* <DateTimePickerModal
                     isVisible={isDatePickerVisible}
                     mode="date"
                     onConfirm={(date) => {
@@ -594,7 +601,7 @@ const fetchExpenseData = () => {
                         setEndDatePickerVisible(false);
                     }}
                     onCancel={() => setEndDatePickerVisible(false)}
-                />
+                /> */}
                 {/* Income, Expense, Balance Cards */}
 
                 <View style={[styles.overviewCard, { backgroundColor: cardBackgroundColor }]}>
@@ -602,7 +609,7 @@ const fetchExpenseData = () => {
                     <View>
                         <Text style={[styles.overviewLabel, { color: textColor }]}>Income</Text>
                         <Text style={[styles.overviewValue, { color: theme === 'dark' ? '#fff' : '#000' }]}>
-                            ${totalIncome || 0}                     </Text>
+                        {currency.label.split(' ')[0]}{totalIncome || 0} </Text>
                     </View>
                 </View>
 
@@ -611,7 +618,7 @@ const fetchExpenseData = () => {
                     <View>
                         <Text style={[styles.overviewLabel, { color: textColor }]}>Expense</Text>
                         <Text style={[styles.overviewValue, { color: theme === 'dark' ? '#fff' : '#000' }]}>
-                            ${totalExpense || 0}
+                            {currency.label.split(' ')[0]}{totalExpense || 0}
                         </Text>
                     </View>
                 </View>
@@ -620,7 +627,7 @@ const fetchExpenseData = () => {
                     <MaterialIcons name="account-balance-wallet" size={32} color="blue" />
                     <View>
                         <Text style={[styles.overviewLabel, { color: textColor }]}>Balance</Text>
-                        <Text style={[styles.overviewValue, { color: textColor }]}>${balance || 0}</Text>
+                        <Text style={[styles.overviewValue, { color: textColor }]}>{currency.label.split(' ')[0]}{balance || 0}</Text>
                     </View>
                 </View>
 
@@ -667,7 +674,7 @@ const fetchExpenseData = () => {
                                                 </Text>
 
                                                 <Text style={[styles.amountText, { color: textColor }]}>
-                                                    ${amount.toFixed(2)}
+                                                {currency.label.split(' ')[0]}{amount.toFixed(2)}
                                                 </Text>
                                             </View>
                                             <ProgressBar
@@ -721,7 +728,7 @@ const fetchExpenseData = () => {
                                                 </Text>
 
                                                 <Text style={[styles.amountText, { color: textColor }]}>
-                                                    ${amount.toFixed(2)}
+                                                {currency.label.split(' ')[0]}{amount.toFixed(2)}
                                                 </Text>
                                             </View>
                                             <ProgressBar
@@ -791,17 +798,20 @@ const fetchExpenseData = () => {
 
 
                     {/* Income and Expense Toggle */}
-                    <View style={styles.toggleContainer}>
-                        <View style={[styles.toggleButton, { backgroundColor: 'green' }]}>
-                            <Text style={styles.toggleText}>Income</Text>
-                        </View>
-                        <View style={[styles.toggleButton, { backgroundColor: 'red' }]}>
-                            <Text style={styles.toggleText}>Expense</Text>
-                        </View>
-                    </View>
+                    <View style={[styles.toggleContainer, { backgroundColor: backgroundColor}]}>
+    <TouchableOpacity style={[styles.toggleButton, styles.incomeButton]}>
+        <View style={[styles.icon, styles.incomeIcon]} />
+        <Text style={[styles.toggleText, {color: textColor}]}>Income</Text>
+    </TouchableOpacity>
+    <TouchableOpacity style={[styles.toggleButton, styles.expenseButton]}>
+        <View style={[styles.icon, styles.expenseIcon]} />
+        <Text style={[styles.toggleText, {color: textColor}]}>Expense</Text>
+    </TouchableOpacity>
+</View>
+
                     <View
                         style={{
-                          marginRight:10,
+                            marginRight: 10,
                             padding: 10,
                             borderRadius: 10,
                             backgroundColor: cardBackgroundColor, // Dark background for better contrast
@@ -809,22 +819,23 @@ const fetchExpenseData = () => {
                             marginVertical: 20,
                         }}
                     >
-                        
+
                         <BarChart
                             data={barData}
                             barWidth={40}
                             renderTooltip={(item, index) => {
+                                const value = item.label === 'Balance' ? balance : item.value;
                                 return (
                                     <View
                                         style={{
-                                           
-                                            marginBottom:-5550,
+
+                                            marginBottom: -5550,
                                             backgroundColor: '#ffcefe',
                                             paddingHorizontal: 6,
                                             paddingVertical: 4,
                                             borderRadius: 4,
                                         }}>
-                                        <Text>{item.value}</Text>
+                                        <Text>{value}</Text>
                                     </View>
                                 );
                             }}
@@ -832,8 +843,8 @@ const fetchExpenseData = () => {
                             yAxisThickness={1.5} // Y-axis line thickness
                             yAxisColor="#fff" // Y-axis line color
                             xAxisThickness={1.5} // X-axis line thickness
-                            xAxisColor="#fff" 
-                            yAxisStepValue={5000} 
+                            xAxisColor="#fff"
+                            yAxisStepValue={5000}
                             // X-axis line color
                             noOfSections={8} // Divide y-axis into 5 sections
                             maxValue={Math.max(totalIncome, totalExpense, balance) + 5000} // Close to the highest value
@@ -846,7 +857,7 @@ const fetchExpenseData = () => {
                             isAnimated
                             side="right"
                             barStyle={{
-                              
+
 
                                 borderWidth: 0,
                                 shadowColor: '#999',
@@ -855,12 +866,12 @@ const fetchExpenseData = () => {
                                 shadowRadius: 6,
                                 elevation: 8,
                             }}
-                           
+
                             initialSpacing={20}
                             barMarginBottom={5}//
                             Enable animation
                             spacing={20}
-             
+
                         />
                     </View>
                     {/* Modal for New Income */}
@@ -888,7 +899,7 @@ const fetchExpenseData = () => {
                                         onPress={openCategoryModal}
                                     >
                                         <Text style={[styles.categoryText, { color: textColor }]}>
-                                            {selectedCategory ? `Category: ${selectedCategory}` : 'Select a category'}
+                                            {selectedCategory ? `Category: {currency.label.split(' ')[0]}{selectedCategory}` : 'Select a category'}
                                         </Text>
                                         <MaterialIcons name="arrow-drop-down" size={24} color={textColor} />
                                     </TouchableOpacity>
@@ -1011,7 +1022,7 @@ const fetchExpenseData = () => {
                                         onPress={openCategoryModal}  // This opens the category selection modal
                                     >
                                         <Text style={[styles.categoryText, { color: textColor }]}>
-                                            {selectedCategory ? `Category: ${selectedCategory}` : 'Select a category'}
+                                            {selectedCategory ? `Category: {currency.label.split(' ')[0]}{selectedCategory}` : 'Select a category'}
                                         </Text>
                                         <MaterialIcons name="arrow-drop-down" size={24} color={textColor} />
                                     </TouchableOpacity>
@@ -1383,19 +1394,44 @@ const styles = StyleSheet.create({
     },
     toggleContainer: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: 20, // Add spacing from the top
     },
     toggleButton: {
-        flex: 1,
-        padding: 10,
-        borderRadius: 5,
+        flexDirection: 'row', // Align icon and text in a row
         alignItems: 'center',
-        marginHorizontal: 5,
+        justifyContent: 'center',
+        paddingVertical: 10,
+        paddingHorizontal: 25,
+        borderRadius: 20, // Rounded container
+        borderWidth: 1, // Border for the button
+        borderColor: '#ccc', // Light border color
+        marginHorizontal: 10, // Spacing between buttons
+        // White background
     },
-
+    incomeButton: {
+        borderColor: 'green', // Border color for income
+    },
+    expenseButton: {
+        borderColor: 'red', // Border color for expense
+    },
+    icon: {
+        width: 15,
+        height: 15,
+        borderRadius: 6, // Circular icon
+        marginRight: 8, // Spacing between icon and text
+    },
+    incomeIcon: {
+        backgroundColor: 'green', // Green icon for income
+    },
+    expenseIcon: {
+        backgroundColor: 'red', // Red icon for expense
+    },
     toggleText: {
-        color: '#fff',
+        // Black text color
         fontWeight: 'bold',
+        fontSize: 14, // Adjust font size for text
     },
     categoryItem: {
         padding: 10,
