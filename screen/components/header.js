@@ -1,241 +1,171 @@
-import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, Image, ScrollView, Alert, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { Menu, Provider, Avatar, Divider } from 'react-native-paper';
-import { auth } from '../../config/firebaseConfig';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+    import React, { useEffect, useState } from 'react';
+    import { View, StyleSheet, Image, Alert, TouchableOpacity, ActivityIndicator } from 'react-native';
+    import { Menu, Provider, Avatar, Divider } from 'react-native-paper';
+    import { auth } from '../../config/firebaseConfig';
+    import { onAuthStateChanged, signOut } from 'firebase/auth';
+    import { GoogleSignin } from "@react-native-google-signin/google-signin";;
 
-const Header = ({ navigation, toggleTheme  }) => {
-  const [menuVisible, setMenuVisible] = useState(false);
-  const [userName, setUserName] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [userPhoto, setUserPhoto] = useState(null);
-  const [userInfos, setUserInfos] = useState(null);
-  const [theme, setTheme] = useState('dark'); // Set default theme to dark
+    const Header = ({ navigation, isDarkMode, toggleTheme }) => {
+    const [menuVisible, setMenuVisible] = useState(false);
+    const [userName, setUserName] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const [userPhoto, setUserPhoto] = useState(null);
 
-  const isDarkMode = theme === 'dark';
-    const backgroundColor = isDarkMode ? '#000' : '#fff';
-    const cardBackgroundColor = isDarkMode ? '#121212' : '#f4f4f4';
-    const textColor = isDarkMode ? '#fff' : '#000';
-    const inputBackgroundColor = isDarkMode ? '#333' : '#fff';
-    const modalTextColor = isDarkMode ? '#fff' : '#000';
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        const displayName = user.displayName ? user.displayName : user.email?.split('@')[0] || 'User';
-        setUserName(displayName);
-        setUserPhoto(user.photoURL);
-      } else {
-        setUserName(null);
-        setUserPhoto(null);
-      }
-    });
+    useEffect(() => {
+         // Configure Google Sign-In
+         GoogleSignin.configure({
+              webClientId:  "622095554406-32i6saoa7sn60bu32n33f4um21ep2i65.apps.googleusercontent.com",
+           });
 
-    return () => unsubscribe();
-  }, []);
-  const handleThemeSwitch = (mode) => {
-    setTheme(mode);
-};
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+        if (user) {
+            const displayName = user.displayName ? user.displayName : user.email?.split('@')[0] || 'User';
+            setUserName(displayName);
+            setUserPhoto(user.photoURL);
+        } else {
+            setUserName(null);
+            setUserPhoto(null);
+        }
+        });
 
-  const openMenu = () => setMenuVisible(true);
-  const closeMenu = () => setMenuVisible(false);
-  const handleGoogleLogout = async () => {
-    try {
-        await GoogleSignin.signOut();
-        await AsyncStorage.removeItem('userInfo');
-        await AsyncStorage.removeItem('userEmail'); // Clear stored email if needed
-        setUserInfos(null);
-        navigation.replace('signin'); // Navigate back to the SignInPage
-    } catch (error) {
-        console.error('Error signing out from Google:', error);
-    }
-};
-  const handleLogout = async () => {
-    closeMenu();
-    setLoading(true); 
-    console.log("logout clicked")
-    try {
-      await signOut(auth);
-      Alert.alert("Logged Out", "You have successfully logged out.");
-      navigation.navigate("signin");
-    } catch (error) {
-      console.log(error);
-      Alert.alert("Logout Error", error.message);
+        return () => unsubscribe();
+    }, []);
 
-    } finally {
-      setLoading(false);
-    }
-  };
+    const openMenu = () => setMenuVisible(true);
+    const closeMenu = () => setMenuVisible(false);
 
-  useEffect(() => {
-    const fetchUserInfo = async () => {
+    const handleLogout = async () => {
+        closeMenu();
+        setLoading(true); 
+        console.log("logout clicked")
         try {
-            const storedUserInfo = await AsyncStorage.getItem("userInfo");
-            if (storedUserInfo) {
-                setUserInfos(storedUserInfo ? JSON.parse(storedUserInfo) : {});
-
-            } else {
-                console.log("No User Info found.");
+            const currentUser = auth.currentUser;
+            if (currentUser.providerData.some(provider => provider.providerId === 'google.com')) {
+              // Revoke Google token and sign out
+              await GoogleSignin.revokeAccess();
+              await GoogleSignin.signOut();
             }
+        await signOut(auth);
+        Alert.alert("Logged Out", "You have successfully logged out.");
+        navigation.navigate("signin");
         } catch (error) {
-            console.error("Error retrieving user info:", error);
+        console.log(error);
+        Alert.alert("Logout Error", error.message);
+
+        } finally {
+        setLoading(false);
         }
     };
 
-    fetchUserInfo();
-}, []);
+    const getAvatarLabel = () => {
+        if (userName) {
+        return userName.slice(0, 2).toUpperCase();
+        }
+        return 'U';
+    };
 
-console.log("user info in header", userInfos)
-  const getAvatarLabel = () => {
-    if (userName) {
-      return userName.slice(0, 2).toUpperCase();
-    }
-    return 'U';
-  };
-
-  return (
-    <Provider>
-    <ScrollView
-        contentContainerStyle={[
-            styles.scrollContent,
-            { backgroundColor: backgroundColor },
-        ]}
-    >
-        {/* Header Section */}
-        <View style={styles.header}>
-            {/* Right-aligned Avatar */}
+    return (
+        <Provider>
+        <View style={[styles.header, { backgroundColor: isDarkMode ? '#000' : '#fff' }]}>
+            <Image
+            source={require('../../assets/wallet_logo.png')}
+            style={styles.logo}
+            />
             <Menu
-                visible={menuVisible}
-                onDismiss={closeMenu}
-                anchor={
-                    <View style={styles.header}>
-                        <TouchableOpacity onPress={openMenu} style={styles.avatarContainer}>
-
-                            {userInfos?.photoURL ? (
-                                <Avatar.Image
-                                    size={40}
-                                    source={{ uri: userInfos.photoURL }}
-                                    style={styles.avatar}
-                                />
-                            ) : (
-                                <Avatar.Text
-                                    size={40}
-                                    label={userInfos?.displayName ? userInfos.displayName[0] : '?'}
-                                    style={styles.avatar}
-                                />
-                            )}
-
-
-
-                        </TouchableOpacity>
-                    </View>
-                }
-                style={[
-                    styles.menuItem,
-                    {
-
-                        paddingVertical: 0,
-                        marginVertical: 0,
-                        // Remove height to allow dynamic sizing
-                    },
-                ]}
+            visible={menuVisible}
+            onDismiss={closeMenu}
+            anchor={
+                <TouchableOpacity onPress={openMenu}>
+                {userPhoto ? (
+                    <Avatar.Image size={45} source={{ uri: userPhoto }} />
+                ) : (
+                    <Avatar.Text size={45} label={getAvatarLabel()} />
+                )}
+                </TouchableOpacity>
+            }
+            style={[
+                styles.menu,
+                { backgroundColor: isDarkMode ? '#000' : '#fff' },
+                { marginLeft: -10 },
+                { position: 'absolute', top:5, zIndex: 1000 },
+            ]}  
             >
+            <View style={[styles.menuItemContainer, { backgroundColor: isDarkMode ? '#333' : '#fff' }]}>
                 <Menu.Item
-                    onPress={() => {
-                        handleThemeSwitch('light');
-                        closeMenu();
-                    }}
-                    title="Light"
-                    icon="weather-sunny"
-                    style={{
-
-                        paddingVertical: 4, // Slight padding adjustment
-                        marginVertical: 0,
-                    }}
-
+                onPress={() => {
+                    toggleTheme();
+                    closeMenu();
+                }}
+                title={isDarkMode ? 'Light' : 'Dark'}
+                icon={isDarkMode ? 'weather-sunny' : 'weather-night' }
+                titleStyle={[styles.menuItemText,{ color: isDarkMode ? '#fff' : '#000' },]}
                 />
+            </View>
+            {/* <Divider /> */}
+            {/* <View style={styles.menuItemContainer}>
                 <Menu.Item
-                    onPress={() => {
-                        handleThemeSwitch('dark');
-                        closeMenu();
-                    }}
-                    title="Dark"
-                    icon="weather-night"
-                    style={{
-
-                        paddingVertical: 4,
-                    }}
-
+                onPress={() => {
+                    toggleTheme();
+                    closeMenu();
+                }}
+                title={isDarkMode ? 'Dark Mode' : 'Dark Mode'}
+                icon={isDarkMode ? 'weather-night' : 'weather-night'}
+                titleStyle={styles.menuItemText}
                 />
-                <Divider style={{ height: 1, backgroundColor: isDarkMode ? '#444' : '#e0e0e0' }} />
+            </View> */}
+            {/* <Divider /> */}
+            <View style={[styles.menuItemContainer, { backgroundColor: isDarkMode ? '#333' : '#fff' }]}>
                 <Menu.Item
-                    onPress={handleLogout}
-                    title="Logout"
-                    icon="logout"
-                    style={{
-
-                        paddingVertical: 4,
-                    }}
-
+                onPress={handleLogout}
+                title="Logout"
+                icon="logout"
+                titleStyle={[ styles.menuItemText, { color: isDarkMode ? '#fff' : '#000' },]}
+                disabled={loading}
                 />
+            </View>
             </Menu>
-
+            {loading && (
+            <ActivityIndicator size="small" color="#000" style={styles.loadingIndicator} />
+            )}
         </View>
-        </ScrollView>
         </Provider>
+    );
+    };
 
-  );
-};
+    const styles = StyleSheet.create({
+    header: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        //marginBottom: 10,
+        marginTop:15,
+        paddingHorizontal: 10,
+        position: 'fixed',
+    },
+    logo: {
+        marginTop: 10,
+        width: 50,
+        height: 50,
+        marginBottom: 10,
+    },
+    menu: {
+        width: 100, 
+        marginTop: 29,
+        position: 'absolute',
+        zIndex: 1001,
+        // backgroundColor: (props) => props.isDarkMode ? '#000' : '#fff', 
+    },
+    menuItemText: {
+        color: '#000',
+    },
+    menuItemContainer: {
+        padding: 5,
+        borderRadius: 5,
+      },
+    loadingIndicator: {
+        position: 'absolute',
+        right: 20,
+    },
+    });
 
-const styles = StyleSheet.create({
-  scrollContent: {
-    flexGrow: 1, // Ensures the content can grow and scroll
-    padding: 20, // Adjust padding as needed
-},
-header: {
-  flexDirection: 'row',
-  justifyContent: 'flex-end',
-  alignItems: 'center',
-  marginBottom: 10,  // Add a little space below the avatar
-},
-  logo: {
-    marginTop: 10,
-    width: 50,
-    height: 50,
-    marginBottom: 10,
-  },
-  avatarContainer: {
-    alignItems: 'flex-end',
-    margin: 10, // Example, adjust as necessary for positioning
-},
-avatarRight: {
-  position: 'absolute',
-  right: 10,
-},
-avatar: {
-  backgroundColor: '#6200ee', // Customize avatar color
-},
-menuItem: {
-
-  marginTop: 50,
-
-},
-  menu: {
-    width: 100, 
-    marginTop: 3,
-    position: 'absolute',
-    zIndex: 1001,
-  },
-  menuItemContainer: {
-    backgroundColor: '#fff', 
-  },
-  menuItemText: {
-    color: '#000',
-  },
-  loadingIndicator: {
-    position: 'absolute',
-    right: 20,
-  },
-});
-
-export default Header;
+    export default Header;
