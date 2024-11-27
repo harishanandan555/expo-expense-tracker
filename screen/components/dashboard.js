@@ -27,7 +27,6 @@ import { format } from 'date-fns'; // Use date-fns for formatting dates
 import { useNavigation } from '@react-navigation/native'; // Import useNavigation hook
 import { doc, setDoc, getDoc, collection, onSnapshot } from "firebase/firestore";
 import { BarChart } from 'react-native-gifted-charts';
-import { ThemeContext } from './themeContext';
 const DashboardScreen = () => {
 
     const [theme, setTheme] = useState('dark');
@@ -610,7 +609,7 @@ const DashboardScreen = () => {
                     <View>
                         <Text style={[styles.overviewLabel, { color: textColor }]}>Income</Text>
                         <Text style={[styles.overviewValue, { color: theme === 'dark' ? '#fff' : '#000' }]}>
-                            {currency.label.split(' ')[0]}{totalIncome || 0} </Text>
+                        {currency.label.split(' ')[0]}{totalIncome || 0} </Text>
                     </View>
                 </View>
 
@@ -675,7 +674,7 @@ const DashboardScreen = () => {
                                                 </Text>
 
                                                 <Text style={[styles.amountText, { color: textColor }]}>
-                                                    ${amount.toFixed(2)}
+                                                {currency.label.split(' ')[0]}{amount.toFixed(2)}
                                                 </Text>
                                             </View>
                                             <ProgressBar
@@ -729,7 +728,7 @@ const DashboardScreen = () => {
                                                 </Text>
 
                                                 <Text style={[styles.amountText, { color: textColor }]}>
-                                                    ${amount.toFixed(2)}
+                                                {currency.label.split(' ')[0]}{amount.toFixed(2)}
                                                 </Text>
                                             </View>
                                             <ProgressBar
@@ -900,7 +899,7 @@ const DashboardScreen = () => {
                                         onPress={openCategoryModal}
                                     >
                                         <Text style={[styles.categoryText, { color: textColor }]}>
-                                            {selectedCategory ? `Category: ${selectedCategory}` : 'Select a category'}
+                                            {selectedCategory ? `Category: {currency.label.split(' ')[0]}{selectedCategory}` : 'Select a category'}
                                         </Text>
                                         <MaterialIcons name="arrow-drop-down" size={24} color={textColor} />
                                     </TouchableOpacity>
@@ -1023,7 +1022,7 @@ const DashboardScreen = () => {
                                         onPress={openCategoryModal}  // This opens the category selection modal
                                     >
                                         <Text style={[styles.categoryText, { color: textColor }]}>
-                                            {selectedCategory ? `Category: ${selectedCategory}` : 'Select a category'}
+                                            {selectedCategory ? `Category: {currency.label.split(' ')[0]}{selectedCategory}` : 'Select a category'}
                                         </Text>
                                         <MaterialIcons name="arrow-drop-down" size={24} color={textColor} />
                                     </TouchableOpacity>
