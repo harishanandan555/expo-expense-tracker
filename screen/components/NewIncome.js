@@ -15,19 +15,22 @@ import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { format } from 'date-fns'; // For date formatting
 import EmojiSelector from 'react-native-emoji-selector'; // For emoji picking
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { getDefaultCategories } from '../services/firebaseSettings';
+import { getDefaultCategories, getUserCategories } from '../services/firebaseSettings';
 import { collection, doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../../config/firebaseConfig';
 import { useNavigation } from '@react-navigation/native';
-
+import { CreateCategoryDialog } from '../local__components/create-category-dialog';
 
 const NewIncomeScreen = ({ route }) => {
     const [transactionDate, setTransactionDate] = useState(new Date());
     const [isDatePickerVisible, setDatePickerVisible] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState(null);
-    const [Categories, setCategories] = useState(null);
+    const [categories, setCategories] = useState(null);
     const [newCategory, setNewCategory] = useState('');
     const [transactionAmount, setTransactionAmount] = useState('');
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(null);
+
     const [transactionDescription, setTransactionDescription] = useState('');
     const [isDarkMode, setIsDarkMode] = useState(true); // Dark mode as default
     const [selectedIcon, setSelectedIcon] = useState(null);
@@ -56,7 +59,54 @@ const NewIncomeScreen = ({ route }) => {
         setDatePickerVisible(false);
     };
 
-
+    
+   
+    const [userId, setUserId] = useState(null);
+  
+    useEffect(() => {
+      const fetchUserData = async () => {
+        const userId = await AsyncStorage.getItem("userId");
+        setUserId(userId);
+      };
+      fetchUserData();
+    }, []);
+  
+    const fetchCategories = async () => {
+      if (!userId) {
+        console.error("User ID is not available. Ensure the user is logged in.");
+        setError("User ID is required.");
+        setIsLoading(false);
+        return;
+      }
+  
+      setIsLoading(true);
+      setError(null);
+  
+      try {
+        const userCategories = await getUserCategories(userId, type) || [];
+        const defaultCategories = await getDefaultCategories(type) || [];
+        const combinedCategories = [
+          ...defaultCategories.map((category) => ({ ...category, isDefault: true })),
+          ...userCategories.map((category) => ({ ...category, isDefault: false })),
+        ];
+  
+        // console.log("combinedCategories: ", combinedCategories)
+  
+        setCategories(combinedCategories);
+  
+      } catch (err) {
+        console.error("Error fetching categories:", err);
+        setError(err.message || "Failed to fetch categories");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+  
+    useEffect(() => {
+      if (userId) {
+        fetchCategories();
+      }
+    }, [userId]);
 
     const toggleDarkMode = () => setIsDarkMode(!isDarkMode);
 
@@ -159,44 +209,46 @@ const NewIncomeScreen = ({ route }) => {
             Alert.alert('Error', `Could not save income transaction: ${error.message}`);
         }
     };
-    useEffect(() => {
-        const fetchCategories = async () => {
-            try {
-                console.log("Fetching categories for type:", type);
 
-                // Replace this with the actual fetching logic
-                const userCategories = []; // Assuming this would fetch user-specific categories
-                const defaultCategories = await getDefaultCategories(type) || [];
 
-                console.log("Default Categories:", defaultCategories); // Log default categories
+    // useEffect(() => {
+    //     const fetchCategories = async () => {
+    //         try {
+    //             console.log("Fetching categories for type:", type);
 
-                const combinedCategories = [
-                    ...defaultCategories.map(category => ({
-                        ...category,
-                        isDefault: true,
-                    })),
-                    ...userCategories.map(category => ({
-                        ...category,
-                        isDefault: false,
-                    })),
-                ];
+    //             // Replace this with the actual fetching logic
+    //             const userCategories = []; // Assuming this would fetch user-specific categories
+    //             const defaultCategories = await getDefaultCategories(type) || [];
 
-                setCategories(combinedCategories);
-            } catch (err) {
-                console.error('Error fetching categories:', err);
-                setError(err.message || 'Failed to fetch categories');
-            } finally {
-                setIsLoading(false);
-            }
-        };
+    //             console.log("Default Categories:", defaultCategories); // Log default categories
 
-        if (type) { // Ensure `type` exists before fetching categories
-            fetchCategories();
-        } else {
-            console.error("Type is undefined or null");
-            setIsLoading(false);
-        }
-    }, [type]);
+    //             const combinedCategories = [
+    //                 ...defaultCategories.map(category => ({
+    //                     ...category,
+    //                     isDefault: true,
+    //                 })),
+    //                 ...userCategories.map(category => ({
+    //                     ...category,
+    //                     isDefault: false,
+    //                 })),
+    //             ];
+
+    //             setCategories(combinedCategories);
+    //         } catch (err) {
+    //             console.error('Error fetching categories:', err);
+    //             setError(err.message || 'Failed to fetch categories');
+    //         } finally {
+    //             setIsLoading(false);
+    //         }
+    //     };
+
+    //     if (type) { // Ensure `type` exists before fetching categories
+    //         fetchCategories();
+    //     } else {
+    //         console.error("Type is undefined or null");
+    //         setIsLoading(false);
+    //     }
+    // }, [type]);
 
 
 
@@ -309,12 +361,14 @@ const NewIncomeScreen = ({ route }) => {
                         {/* Create New Button */}
                         <TouchableOpacity style={styles.createNewButton} onPress={openCreateCategoryModal}>
                             <MaterialIcons name="add" size={24} color={textColor} />
-                            <Text style={[styles.createNewText, { color: textColor }]}>Create New</Text>
+                           
+                            <CreateCategoryDialog type={type} onSuccessCallback={fetchCategories} />
+
                         </TouchableOpacity>
 
                         {/* Categories List */}
                         <FlatList
-                            data={Categories} // Display categories here
+                            data={categories} // Display categories here
                             keyExtractor={(item) => item.id}
                             numColumns={1}
 

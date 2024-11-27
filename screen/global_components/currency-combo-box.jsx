@@ -120,6 +120,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { View, Button, Text } from "react-native";
 import Toast from "react-native-toast-message"; 
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Sample mock data for currencies
 const mockCurrencies = [
@@ -201,23 +202,31 @@ export function CurrencyComboBox() {
     getSettings();
   }, []);
 
-  const onSelectOption = useCallback((currency) => {
+  const onSelectOption = useCallback(async (currency) => {
     if (!currency) {
       Toast.show({ text1: "Please select currency!", type: "error" });
       return;
     }
-
+  
     Toast.show({ text1: "Updating Currency...", type: "info" });
-
-    UpdateUserCurrency(currency.value)
-      .then(() => {
-        Toast.show({ text1: "Currency updated successfully!", type: "success" });
-        setSelectedOption(mockCurrencies.find((c) => c.value === currency.value) || null);
-      })
-      .catch(() => {
-        Toast.show({ text1: "Something went wrong!", type: "error" });
-      });
+  
+    try {
+      // Update the currency via API or backend
+      await UpdateUserCurrency(currency.value);
+  
+      // Save the selected currency to AsyncStorage
+      await AsyncStorage.setItem("selectedCurrency", JSON.stringify(currency));
+  
+      // Update the selected option state
+      setSelectedOption(mockCurrencies.find((c) => c.value === currency.value) || null);
+  
+      Toast.show({ text1: "Currency updated successfully!", type: "success" });
+    } catch (error) {
+      console.error("Error updating currency:", error);
+      Toast.show({ text1: "Something went wrong!", type: "error" });
+    }
   }, []);
+  
 
   if (settings.isFetching) {
     return <Text>Loading...</Text>; // Simplified loading state for testing

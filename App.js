@@ -4,7 +4,7 @@ import { ActivityIndicator, Text, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-
+import { ThemeProvider } from './screen/components/themeContext';
 import Landing from './screen/landing';
 import SignInPage from './screen/auth/signin';
 import DashboardScreen from './screen/components/dashboard';
@@ -28,7 +28,7 @@ export default function App() {
  
 
   return (
-   
+    <ThemeProvider>
         <NavigationContainer>
 
           {/* testing settingScreen */}
@@ -55,6 +55,7 @@ export default function App() {
           {/* main */}
 
         </NavigationContainer>
+        </ThemeProvider>
       
   );
 }

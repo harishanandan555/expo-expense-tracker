@@ -1,15 +1,24 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, Image, Alert, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, Image, ScrollView, Alert, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Menu, Provider, Avatar, Divider } from 'react-native-paper';
 import { auth } from '../../config/firebaseConfig';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const Header = ({ navigation, isDarkMode, toggleTheme }) => {
+const Header = ({ navigation, toggleTheme  }) => {
   const [menuVisible, setMenuVisible] = useState(false);
   const [userName, setUserName] = useState(null);
   const [loading, setLoading] = useState(false);
   const [userPhoto, setUserPhoto] = useState(null);
+  const [userInfos, setUserInfos] = useState(null);
+  const [theme, setTheme] = useState('dark'); // Set default theme to dark
 
+  const isDarkMode = theme === 'dark';
+    const backgroundColor = isDarkMode ? '#000' : '#fff';
+    const cardBackgroundColor = isDarkMode ? '#121212' : '#f4f4f4';
+    const textColor = isDarkMode ? '#fff' : '#000';
+    const inputBackgroundColor = isDarkMode ? '#333' : '#fff';
+    const modalTextColor = isDarkMode ? '#fff' : '#000';
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
@@ -24,10 +33,23 @@ const Header = ({ navigation, isDarkMode, toggleTheme }) => {
 
     return () => unsubscribe();
   }, []);
+  const handleThemeSwitch = (mode) => {
+    setTheme(mode);
+};
 
   const openMenu = () => setMenuVisible(true);
   const closeMenu = () => setMenuVisible(false);
-
+  const handleGoogleLogout = async () => {
+    try {
+        await GoogleSignin.signOut();
+        await AsyncStorage.removeItem('userInfo');
+        await AsyncStorage.removeItem('userEmail'); // Clear stored email if needed
+        setUserInfos(null);
+        navigation.replace('signin'); // Navigate back to the SignInPage
+    } catch (error) {
+        console.error('Error signing out from Google:', error);
+    }
+};
   const handleLogout = async () => {
     closeMenu();
     setLoading(true); 
@@ -45,6 +67,25 @@ const Header = ({ navigation, isDarkMode, toggleTheme }) => {
     }
   };
 
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+        try {
+            const storedUserInfo = await AsyncStorage.getItem("userInfo");
+            if (storedUserInfo) {
+                setUserInfos(storedUserInfo ? JSON.parse(storedUserInfo) : {});
+
+            } else {
+                console.log("No User Info found.");
+            }
+        } catch (error) {
+            console.error("Error retrieving user info:", error);
+        }
+    };
+
+    fetchUserInfo();
+}, []);
+
+console.log("user info in header", userInfos)
   const getAvatarLabel = () => {
     if (userName) {
       return userName.slice(0, 2).toUpperCase();
@@ -54,76 +95,131 @@ const Header = ({ navigation, isDarkMode, toggleTheme }) => {
 
   return (
     <Provider>
-      <View style={[styles.header, { backgroundColor: isDarkMode ? '#000' : '#fff' }]}>
-        <Image
-          source={require('../../assets/wallet_logo.png')}
-          style={styles.logo}
-        />
-        <Menu
-          visible={menuVisible}
-          onDismiss={closeMenu}
-          anchor={
-            <TouchableOpacity onPress={openMenu}>
-              {userPhoto ? (
-                <Avatar.Image size={45} source={{ uri: userPhoto }} />
-              ) : (
-                <Avatar.Text size={45} label={getAvatarLabel()} />
-              )}
-            </TouchableOpacity>
-          }
-          style={[
-            styles.menu,
-            { backgroundColor: isDarkMode ? '#333' : '#fff' },
-            { marginLeft: -10 },
-            { position: 'absolute', top: 1, zIndex: 1000 },
-          ]}
-        >
-          <View style={styles.menuItemContainer}>
-            <Menu.Item
-              onPress={() => {
-                toggleTheme();
-                closeMenu();
-              }}
-              title={isDarkMode ? 'Light Mode' : 'Dark Mode'}
-              icon={isDarkMode ? 'weather-sunny' : 'weather-night'}
-              titleStyle={styles.menuItemText}
-            />
-          </View>
-          <Divider />
-          <View style={styles.menuItemContainer}>
-            <Menu.Item
-              onPress={handleLogout}
-              title="Logout"
-              icon="logout"
-              titleStyle={styles.menuItemText}
-              disabled={loading}
-            />
-          </View>
-        </Menu>
-        {loading && (
-          <ActivityIndicator size="small" color="#000" style={styles.loadingIndicator} />
-        )}
-      </View>
-    </Provider>
+    <ScrollView
+        contentContainerStyle={[
+            styles.scrollContent,
+            { backgroundColor: backgroundColor },
+        ]}
+    >
+        {/* Header Section */}
+        <View style={styles.header}>
+            {/* Right-aligned Avatar */}
+            <Menu
+                visible={menuVisible}
+                onDismiss={closeMenu}
+                anchor={
+                    <View style={styles.header}>
+                        <TouchableOpacity onPress={openMenu} style={styles.avatarContainer}>
+
+                            {userInfos?.photoURL ? (
+                                <Avatar.Image
+                                    size={40}
+                                    source={{ uri: userInfos.photoURL }}
+                                    style={styles.avatar}
+                                />
+                            ) : (
+                                <Avatar.Text
+                                    size={40}
+                                    label={userInfos?.displayName ? userInfos.displayName[0] : '?'}
+                                    style={styles.avatar}
+                                />
+                            )}
+
+
+
+                        </TouchableOpacity>
+                    </View>
+                }
+                style={[
+                    styles.menuItem,
+                    {
+
+                        paddingVertical: 0,
+                        marginVertical: 0,
+                        // Remove height to allow dynamic sizing
+                    },
+                ]}
+            >
+                <Menu.Item
+                    onPress={() => {
+                        handleThemeSwitch('light');
+                        closeMenu();
+                    }}
+                    title="Light"
+                    icon="weather-sunny"
+                    style={{
+
+                        paddingVertical: 4, // Slight padding adjustment
+                        marginVertical: 0,
+                    }}
+
+                />
+                <Menu.Item
+                    onPress={() => {
+                        handleThemeSwitch('dark');
+                        closeMenu();
+                    }}
+                    title="Dark"
+                    icon="weather-night"
+                    style={{
+
+                        paddingVertical: 4,
+                    }}
+
+                />
+                <Divider style={{ height: 1, backgroundColor: isDarkMode ? '#444' : '#e0e0e0' }} />
+                <Menu.Item
+                    onPress={handleLogout}
+                    title="Logout"
+                    icon="logout"
+                    style={{
+
+                        paddingVertical: 4,
+                    }}
+
+                />
+            </Menu>
+
+        </View>
+        </ScrollView>
+        </Provider>
+
   );
 };
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 10,
-    marginTop:15,
-    paddingHorizontal: 10,
-    position: 'fixed',
-  },
+  scrollContent: {
+    flexGrow: 1, // Ensures the content can grow and scroll
+    padding: 20, // Adjust padding as needed
+},
+header: {
+  flexDirection: 'row',
+  justifyContent: 'flex-end',
+  alignItems: 'center',
+  marginBottom: 10,  // Add a little space below the avatar
+},
   logo: {
     marginTop: 10,
     width: 50,
     height: 50,
     marginBottom: 10,
   },
+  avatarContainer: {
+    alignItems: 'flex-end',
+    margin: 10, // Example, adjust as necessary for positioning
+},
+avatarRight: {
+  position: 'absolute',
+  right: 10,
+},
+avatar: {
+  backgroundColor: '#6200ee', // Customize avatar color
+},
+menuItem: {
+
+  marginTop: 50,
+
+},
   menu: {
     width: 100, 
     marginTop: 3,
