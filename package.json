@@ -42,7 +42,9 @@
     "expo-dev-client": "~4.0.29",
     "expo-file-system": "^17.0.1",
     "expo-linear-gradient": "~13.0.2",
+    "expo-mail-composer": "~13.0.1",
     "expo-media-library": "^16.0.5",
+    "expo-permissions": "^14.4.0",
     "expo-print": "^13.0.1",
     "expo-random": "~14.0.1",
     "expo-router": "~3.5.24",
@@ -94,6 +96,5 @@
     "@babel/core": "^7.20.0",
     "@types/react": "~18.2.79"
   },
-  "private": true,
-  "packageManager": "yarn@1.22.22+sha1.ac34549e6aa8e7ead463a7407e1c7390f61a6610"
+  "private": true
 }

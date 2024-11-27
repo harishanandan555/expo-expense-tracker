@@ -3,7 +3,7 @@
     import { Menu, Provider, Avatar, Divider } from 'react-native-paper';
     import { auth } from '../../config/firebaseConfig';
     import { onAuthStateChanged, signOut } from 'firebase/auth';
-    import { GoogleSignin } from "@react-native-google-signin/google-signin";;
+    import { GoogleSignin } from "@react-native-google-signin/google-signin";
 
     const Header = ({ navigation, isDarkMode, toggleTheme }) => {
     const [menuVisible, setMenuVisible] = useState(false);
@@ -77,18 +77,18 @@
             anchor={
                 <TouchableOpacity onPress={openMenu}>
                 {userPhoto ? (
-                    <Avatar.Image size={45} source={{ uri: userPhoto }} />
+                    <Avatar.Image size={45} source={{ uri: userPhoto }}style={[styles.avatar, { backgroundColor: 'transparent' }]} />
                 ) : (
-                    <Avatar.Text size={45} label={getAvatarLabel()} />
+                    <Avatar.Text size={45} label={getAvatarLabel()} style={[styles.avatar, { backgroundColor: 'transparent' }]}  />
                 )}
                 </TouchableOpacity>
             }
             style={[
-                styles.menu,
-                { backgroundColor: isDarkMode ? '#000' : '#fff' },
-                { marginLeft: -10 },
-                { position: 'absolute', top:5, zIndex: 1000 },
-            ]}  
+                styles.avatarContainer,
+                 {
+                backgroundColor: isDarkMode ? '#000' : '#fff',
+                },
+               ]}
             >
             <View style={[styles.menuItemContainer, { backgroundColor: isDarkMode ? '#333' : '#fff' }]}>
                 <Menu.Item
@@ -113,7 +113,7 @@
                 titleStyle={styles.menuItemText}
                 />
             </View> */}
-            {/* <Divider /> */}
+            <Divider />
             <View style={[styles.menuItemContainer, { backgroundColor: isDarkMode ? '#333' : '#fff' }]}>
                 <Menu.Item
                 onPress={handleLogout}
@@ -142,6 +142,17 @@
         paddingHorizontal: 10,
         position: 'fixed',
     },
+    avatarContainer:{
+        marginTop: 0,
+        marginBottom: 0,
+      },
+      avatar:{
+        backgroundColor: 'transparent',
+        marginTop: 0,
+        marginBottom: 0,
+        paddingTop: 0,
+        paddingBottom: 0,
+      },
     logo: {
         marginTop: 10,
         width: 50,
@@ -150,17 +161,20 @@
     },
     menu: {
         width: 100, 
-        marginTop: 29,
         position: 'absolute',
         zIndex: 1001,
-        // backgroundColor: (props) => props.isDarkMode ? '#000' : '#fff', 
+        marginTop:10,   
+        // backgroundColor: 'transparent', 
+        backgroundColor: (props) => props.isDarkMode ? '#000' : '#fff', 
     },
     menuItemText: {
-        color: '#000',
+        // color: '#000',
+        color: (props) => (props.isDarkMode ? '#fff' : '#000'),
     },
     menuItemContainer: {
-        padding: 5,
-        borderRadius: 5,
+         backgroundColor: 'transparent', 
+        // padding: 5,
+        // borderRadius: 5,
       },
     loadingIndicator: {
         position: 'absolute',
