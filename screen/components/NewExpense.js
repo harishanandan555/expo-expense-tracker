@@ -19,7 +19,8 @@ import { useSQLiteContext } from 'expo-sqlite/next'; // Import SQLite context
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { collection, doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../../config/firebaseConfig';
-import { getDefaultCategories } from '../services/firebaseSettings';
+import { getDefaultCategories, getUserCategories} from '../services/firebaseSettings';
+import { CreateCategoryDialog } from '../local__components/create-category-dialog';
 
 
 
@@ -27,8 +28,9 @@ const NewExpenseScreen = ({ navigation, route }) => {
     const [transactionDate, setTransactionDate] = useState(new Date());
     const [isDatePickerVisible, setDatePickerVisible] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState(null);
-    const [Categories, setCategories] = useState(null);
-
+    const [categories, setCategories] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [newCategory, setNewCategory] = useState('');
     const [transactionAmount, setTransactionAmount] = useState('');
     const [transactionDescription, setTransactionDescription] = useState('');
@@ -156,44 +158,53 @@ const NewExpenseScreen = ({ navigation, route }) => {
     };
 
 
+    const [userId, setUserId] = useState(null);
+  
     useEffect(() => {
-        const fetchCategories = async () => {
-            try {
-                console.log("Fetching categories for type:", type);
+      const fetchUserData = async () => {
+        const userId = await AsyncStorage.getItem("userId");
+        setUserId(userId);
+      };
+      fetchUserData();
+    }, []);
+  
+    const fetchCategories = async () => {
+      if (!userId) {
+        console.error("User ID is not available. Ensure the user is logged in.");
+        setError("User ID is required.");
+        setIsLoading(false);
+        return;
+      }
+  
+      setIsLoading(true);
+      setError(null);
+      console.log("expense ", type)
+      try {
+        const userCategories = await getUserCategories(userId, type) || [];
+        const defaultCategories = await getDefaultCategories(type) || [];
+        const combinedCategories = [
+          ...defaultCategories.map((category) => ({ ...category, isDefault: true })),
+          ...userCategories.map((category) => ({ ...category, isDefault: false })),
+        ];
+  
+        // console.log("combinedCategories: ", combinedCategories)
+  
+        setCategories(combinedCategories);
+  
+      } catch (err) {
+        console.error("Error fetching categories:", err);
+        setError(err.message || "Failed to fetch categories");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+  
+    useEffect(() => {
+      if (userId) {
+        fetchCategories();
+      }
+    }, [userId]);
 
-                // Replace this with the actual fetching logic
-                const userCategories = []; // Assuming this would fetch user-specific categories
-                const defaultCategories = await getDefaultCategories(type) || [];
-
-                console.log("Default Categories:", defaultCategories); // Log default categories
-
-                const combinedCategories = [
-                    ...defaultCategories.map(category => ({
-                        ...category,
-                        isDefault: true,
-                    })),
-                    ...userCategories.map(category => ({
-                        ...category,
-                        isDefault: false,
-                    })),
-                ];
-
-                setCategories(combinedCategories);
-            } catch (err) {
-                console.error('Error fetching categories:', err);
-                setError(err.message || 'Failed to fetch categories');
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        if (type) { // Ensure `type` exists before fetching categories
-            fetchCategories();
-        } else {
-            console.error("Type is undefined or null");
-            setIsLoading(false);
-        }
-    }, [type]);
 
 
     return (
@@ -219,7 +230,7 @@ const NewExpenseScreen = ({ navigation, route }) => {
 
             {/* Transaction Description Input */}
             <TextInput
-                style={[styles.input, { borderColor: inputBorderColor, color: textColor , backgroundColor: cardBackgroundColor}]}
+                style={[styles.input, { borderColor: inputBorderColor, color: textColor, backgroundColor: cardBackgroundColor }]}
                 placeholder="Your description..."
                 placeholderTextColor={placeholderTextColor}
                 value={transactionDescription}
@@ -229,7 +240,7 @@ const NewExpenseScreen = ({ navigation, route }) => {
 
             {/* Transaction Amount Input */}
             <TextInput
-                style={[styles.input, { borderColor: inputBorderColor, color: textColor , backgroundColor: cardBackgroundColor}]}               
+                style={[styles.input, { borderColor: inputBorderColor, color: textColor, backgroundColor: cardBackgroundColor }]}
                 placeholder="Put the price"
                 placeholderTextColor={placeholderTextColor}
                 keyboardType="numeric"
@@ -283,7 +294,10 @@ const NewExpenseScreen = ({ navigation, route }) => {
             <TouchableOpacity style={[styles.saveButton, { backgroundColor: buttonBackgroundColor }]} onPress={handleSaveExpense}>
                 <Text style={styles.saveButtonText}>Save</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.cancelButton, { backgroundColor: cancelButtonColor }]}>
+            <TouchableOpacity onPress={() => {
+                navigation.navigate('main')
+
+            }} style={[styles.cancelButton, { backgroundColor: cancelButtonColor }]}>
                 <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
 
@@ -299,15 +313,15 @@ const NewExpenseScreen = ({ navigation, route }) => {
                         {/* Create New Button */}
                         <TouchableOpacity style={styles.createNewButton} onPress={openCreateCategoryModal}>
                             <MaterialIcons name="add" size={24} color={textColor} />
-                            <Text style={[styles.createNewText, { color: textColor }]}>Create New</Text>
+                            <CreateCategoryDialog type={type} onSuccessCallback={fetchCategories} />
                         </TouchableOpacity>
                         <FlatList
-                            data={Categories} // Display categories here
+                            data={categories} // Display categories here
                             keyExtractor={(item) => item.id}
                             numColumns={1}
                             renderItem={({ item }) => (
                                 <TouchableOpacity
-                                    style={styles.categoryItem}
+                                    style={[styles.categoryItem, {backgroundColor:backgroundColor}]}
                                     onPress={() => {
                                         setSelectedCategory(item.name); // Set selected category
                                         setCategoryModalVisible(false); // Close modal
@@ -320,7 +334,9 @@ const NewExpenseScreen = ({ navigation, route }) => {
                             contentContainerStyle={styles.categoryList}
                         />
                         {/* Cancel Button */}
-                        <TouchableOpacity onPress={closeCategoryModal} style={[styles.smallCancelButton, { backgroundColor: cancelButtonColor }]}>
+                        <TouchableOpacity onPress={() => {
+                            setCategoryModalVisible(false); // Close the modal correctly
+                        }} style={[styles.smallCancelButton, { backgroundColor: cancelButtonColor }]}>
                             <Text style={styles.smallCancelText}>Cancel</Text>
                         </TouchableOpacity>
                     </View>
@@ -379,17 +395,6 @@ const NewExpenseScreen = ({ navigation, route }) => {
             </Modal>
 
 
-            <Text style={[styles.sectionTitle, { color: textColor }]}>Expenses</Text>
-            {expenses.map((expense) => (
-                <View key={expense.id} style={styles.expenseItem}>
-                    <Text style={[styles.expenseText, { color: textColor }]}>
-                        {expense.description} - ${expense.amount}
-                    </Text>
-                    <TouchableOpacity onPress={() => deleteExpense(expense.id)}>
-                        <MaterialIcons name="delete" size={24} color="red" />
-                    </TouchableOpacity>
-                </View>
-            ))}
         </View>
 
     );
@@ -504,7 +509,7 @@ const styles = StyleSheet.create({
         marginVertical: 10,
         borderWidth: 1,
         borderColor: '#CCC',
-        backgroundColor: '#2C2C2E',
+        
         width: '90%', // Adjust to fit two items per row
     },
     categoryList: {
@@ -543,7 +548,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#1C1C1E',
         borderRadius: 10,
         alignItems: 'center',
-        maxHeight: '70%', 
+        maxHeight: '70%',
     },
     searchInput: {
         borderWidth: 1,
