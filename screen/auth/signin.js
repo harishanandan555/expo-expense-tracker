@@ -244,6 +244,7 @@ import {collection, getDocs, query, where,doc, setDoc } from "firebase/firestore
   
                   // Navigate to the main screen
                   navigation.navigate("main", { userInfo: firebaseUser });
+                  
               } catch (error) {
                   console.error("Silent login failed, showing account picker...", error);
   
@@ -282,7 +283,7 @@ import {collection, getDocs, query, where,doc, setDoc } from "firebase/firestore
           const userCredential = await signInWithCredential(auth, googleCredential);
           const firebaseUser = userCredential.user;
   
-          console.log("Google Sign-In successful:", firebaseUser);
+          // console.log("Google Sign-In successful:", firebaseUser);
   
           // Save user info in AsyncStorage
           await AsyncStorage.setItem("userId", firebaseUser.uid);
@@ -318,7 +319,7 @@ import {collection, getDocs, query, where,doc, setDoc } from "firebase/firestore
             },
             { merge: true }
         );
-        console.log("User data saved to Firestore successfully!");
+        // console.log("User data saved to Firestore successfully!");
     } catch (error) {
         console.error("Error saving user data to Firestore: ", error);
     }
@@ -421,9 +422,10 @@ import {collection, getDocs, query, where,doc, setDoc } from "firebase/firestore
             <TouchableOpacity
               style={styles.signInButton}
               onPress={() =>
-                onGoogleButtonPress().then(() =>
-                  console.log("Signed in with Google!")
-                )
+                onGoogleButtonPress()
+                // .then(() =>
+                //   // console.log("Signed in with Google!")
+                // )
               }
             >
               <Image

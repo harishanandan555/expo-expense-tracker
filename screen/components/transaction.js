@@ -16,33 +16,33 @@ import { updateDoc, doc, getDoc } from 'firebase/firestore';
 import EditTransactionModal from './EditTransaction';
 // import * as MailComposer from 'expo-mail-composer';
 
-const themes = {
-  light: {
-    background: '#ffffff',
-    text: '#000000',
-    buttonBackground: '#ffffff', 
-    buttonBorder: '#333',
-    buttonText: '#000000',
-    tableHeaderBackground: '#ffffff',
-    tableHeaderText: '#000000',
-    transactionBackground: '#ffffff',
-    transactionText: '#000000',
+// const themes = {
+//   light: {
+//     background: '#ffffff',
+//     text: '#000000',
+//     buttonBackground: '#ffffff', 
+//     buttonBorder: '#333',
+//     buttonText: '#000000',
+//     tableHeaderBackground: '#ffffff',
+//     tableHeaderText: '#000000',
+//     transactionBackground: '#ffffff',
+//     transactionText: '#000000',
   
-  },
-  dark: {
-    background: '#000000',
-    text: '#ffffff',
-    buttonBackground: '#333',
-    buttonText: '#ffffff',
-    tableHeaderBackground: '#333',
-    tableHeaderText: '#ffffff',
-    transactionBackground: '#121212',
-    transactionText: '#ffffff',
-  },
-};
+//   },
+//   dark: {
+//     background: '#000000',
+//     text: '#ffffff',
+//     buttonBackground: '#333',
+//     buttonText: '#ffffff',
+//     tableHeaderBackground: '#333',
+//     tableHeaderText: '#ffffff',
+//     transactionBackground: '#121212',
+//     transactionText: '#ffffff',
+//   },
+// };
 
-const TransactionScreen = () => { 
-  const [theme, setTheme] = useState('dark');
+const TransactionScreen = ({theme}) => { 
+  // const [theme, setTheme] = useState('dark');
   const [selectedCategory, setSelectedCategory] = useState("Category");
   const [selectedType, setSelectedType] = useState("Type");
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
@@ -398,19 +398,19 @@ const TransactionScreen = () => {
     const isMenuVisible = menuVisible === uniqueId; // Compare with menuVisible state  
 
     return (
-     <View style={[styles.transactionRow, { backgroundColor: themes[theme].transactionBackground }]}>
+     <View style={[styles.transactionRow, { backgroundColor: theme.transactionBackground }]}>
       
-      <Text style={[styles.transactionCell, { color: themes[theme].transactionText }]}>{formatDate(item.date)}</Text>
-      <Text style={[styles.transactionCell, { color: themes[theme].transactionText }]}>{item.category}</Text>
-      <Text style={[styles.transactionCell, { color: themes[theme].transactionText }]}>{item.description}</Text>
-      <Text style={[styles.transactionCell, { color: themes[theme].transactionText }]}>{item.type}</Text>
-      <Text style={[styles.transactionCell, { color: themes[theme].transactionText }]}>{item.amount}</Text>
+      <Text style={[styles.transactionCell, { color: theme.transactionText }]}>{formatDate(item.date)}</Text>
+      <Text style={[styles.transactionCell, { color: theme.transactionText }]}>{item.category}</Text>
+      <Text style={[styles.transactionCell, { color: theme.transactionText }]}>{item.description}</Text>
+      <Text style={[styles.transactionCell, { color: theme.transactionText }]}>{item.type}</Text>
+      <Text style={[styles.transactionCell, { color: theme.transactionText }]}>{item.amount}</Text>
         
         {/* More Icon */}
         <TouchableOpacity
         onPress={() => setMenuVisible(isMenuVisible ? null : uniqueId)} // Toggle visibility
       >
-        <Icon name="more-horiz" size={24} color={themes[theme].transactionText} />
+        <Icon name="more-horiz" size={24} color={theme.transactionText} />
       </TouchableOpacity>
   
         {/* Dropdown Menu */}
@@ -644,10 +644,10 @@ const TransactionScreen = () => {
   return (
     <Provider>
       <TouchableWithoutFeedback  onPress={() => setMenuVisible(null)} accessible={false}>
-      <View style={[styles.container, { backgroundColor: themes[theme].background }]}>
+      <View style={[styles.container, { backgroundColor: theme.background }]}>
 
         <View style={styles.transactionsContainer}>
-        <Text style={[styles.headerTitle, { color: themes[theme].text }]}> Transactions History</Text>
+        <Text style={[styles.headerTitle, { color: theme.text }]}> Transactions History</Text>
 
         {/* Filter Section */}
           <View style={styles.filterContainer}>
@@ -655,8 +655,8 @@ const TransactionScreen = () => {
               <Picker  selectedValue={selectedCategory} onValueChange={(itemValue) => setSelectedCategory(itemValue)}
                 style={[ styles.picker,
                   { 
-                  backgroundColor: themes[theme].buttonBackground,
-                  borderColor: themes[theme].buttonBorder,color: themes[theme].text
+                  backgroundColor: theme.buttonBackground,
+                  borderColor: theme.buttonBorder,color: theme.text
                 }]}
                 dropdownIconColor={theme === 'dark' ? 'white' : 'black'}
                 >
@@ -671,9 +671,9 @@ const TransactionScreen = () => {
           <View style={styles.pickerContainer}>
             <Picker selectedValue={selectedType} onValueChange={(itemValue) => setSelectedType(itemValue)}
               style={[ styles.picker, {
-                  backgroundColor: themes[theme].buttonBackground,
-                  borderColor: themes[theme].buttonBorder,
-                  color: themes[theme].text,
+                  backgroundColor: theme.buttonBackground,
+                  borderColor: theme.buttonBorder,
+                  color: theme.text,
                 },
               ]}
               dropdownIconColor={theme === 'dark' ? 'white' : 'black'}
@@ -692,9 +692,9 @@ const TransactionScreen = () => {
               style={[
                 styles.picker,
                 {
-                  backgroundColor: themes[theme].buttonBackground,
-                  borderColor: themes[theme].buttonBorder,
-                  color: themes[theme].text,
+                  backgroundColor: theme.buttonBackground,
+                  borderColor: theme.buttonBorder,
+                  color: theme.text,
                 },
               ]}
               dropdownIconColor={theme === 'dark' ? 'white' : 'black'}
@@ -710,13 +710,13 @@ const TransactionScreen = () => {
             style={[
               styles.datePickerButton,
               {
-                backgroundColor: themes[theme].buttonBackground,
-                borderColor: themes[theme].buttonBorder,
+                backgroundColor: theme.buttonBackground,
+                borderColor: theme.buttonBorder,
               },
             ]}
             onPress={showDatePicker}
           >
-            <Text style={[  styles.datePickerText, { color: themes[theme].buttonText }]}>
+            <Text style={[  styles.datePickerText, { color: theme.buttonText }]}>
               {selectedDate ? `Selected Date: ${selectedDate}` : "Select Date"}
             </Text>
           </TouchableOpacity>
@@ -729,13 +729,13 @@ const TransactionScreen = () => {
         </View>
 
         {/* Transactions Table Header */}
-        <View style={[ styles.tableHeader,  { backgroundColor: themes[theme].tableHeaderBackground }]}>
+        <View style={[ styles.tableHeader,  { backgroundColor: theme.tableHeaderBackground }]}>
           
-          <Text  style={[ styles.headerText, { color: themes[theme].tableHeaderText },]}> Date </Text>
-          <Text style={[ styles.headerText,{ color: themes[theme].tableHeaderText },]}>Category</Text>
-          <Text style={[ styles.headerCell, { color: themes[theme].tableHeaderText }]}>Description</Text>
-          <Text  style={[ styles.headerText,{ color: themes[theme].tableHeaderText },]}>Type </Text>
-          <Text  style={[ styles.lastHeaderText,{ color: themes[theme].tableHeaderText },]}>Amount </Text>
+          <Text  style={[ styles.headerText, { color: theme.tableHeaderText },]}> Date </Text>
+          <Text style={[ styles.headerText,{ color: theme.tableHeaderText },]}>Category</Text>
+          <Text style={[ styles.headerCell, { color: theme.tableHeaderText }]}>Description</Text>
+          <Text  style={[ styles.headerText,{ color: theme.tableHeaderText },]}>Type </Text>
+          <Text  style={[ styles.lastHeaderText,{ color: theme.tableHeaderText },]}>Amount </Text>
           
         </View>
       <View style={{flex:1, height:'100%'}}>
@@ -752,7 +752,7 @@ const TransactionScreen = () => {
         />
       ) : (
         <View style={styles.noTransactionsContainer}>
-        <Text style={[styles.noTransactionsText, { color: themes[theme].text }]}>
+        <Text style={[styles.noTransactionsText, { color: theme.text }]}>
           No transactions found.
         </Text>
       </View>
