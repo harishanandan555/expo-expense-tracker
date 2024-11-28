@@ -218,11 +218,18 @@ const styles = StyleSheet.create({
     paddingTop: 10, // Ensures no extra space at the top
   },
   header: {
+    position:'absolute',
+    top:0,
+    left:0,
+    right:0,
+    zIndex:10,
+
     height: '10%',
-    // marginTop: 0, // Removes any default margin or padding at the top
+     // Removes any default margin or padding at the top
   },
   body: {
     flex: 1,
+    marginTop:10
     // height: '80%',
   },
   footer: {

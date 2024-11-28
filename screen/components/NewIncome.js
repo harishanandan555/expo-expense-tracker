@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
+    KeyboardAvoidingView,
     View,
     Text,
     TextInput,
@@ -8,7 +9,10 @@ import {
     Switch,
     Modal,
     Alert,
-    FlatList
+    FlatList,
+    TouchableWithoutFeedback,
+    Platform,
+    Keyboard,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons'; // For icons
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
@@ -20,8 +24,9 @@ import { collection, doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../../config/firebaseConfig';
 import { useNavigation } from '@react-navigation/native';
 import { CreateCategoryDialog } from '../local__components/create-category-dialog';
-
-const NewIncomeScreen = ({ route }) => {
+import { useTheme } from '../../themeContext';
+const NewIncomeScreen = ({ route,  }) => {
+    const { theme } = useTheme(); 
     const [transactionDate, setTransactionDate] = useState(new Date());
     const [isDatePickerVisible, setDatePickerVisible] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState(null);
@@ -52,7 +57,7 @@ const NewIncomeScreen = ({ route }) => {
     const navigation = useNavigation();
 
     const { type } = route.params || {}; // Extract the 'type' parameter
-    console.log("Type:", type);
+ 
 
     const handleDateConfirm = (date) => {
         setTransactionDate(date);
@@ -255,13 +260,19 @@ const NewIncomeScreen = ({ route }) => {
 
 
     return (
-        <View style={[styles.container, { backgroundColor }]}>
+        <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View style={[styles.container, { backgroundColor:theme.background }]}
+        keyboardShouldPersistTaps="handled">
             {/* Header with Dark/Light Mode Toggle */}
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                    <MaterialIcons name="arrow-back" size={24} color={textColor} />
+                    <MaterialIcons name="arrow-back" size={24} color={theme.text} />
                 </TouchableOpacity>
-                <Text style={[styles.screenTitle, { color: textColor }]}>New Income</Text>
+                <Text style={[styles.screenTitle, { color: theme.text }]}>New Income</Text>
                 <Switch
                     value={isDarkMode}
                     onValueChange={toggleDarkMode}
@@ -270,32 +281,32 @@ const NewIncomeScreen = ({ route }) => {
                 />
             </View>
 
-            <Text style={[styles.modalTitle, { color: textColor }]}>
+            <Text style={[styles.modalTitle, { color: theme.text }]}>
                 Add New <Text style={{ color: 'green' }}>Income</Text> Transaction
             </Text>
 
             {/* Transaction Description Input */}
             <TextInput
-                style={[styles.input, { borderColor: inputBorderColor, color: textColor, backgroundColor: cardBackgroundColor }]}
+                style={[styles.input, { borderColor: inputBorderColor, color: theme.text, backgroundColor: theme.background }]}
                 placeholder="Your description..."
-                placeholderTextColor={placeholderTextColor}
+                placeholderTextColor={theme.text}
                 value={transactionDescription}
                 onChangeText={setTransactionDescription}
             />
-            <Text style={[styles.optionalText, { color: placeholderTextColor }]}>Transaction Description (Optional)</Text>
+            <Text style={[styles.optionalText, { color: theme.text }]}>Transaction Description (Optional)</Text>
 
             {/* Transaction Amount Input */}
             <TextInput
-                style={[styles.input, { borderColor: inputBorderColor, color: textColor, backgroundColor: cardBackgroundColor }]} placeholder="Put the price"
-                placeholderTextColor={placeholderTextColor}
+                style={[styles.input, { borderColor: inputBorderColor, color: theme.text, backgroundColor: theme.background }]} placeholder="Put the price"
+                placeholderTextColor={theme.text}
                 keyboardType="numeric"
                 value={transactionAmount}
                 onChangeText={setTransactionAmount}
             />
-            <Text style={[styles.requiredText, { color: placeholderTextColor }]}>Transaction Amount (Required)</Text>
+            <Text style={[styles.requiredText, { color: theme.text }]}>Transaction Amount (Required)</Text>
 
             {/* Category and Date Picker */
-            }<Text style={[styles.categoryText, { color: textColor }]}>
+            }<Text style={[styles.categoryText, { color: theme.text }]}>
                 {selectedCategory ? `Category: ${selectedCategory}` : 'Select a category'}
             </Text>
 
@@ -305,12 +316,12 @@ const NewIncomeScreen = ({ route }) => {
                         style={[styles.categoryBox, { borderColor: inputBorderColor }]}
                         onPress={openCategoryModal}
                     >
-                        <Text style={[styles.categoryText, { color: textColor }]}>
+                        <Text style={[styles.categoryText, { color: theme.text }]}>
                             {selectedCategory ? `Category: ${selectedCategory}` : 'Select a category'}
                         </Text>
-                        <MaterialIcons name="arrow-drop-down" size={24} color={textColor} />
+                        <MaterialIcons name="arrow-drop-down" size={24} color={theme.text} />
                     </TouchableOpacity>
-                    <Text style={[styles.optionalText, { color: placeholderTextColor }]}>Select a category for the transaction</Text>
+                    <Text style={[styles.optionalText, { color: theme.text }]}>Select a category for the transaction</Text>
                 </View>
 
                 <View style={styles.column}>
@@ -318,12 +329,12 @@ const NewIncomeScreen = ({ route }) => {
                         style={[styles.datePickerButton, { borderColor: inputBorderColor }]}
                         onPress={() => setDatePickerVisible(true)}
                     >
-                        <Text style={[styles.datePickerText, { color: textColor }]}>
+                        <Text style={[styles.datePickerText, { color: theme.text }]}>
                             {format(transactionDate, 'MMMM do, yyyy')}
                         </Text>
-                        <MaterialIcons name="calendar-today" size={24} color={textColor} />
+                        <MaterialIcons name="calendar-today" size={24} color={theme.text} />
                     </TouchableOpacity>
-                    <Text style={[styles.optionalText, { color: placeholderTextColor }]}>Select a date for your transaction</Text>
+                    <Text style={[styles.optionalText, { color: theme.text }]}>Select a date for your transaction</Text>
                 </View>
             </View>
 
@@ -350,9 +361,9 @@ const NewIncomeScreen = ({ route }) => {
             {/* Modal for Category Selection */}
             <Modal visible={isCategoryModalVisible} animationType="slide" transparent={true}>
                 <View style={styles.modalContainer}>
-                    <View style={[styles.modalContent, { backgroundColor: modalBackgroundColor }]}>
+                    <View style={[styles.modalContent, { backgroundColor:theme.background }]}>
                         <TextInput
-                            style={[styles.searchInput, { borderColor: inputBorderColor, color: textColor, backgroundColor: inputBackgroundColor }]}
+                            style={[styles.searchInput, { borderColor: inputBorderColor, color: theme.text, backgroundColor: theme.background }]}
                             placeholder="Search category..."
                             placeholderTextColor={placeholderTextColor}
                         // Add a search handler if needed
@@ -360,7 +371,7 @@ const NewIncomeScreen = ({ route }) => {
 
                         {/* Create New Button */}
                         <TouchableOpacity style={styles.createNewButton} onPress={openCreateCategoryModal}>
-                            <MaterialIcons name="add" size={24} color={textColor} />
+                            <MaterialIcons name="add" size={24} color={theme.text} />
                            
                             <CreateCategoryDialog type={type} onSuccessCallback={fetchCategories} />
 
@@ -374,14 +385,14 @@ const NewIncomeScreen = ({ route }) => {
 
                             renderItem={({ item }) => (
                                 <TouchableOpacity
-                                    style={styles.categoryItem}
+                                    style={[styles.categoryItem, {backgroundColor:theme.background}]}
                                     onPress={() => {
                                         setSelectedCategory(item.name); // Set selected category
                                         setCategoryModalVisible(false); // Close modal
                                     }}
                                 >
                                     <Text style={styles.categoryIcon}>{item.icon}</Text>
-                                    <Text style={[styles.categoryName, { color: textColor }]}>{item.name}</Text>
+                                    <Text style={[styles.categoryName, { color: theme.text }]}>{item.name}</Text>
                                 </TouchableOpacity>
                             )}
                             contentContainerStyle={styles.categoryList}
@@ -406,12 +417,12 @@ const NewIncomeScreen = ({ route }) => {
             <Modal visible={isCreateCategoryModalVisible} animationType="slide" transparent={true}>
                 <View style={styles.modalContainer}>
                     <View style={[styles.modalContent, { backgroundColor: modalBackgroundColor }]}>
-                        <Text style={[styles.modalTitle, { color: textColor }]}>Create Expense category</Text>
+                        <Text style={[styles.modalTitle, { color: theme.text }]}>Create Expense category</Text>
                         <Text style={[styles.subText, { color: placeholderTextColor }]}>Categories are used to group your transactions.</Text>
 
                         {/* Category Name Input */}
                         <TextInput
-                            style={[styles.input, { borderColor: inputBorderColor, color: textColor, backgroundColor: inputBackgroundColor }]}
+                            style={[styles.input, { borderColor: inputBorderColor, color: theme.text, backgroundColor: inputBackgroundColor }]}
                             placeholder="Category"
                             value={newCategory}
                             onChangeText={setNewCategory}
@@ -421,13 +432,13 @@ const NewIncomeScreen = ({ route }) => {
 
                         {/* Icon Selection */}
                         <TouchableOpacity style={[styles.iconSelector, { borderColor: inputBorderColor, backgroundColor: inputBackgroundColor }]} onPress={() => setEmojiPickerVisible(true)}>
-                            <Text style={[styles.iconText, { color: textColor }]}>{selectedIcon ? selectedIcon : 'Click To Select Icon'}</Text>
+                            <Text style={[styles.iconText, { color: theme.text }]}>{selectedIcon ? selectedIcon : 'Click To Select Icon'}</Text>
                         </TouchableOpacity>
                         <Text style={[styles.subText, { color: placeholderTextColor }]}>This Icon will appear in the category.</Text>
 
                         {/* Save and Cancel Buttons */}
                         <TouchableOpacity style={[styles.saveButton, { backgroundColor: buttonBackgroundColor }]} onPress={handleSaveCategory}>
-                            <Text style={[styles.saveButtonText, { color: buttonTextColor }]}>Save</Text>
+                            <Text style={[styles.saveButtonText, { color:theme.text }]}>Save</Text>
                         </TouchableOpacity>
                         <TouchableOpacity style={[styles.cancelButton, { backgroundColor: cancelButtonColor }]}
                             onPress={() => {
@@ -458,6 +469,8 @@ const NewIncomeScreen = ({ route }) => {
                 </View>
             </Modal>
         </View>
+        </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
     );
 };
 
@@ -637,25 +650,20 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
     categoryList: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        justifyContent: 'space-between',
+        flexDirection: 'column', // Render items in a single column
         paddingHorizontal: 10,
-
-
     },
     categoryItem: {
-        flexDirection: 'row', // Align icon and text side by side
+        flexDirection: 'row', // Align icon and text side by side within the row
         alignItems: 'center',
-        justifyContent: 'flex-start',
-        margin: 5,
+        marginVertical: 5, // Add vertical space between items
         padding: 10,
+        paddingHorizontal: 40,
         borderRadius: 10,
-        marginVertical: 10,
         borderWidth: 1,
         borderColor: '#CCC',
         backgroundColor: '#2C2C2E',
-        width: '90%', // Adjust to fit two items per row
+        width: '100%', // Occupy the full width of the container
     },
 
 });

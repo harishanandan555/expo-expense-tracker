@@ -21,10 +21,11 @@ import { collection, doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../../config/firebaseConfig';
 import { getDefaultCategories, getUserCategories} from '../services/firebaseSettings';
 import { CreateCategoryDialog } from '../local__components/create-category-dialog';
-
+import { useTheme } from '../../themeContext';
 
 
 const NewExpenseScreen = ({ navigation, route }) => {
+    const { theme } = useTheme(); 
     const [transactionDate, setTransactionDate] = useState(new Date());
     const [isDatePickerVisible, setDatePickerVisible] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState(null);
@@ -56,7 +57,7 @@ const NewExpenseScreen = ({ navigation, route }) => {
 
 
     const { type } = route.params || {}; // Extract the 'type' parameter
-    console.log("Type:", type);
+
 
 
     const handleDateConfirm = (date) => {
@@ -499,26 +500,21 @@ const styles = StyleSheet.create({
         backgroundColor: '#f9f9f9',
         borderRadius: 5,
     },
+    categoryList: {
+        flexDirection: 'column', // Render items in a single column
+        paddingHorizontal: 10,
+    },
     categoryItem: {
-        flexDirection: 'row', // Align icon and text side by side
+        flexDirection: 'row', // Align icon and text side by side within the row
         alignItems: 'center',
-        justifyContent: 'flex-start',
-        margin: 5,
+        marginVertical: 5, // Add vertical space between items
         padding: 10,
+        paddingHorizontal: 40,
         borderRadius: 10,
-        marginVertical: 10,
         borderWidth: 1,
         borderColor: '#CCC',
-        
-        width: '90%', // Adjust to fit two items per row
-    },
-    categoryList: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        justifyContent: 'space-between',
-        paddingHorizontal: 10,
-
-
+        backgroundColor: '#2C2C2E',
+        width: '100%', // Occupy the full width of the container
     },
     expenseText: {
         fontSize: 16,
