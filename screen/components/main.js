@@ -219,7 +219,12 @@ const styles = StyleSheet.create({
   },
   header: {
     height: '10%',
-    // marginTop: 0, // Removes any default margin or padding at the top
+    position:'absolute',
+    top:0,
+    left:0,
+    right:0,
+    zIndex:10,
+    marginTop: 10, // Removes any default margin or padding at the top
   },
   body: {
     flex: 1,
