@@ -210,7 +210,7 @@ export default function MainScreen() {
       </View>
 
       {/* Body Section */}
-      <View style={styles.body}>{renderCurrentScreen()}</View>
+      {/* <View style={styles.body}>{renderCurrentScreen()}</View> */}
 
       {/* Footer Section */}
       <View style={[styles.footer, { backgroundColor: theme.background }]}>
@@ -226,11 +226,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    // position: 'absolute',
-    // top: 0,
-    // left: 0,
-    // right: 0,
-    // zIndex: 10,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10,
     height: '10%',
   },
   body: {

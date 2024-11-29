@@ -234,7 +234,7 @@ const Header = ({ navigation, isDarkMode, toggleTheme }) => {
       }
       await signOut(auth);
       Alert.alert("Logged Out", "You have successfully logged out.");
-      navigation.navigate("signin");
+      navigation.navigate("SignIn");
     } catch (error) {
       console.error(error);
       Alert.alert("Logout Error", error.message);
