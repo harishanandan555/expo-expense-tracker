@@ -194,7 +194,7 @@ import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { useNavigation } from '@react-navigation/native';
 
-const Header = ({  isDarkMode, toggleTheme }) => {
+const Header = ({ isDarkMode, toggleTheme }) => {
   const navigation = useNavigation();
   console.log('Navigation prop:', navigation);
   const [menuVisible, setMenuVisible] = useState(false);
@@ -210,7 +210,7 @@ const Header = ({  isDarkMode, toggleTheme }) => {
 
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
-        const displayName = user.displayName? user.displayName : user.email?.split('@')[0] || 'User';
+        const displayName = user.displayName ? user.displayName : user.email?.split('@')[0] || 'User';
         setUserName(displayName);
         setUserPhoto(user.photoURL);
       } else {
@@ -246,61 +246,63 @@ const Header = ({  isDarkMode, toggleTheme }) => {
     }
   };
 
+
+
   const getAvatarLabel = () => {
-        if (userName) {
-        return userName.slice(0, 2).toUpperCase();
-        }
-        return 'U';
-    };
+    if (userName) {
+      return userName.slice(0, 2).toUpperCase();
+    }
+    return 'U';
+  };
 
   return (
     <Provider>
       <View style={[styles.header, { backgroundColor: isDarkMode ? '#000' : '#fff' }]}>
         <Image source={require('../../assets/wallet_logo.png')} style={styles.logo} />
         <Menu
-            visible={menuVisible}
-            onDismiss={() => setMenuVisible(false)}
-            anchor={
-              <TouchableOpacity onPress={() => setMenuVisible(true)}>
-                {userPhoto ? (
-                  <Avatar.Image size={45} source={{ uri: userPhoto }} style={[styles.avatar, { backgroundColor: 'transparent' }]} />
-                ) : (
-                  <Avatar.Text size={45} label={getAvatarLabel()} style={[styles.avatar,  { backgroundColor: isDarkMode ? '#333' : '#f0f0f0' }]} />
-                  // <Avatar.Text size={45} label={getAvatarLabel()} style={[styles.avatar, { backgroundColor: 'transparent' }]}/>
-                )}
-              </TouchableOpacity>
-            }
-            contentStyle={{
-              backgroundColor: isDarkMode ? '#333' : '#f9f9f9', // Menu background color
-            }}
-            // style={[
-            //   styles.menu,
-            //   { backgroundColor: isDarkMode ? '#000' : '#fff' },
-            // ]}
+          visible={menuVisible}
+          onDismiss={() => setMenuVisible(false)}
+          anchor={
+            <TouchableOpacity onPress={() => setMenuVisible(true)}>
+              {userPhoto ? (
+                <Avatar.Image size={45} source={{ uri: userPhoto }} style={[styles.avatar, { backgroundColor: 'transparent' }]} />
+              ) : (
+                <Avatar.Text size={45} label={getAvatarLabel()} style={[styles.avatar, { backgroundColor: isDarkMode ? '#333' : '#f0f0f0' }]} />
+                // <Avatar.Text size={45} label={getAvatarLabel()} style={[styles.avatar, { backgroundColor: 'transparent' }]}/>
+              )}
+            </TouchableOpacity>
+          }
+          contentStyle={{
+            backgroundColor: isDarkMode ? '#333' : '#f9f9f9', // Menu background color
+          }}
+        // style={[
+        //   styles.menu,
+        //   { backgroundColor: isDarkMode ? '#000' : '#fff' },
+        // ]}
         >
-            <Menu.Item
-              onPress={() => {
-                toggleTheme();
-                closeMenu();
-              }}
-              title={isDarkMode ? 'Light Mode' : 'Dark Mode'}
-              icon={isDarkMode ? 'weather-sunny' : 'weather-night'}
-              titleStyle={[
-                styles.menuItemText,
-                { color: isDarkMode ? '#fff' : '#000' },
-              ]}
-            />
-            <Divider />
-            <Menu.Item
-              onPress={handleLogout}
-              title="Logout"
-              icon="logout"
-              titleStyle={[
-                styles.menuItemText,
-                { color: isDarkMode ? '#fff' : '#000' },
-              ]}
-              disabled={loading}
-            />
+          <Menu.Item
+            onPress={() => {
+              toggleTheme();
+              closeMenu();
+            }}
+            title={isDarkMode ? 'Light Mode' : 'Dark Mode'}
+            icon={isDarkMode ? 'weather-sunny' : 'weather-night'}
+            titleStyle={[
+              styles.menuItemText,
+              { color: isDarkMode ? '#fff' : '#000' },
+            ]}
+          />
+          <Divider />
+          <Menu.Item
+            onPress={handleLogout}
+            title="Logout"
+            icon="logout"
+            titleStyle={[
+              styles.menuItemText,
+              { color: isDarkMode ? '#fff' : '#000' },
+            ]}
+            disabled={loading}
+          />
         </Menu>
         {loading && <ActivityIndicator size="small" color="#000" style={styles.loadingIndicator} />}
       </View>
@@ -315,8 +317,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 10,
     marginTop: 15,
-    padding:15,
-    marginLeft:10
+    padding: 15,
+    marginLeft: 10
   },
   avatar: {
     backgroundColor: 'transparent',
