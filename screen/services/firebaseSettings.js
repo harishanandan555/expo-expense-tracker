@@ -312,7 +312,7 @@ export async function storeUserCategories(userId, data) {
   }
 }
 
-export async function getUserCategoriesByTyep(userId, type) {
+export async function getUserCategoriesByType(userId, type) {
   try {
     if (!userId) {
       throw new Error("User ID is required.");

@@ -250,45 +250,45 @@ const Header = ({ navigation, isDarkMode, toggleTheme }) => {
       <View style={[styles.header, { backgroundColor: isDarkMode ? '#000' : '#fff' }]}>
         <Image source={require('../../assets/wallet_logo.png')} style={styles.logo} />
         <Menu
-          visible={menuVisible}
-          onDismiss={closeMenu}
-          anchor={
-            <TouchableOpacity onPress={openMenu}>
-              {userPhoto ? (
-                <Avatar.Image size={45} source={{ uri: userPhoto }} style={styles.avatar} />
-              ) : (
-                <Avatar.Text size={45} label={getAvatarLabel()} style={styles.avatar} />
-              )}
-            </TouchableOpacity>
-          }
-          style={[
-            styles.menu,
-            { backgroundColor: isDarkMode ? '#000' : '#fff' },
-          ]}
+            visible={menuVisible}
+            onDismiss={closeMenu}
+            anchor={
+              <TouchableOpacity onPress={openMenu}>
+                {userPhoto ? (
+                  <Avatar.Image size={45} source={{ uri: userPhoto }} style={styles.avatar} />
+                ) : (
+                  <Avatar.Text size={45} label={getAvatarLabel()} style={styles.avatar} />
+                )}
+              </TouchableOpacity>
+            }
+            style={[
+              styles.menu,
+              { backgroundColor: isDarkMode ? '#000' : '#fff' },
+            ]}
         >
-          <Menu.Item
-            onPress={() => {
-              toggleTheme();
-              closeMenu();
-            }}
-            title={isDarkMode ? 'Light Mode' : 'Dark Mode'}
-            icon={isDarkMode ? 'weather-sunny' : 'weather-night'}
-            titleStyle={[
-              styles.menuItemText,
-              { color: isDarkMode ? '#fff' : '#000' },
-            ]}
-          />
-          <Divider />
-          <Menu.Item
-            onPress={handleLogout}
-            title="Logout"
-            icon="logout"
-            titleStyle={[
-              styles.menuItemText,
-              { color: isDarkMode ? '#fff' : '#000' },
-            ]}
-            disabled={loading}
-          />
+            <Menu.Item
+              onPress={() => {
+                toggleTheme();
+                closeMenu();
+              }}
+              title={isDarkMode ? 'Light Mode' : 'Dark Mode'}
+              icon={isDarkMode ? 'weather-sunny' : 'weather-night'}
+              titleStyle={[
+                styles.menuItemText,
+                { color: isDarkMode ? '#fff' : '#000' },
+              ]}
+            />
+            <Divider />
+            <Menu.Item
+              onPress={handleLogout}
+              title="Logout"
+              icon="logout"
+              titleStyle={[
+                styles.menuItemText,
+                { color: isDarkMode ? '#fff' : '#000' },
+              ]}
+              disabled={loading}
+            />
         </Menu>
         {loading && <ActivityIndicator size="small" color="#000" style={styles.loadingIndicator} />}
       </View>
@@ -313,6 +313,11 @@ const styles = StyleSheet.create({
   },
   menu: {
     marginTop: 0,
+    // position:'absolute',
+    // top:0,
+    // left:0,
+    // right:0,
+    // zIndex:10,
   },
   menuItemText: {
     fontSize: 16,

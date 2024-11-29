@@ -224,21 +224,18 @@ export default function MainScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    // paddingTop: 0, // Ensures no extra space at the top
   },
   header: {
-    position:'absolute',
-    top:0,
-    left:0,
-    right:0,
-    zIndex:10,
-
+    // position: 'absolute',
+    // top: 0,
+    // left: 0,
+    // right: 0,
+    // zIndex: 10,
     height: '10%',
-     // Removes any default margin or padding at the top
   },
   body: {
     flex: 1,
-    // height: '80%',
+    height: '80%',
   },
   footer: {
     height: '8%',

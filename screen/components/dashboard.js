@@ -27,9 +27,9 @@ import { format } from 'date-fns'; // Use date-fns for formatting dates
 import { useNavigation } from '@react-navigation/native'; // Import useNavigation hook
 import { doc, setDoc, getDoc, collection, onSnapshot } from "firebase/firestore";
 import { BarChart } from 'react-native-gifted-charts';
-const DashboardScreen = () => {
+const DashboardScreen = ({ theme }) => {
 
-    const [theme, setTheme] = useState('dark');
+
     const [menuVisible, setMenuVisible] = useState(false);
     const [isIncomeModalVisible, setIncomeModalVisible] = useState(false);
     const [isExpenseModalVisible, setExpenseModalVisible] = useState(false);
@@ -45,6 +45,8 @@ const DashboardScreen = () => {
     const [selectedIcon, setSelectedIcon] = useState(null);
     const [newCategory, setNewCategory] = useState('');
     const [selectedCategory, setSelectedCategory] = useState(null);
+    const [selectedGraph, setSelectedGraph] = useState(null); // Default to null for showing all data
+
     const navigation = useNavigation();
     const [firebaseBalance, setFirebaseBalance] = useState(0);
     const [firebaseTotalIncome, setFirebaseTotalIncome] = useState(0);
@@ -83,7 +85,9 @@ const DashboardScreen = () => {
     const maxValue = Math.max(totalIncome, totalExpense, balance);
     const yAxisStep = Math.ceil(maxValue / 5);
 
-
+    const toggleGraph = (graphType) => {
+        setSelectedGraph(graphType); // Update selected graph
+    };
     const [userInfos, setUserInfos] = useState(null);
 
     const route = useRoute();
@@ -204,12 +208,12 @@ const DashboardScreen = () => {
                 setBalance(calculatedBalance);
                 setLastUpdated(lastUpdatedTime);
 
-                console.log("Updated financial data:", {
-                    totalIncome: calculatedTotalIncome,
-                    totalExpense: calculatedTotalExpense,
-                    balance: calculatedBalance,
-                    lastUpdated: lastUpdatedTime,
-                });
+                // console.log("Updated financial data:", {
+                //     totalIncome: calculatedTotalIncome,
+                //     totalExpense: calculatedTotalExpense,
+                //     balance: calculatedBalance,
+                //     lastUpdated: lastUpdatedTime,
+                // });
             } else {
                 console.error("User document does not exist.");
             }
@@ -232,6 +236,9 @@ const DashboardScreen = () => {
             return;
         }
 
+        const screenWidth = Dimensions.get('window').width;
+
+
         // Reference to the user's Firestore document
         const userDocRef = doc(db, "users", id);
 
@@ -253,7 +260,7 @@ const DashboardScreen = () => {
                     // Update the state with the new income data
                     setIncomeCategory(incomeData);
                 } else {
-                    console.error("No income data found for this user.");
+                    // console.error("No income data found for this user.");
                     setIncomeCategory([]); // Reset to empty if no data is found
                 }
             } else {
@@ -420,7 +427,7 @@ const DashboardScreen = () => {
     }, []);
 
 
-
+    const fixedMaxValue = Math.max(totalIncome, totalExpense, balance, 5000) + 5000;
     // Determine colors based on the theme
     const isDarkMode = theme === 'dark';
     const backgroundColor = isDarkMode ? '#000' : '#fff';
@@ -436,15 +443,15 @@ const DashboardScreen = () => {
             <ScrollView
                 contentContainerStyle={[
                     styles.scrollContent,
-                    { backgroundColor: backgroundColor },
+                    { backgroundColor: theme.background },
                 ]}
             >
                 {/* Header Section */}
 
 
                 {/* Top Upgrade Bar */}
-                <View style={[styles.upgradeBar, { backgroundColor: isDarkMode ? '#FF6A00' : '#FFD580' }]}>
-                    <Text style={[styles.upgradeText, { color: textColor }]}>Upgrade to premium user</Text>
+                <View style={[styles.upgradeBar, { backgroundColor: '#FF8C00' }]}>
+                    <Text style={[styles.upgradeText, { color: theme.text }]}>Upgrade to premium user</Text>
                 </View>
 
                 {/* New Income and New Expense Buttons */}
@@ -484,7 +491,7 @@ const DashboardScreen = () => {
                         <Text
                             style={[
                                 styles.buttonText,
-                                { color: activeButton === 'expense' ? backgroundColor : isDarkMode ? '#FF6A00' : '#FF8C00' },
+                                { color: activeButton === 'expense' ? "black" : 'black' },
                             ]}
                         >
                             New Expense
@@ -494,7 +501,7 @@ const DashboardScreen = () => {
 
 
                 {/* Overview Section */}
-                <Text style={[styles.sectionTitle, { color: textColor }]}>Overview</Text>
+                <Text style={[styles.sectionTitle, { color: theme.text }]}>Overview</Text>
 
                 {/* <TouchableOpacity onPress={() => setDatePickerVisible(true)} style={styles.datePickerWrapper}>
                         <Text style={[styles.dateText, { color: textColor }]}>
@@ -528,30 +535,30 @@ const DashboardScreen = () => {
                 /> */}
                 {/* Income, Expense, Balance Cards */}
 
-                <View style={[styles.overviewCard, { backgroundColor: cardBackgroundColor }]}>
+                <View style={[styles.overviewCard, { backgroundColor: theme.background }]}>
                     <MaterialIcons name="trending-up" size={32} color="green" />
                     <View>
-                        <Text style={[styles.overviewLabel, { color: textColor }]}>Income</Text>
-                        <Text style={[styles.overviewValue, { color: theme === 'dark' ? '#fff' : '#000' }]}>
-                            {currency.symbol}{totalIncome || 0} </Text>
+                        <Text style={[styles.overviewLabel, { color: theme.text }]}>Income</Text>
+                        <Text style={[styles.overviewValue, { color: theme.text }]}>
+                            {currency.label.split(' ')[0]}{totalIncome || 0} </Text>
                     </View>
                 </View>
 
-                <View style={[styles.overviewCard, { backgroundColor: cardBackgroundColor }]}>
+                <View style={[styles.overviewCard, { backgroundColor: theme.background }]}>
                     <MaterialIcons name="trending-down" size={32} color="red" />
                     <View>
-                        <Text style={[styles.overviewLabel, { color: textColor }]}>Expense</Text>
-                        <Text style={[styles.overviewValue, { color: theme === 'dark' ? '#fff' : '#000' }]}>
-                            {currency.symbol}{totalExpense || 0}
+                        <Text style={[styles.overviewLabel, { color: theme.text }]}>Expense</Text>
+                        <Text style={[styles.overviewValue, { color: theme.text }]}>
+                            {currency.label.split(' ')[0]}{totalExpense || 0}
                         </Text>
                     </View>
                 </View>
 
-                <View style={[styles.overviewCard, { backgroundColor: cardBackgroundColor }]}>
+                <View style={[styles.overviewCard, { backgroundColor: theme.background }]}>
                     <MaterialIcons name="account-balance-wallet" size={32} color="blue" />
                     <View>
-                        <Text style={[styles.overviewLabel, { color: textColor }]}>Balance</Text>
-                        <Text style={[styles.overviewValue, { color: textColor }]}>{currency.symbol}{balance || 0}</Text>
+                        <Text style={[styles.overviewLabel, { color: theme.text }]}>Balance</Text>
+                        <Text style={[styles.overviewValue, { color: theme.text }]}>{currency.label.split(' ')[0]}{balance || 0}</Text>
                     </View>
                 </View>
 
@@ -559,21 +566,21 @@ const DashboardScreen = () => {
 
                 {/* Income and Expense Section */}
 
-                <Text style={[styles.sectionTitle, { color: textColor }]}>Income</Text>
+                <Text style={[styles.sectionTitle, { color: theme.text }]}>Income</Text>
                 {/* <TouchableOpacity style={styles.button} onPress={fetchIncomeData}>
                     <Text style={styles.buttonText}>Fetch Income Data</Text>
                 </TouchableOpacity> */}
 
-                <View style={[styles.noDataCard, { backgroundColor: cardBackgroundColor }]}>
+                <View style={[styles.noDataCard, { backgroundColor: theme.background }]}>
                     {IncomeCategory.length === 0 ? (
                         <>
-                            <Text style={[styles.noDataText, { color: textColor }]}>No income data available.</Text>
+                            <Text style={[styles.noDataText, { color: theme.text }]}>No income data available.</Text>
                             <Text style={styles.noDataSubtext}>Add new income to see details.</Text>
                         </>
                     ) : (
 
                         <ScrollView style={styles.scrollArea}>
-                            <View style={[styles.sectionContainer, { backgroundColor: cardBackgroundColor }]}>
+                            <View style={[styles.sectionContainer, { backgroundColor: theme.background }]}>
                                 {Object.values(
                                     IncomeCategory.reduce((acc, curr) => {
                                         if (!acc[curr.category]) {
@@ -591,14 +598,14 @@ const DashboardScreen = () => {
                                     return (
                                         <View key={index} style={styles.listItem}>
                                             <View style={styles.itemHeader}>
-                                                <Text style={[styles.emoji, { color: textColor }]}>{item.icon}</Text>
-                                                <Text style={[styles.itemCategory, { color: textColor }]} > {item.category}{" "}</Text>
-                                                <Text style={[styles.percentageText, { color: textColor }]}>
+                                                <Text style={[styles.emoji, { color: theme.text }]}>{item.icon}</Text>
+                                                <Text style={[styles.itemCategory, { color: theme.text }]} > {item.category}{" "}</Text>
+                                                <Text style={[styles.percentageText, { color: theme.text }]}>
                                                     ({percentage.toFixed(0)}%)
                                                 </Text>
 
-                                                <Text style={[styles.amountText, { color: textColor }]}>
-                                                    {currency.symbol}{amount.toFixed(2)}
+                                                <Text style={[styles.amountText, { color: theme.text }]}>
+                                                    {currency.label.split(' ')[0]}{amount.toFixed(2)}
                                                 </Text>
                                             </View>
                                             <ProgressBar
@@ -617,12 +624,12 @@ const DashboardScreen = () => {
                 </View>
 
 
-                <Text style={[styles.sectionTitle, { color: textColor }]}>Expense</Text>
-                <View style={[styles.noDataCard, { backgroundColor: cardBackgroundColor }]}>
+                <Text style={[styles.sectionTitle, { color: theme.text }]}>Expense</Text>
+                <View style={[styles.noDataCard, { backgroundColor: theme.background }]}>
                     {expenses.length === 0 ? (
                         // Display this message if there is no data
                         <>
-                            <Text style={[styles.noDataText, { color: textColor }]}>No data for the selected period.</Text>
+                            <Text style={[styles.noDataText, { color: theme.text }]}>No data for the selected period.</Text>
                             <Text style={styles.noDataSubtext}>Try to select a different period or add expenses.</Text>
                         </>
                     ) : (
@@ -645,14 +652,14 @@ const DashboardScreen = () => {
                                     return (
                                         <View key={index} style={styles.listItem}>
                                             <View style={styles.itemHeader}>
-                                                <Text style={[styles.emoji, { color: textColor }]}>{item.icon}</Text>
-                                                <Text style={[styles.itemCategory, { color: textColor }]} > {item.category}{" "}</Text>
-                                                <Text style={[styles.percentageText, { color: textColor }]}>
+                                                <Text style={[styles.emoji, { color: theme.text }]}>{item.icon}</Text>
+                                                <Text style={[styles.itemCategory, { color: theme.text }]} > {item.category}{" "}</Text>
+                                                <Text style={[styles.percentageText, { color: theme.text }]}>
                                                     ({percentage.toFixed(0)}%)
                                                 </Text>
 
-                                                <Text style={[styles.amountText, { color: textColor }]}>
-                                                    {currency.symbol}{amount.toFixed(2)}
+                                                <Text style={[styles.amountText, { color: theme.text }]}>
+                                                    {currency.label.split(' ')[0]}{amount.toFixed(2)}
                                                 </Text>
                                             </View>
                                             <ProgressBar
@@ -673,19 +680,19 @@ const DashboardScreen = () => {
 
 
                 {/* History Section */}
-                <Text style={[styles.sectionTitle, { color: textColor }]}>History</Text>
-                <View style={[styles.historyContainer, { backgroundColor: cardBackgroundColor }]}>
+                <Text style={[styles.sectionTitle, { color: theme.text }]}>History</Text>
+                <View style={[styles.historyContainer, { backgroundColor: theme.background }]}>
                     {/* Switch between Year and Month */}
                     <View style={styles.switchContainer}>
                         <View>
-                            <TouchableOpacity style={[styles.switchButton, { backgroundColor: cardBackgroundColor }]}>
-                                <Text style={[styles.switchButtonText, { color: textColor }]}>2024</Text>
-                            </TouchableOpacity>
+                            {/* <TouchableOpacity style={[styles.switchButton, { backgroundColor: theme.background }]}>
+                                <Text style={[styles.switchButtonText, { color: theme.text }]}>2024</Text>
+                            </TouchableOpacity> */}
 
 
 
                             {/* Month Selection Dropdown */}
-                            <View style={styles.dropdownWrapper}>
+                            {/* <View style={styles.dropdownWrapper}>
                                 <DropDownPicker
                                     open={open}
                                     value={value}
@@ -712,7 +719,7 @@ const DashboardScreen = () => {
                                     }}
                                 />
 
-                            </View>
+                            </View> */}
 
 
                         </View>
@@ -722,122 +729,264 @@ const DashboardScreen = () => {
 
 
                     {/* Income and Expense Toggle */}
-                    <View style={[styles.toggleContainer, { backgroundColor: backgroundColor }]}>
-                        <TouchableOpacity style={[styles.toggleButton, styles.incomeButton]}>
+                    <View style={[styles.toggleContainer, { backgroundColor: theme.background }]}>
+                        <TouchableOpacity
+                            style={[
+                                styles.toggleButton,
+                                styles.incomeButton,
+                                selectedGraph === 'income', // Highlight if selected
+                            ]}
+                            onLongPress={() => setSelectedGraph('income')} // Show only Expense on long press
+                            onPressOut={() => setSelectedGraph(null)} // Show only Income
+                        >
                             <View style={[styles.icon, styles.incomeIcon]} />
-                            <Text style={[styles.toggleText, { color: textColor }]}>Income</Text>
+                            <Text style={[styles.toggleText, { color: theme.text }]}>Income</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity style={[styles.toggleButton, styles.expenseButton]}>
-                            <View style={[styles.icon, styles.expenseIcon]} />
-                            <Text style={[styles.toggleText, { color: textColor }]}>Expense</Text>
-                        </TouchableOpacity>
-                    </View>
 
+                        <TouchableOpacity
+                            style={[
+                                styles.toggleButton,
+                                styles.expenseButton,
+                                selectedGraph === 'expense', // Highlight if selected
+                            ]}
+                            onLongPress={() => setSelectedGraph('expense')} // Show only Income on long press
+                            onPressOut={() => setSelectedGraph(null)} // Show only Expense
+                        >
+                            <View style={[styles.icon, styles.expenseIcon]} />
+                            <Text style={[styles.toggleText, { color: theme.text }]}>Expense</Text>
+                        </TouchableOpacity>
+
+
+                    </View>
                     <View
                         style={{
                             marginRight: 10,
                             padding: 10,
                             borderRadius: 10,
-                            backgroundColor: cardBackgroundColor, // Dark background for better contrast
+                            backgroundColor: theme.background, // Dark background for better contrast
                             alignItems: 'center',
                             marginVertical: 20,
                         }}
                     >
+                        {selectedGraph === null && (
+                            <BarChart
+                                data={barData}
+                                barWidth={screenWidth*0.1}
+                                renderTooltip={(item, index) => {
+                                    const value = item.label === 'Balance' ? balance : item.value;
+                                    return (
+                                        <View
+                                            style={{
 
-                        <BarChart
-                            data={barData}
-                            barWidth={40}
-                            renderTooltip={(item, index) => {
-                                const value = item.label === 'Balance' ? balance : item.value;
-                                return (
-                                    <View
-                                        style={{
+                                                marginBottom: -5550,
+                                                backgroundColor: '#DB7093',
+                                                paddingHorizontal: 6,
+                                                paddingVertical: 4,
+                                                borderRadius: 4,
 
-                                            marginBottom: -5550,
-                                            backgroundColor: '#ffcefe',
-                                            paddingHorizontal: 6,
-                                            paddingVertical: 4,
-                                            borderRadius: 4,
-                                        }}>
-                                        <Text>{value}</Text>
-                                    </View>
-                                );
-                            }}
-                            barBorderRadius={6}
-                            yAxisThickness={1.5} // Y-axis line thickness
-                            yAxisColor="#fff" // Y-axis line color
-                            xAxisThickness={1.5} // X-axis line thickness
-                            xAxisColor="#fff"
-                            yAxisStepValue={5000}
-                            // X-axis line color
-                            noOfSections={8} // Divide y-axis into 5 sections
-                            maxValue={Math.max(totalIncome, totalExpense, balance) + 5000} // Close to the highest value
-                            yAxisTextStyle={{ color: textColor, fontSize: 12 }} // Customize y-axis labels
-                            xAxisLabelTextStyle={{ color: textColor, fontSize: 12 }} // Customize x-axis labels
-                            height={500} // Chart height
-                            yAxisLabelContainerStyle={{
-                                marginRight: 10, // Add a gap between the Y-axis line and labels
-                            }}
-                            isAnimated
-                            side="right"
-                            barStyle={{
+                                            }}>
+                                            <Text style={{ color: theme.text }}> {currency.label.split(' ')[0]}{value}</Text>
+                                        </View>
+                                    );
+                                }}
+                                barBorderRadius={6}
+                                yAxisThickness={1.5} // Y-axis line thickness
+                                yAxisColor={theme.text} // Y-axis line color
+                                xAxisThickness={2.5} // X-axis line thickness
+                                xAxisColor={theme.text}
+                                yAxisStepValue={5000}
+                                // X-axis line color
+                                noOfSections={8} // Divide y-axis into 5 sections
+                                maxValue={Math.max(totalIncome, totalExpense, balance) + 1000} // Close to the highest value
+                                yAxisTextStyle={{ color: theme.text, fontSize: 12 }} // Customize y-axis labels
+                                xAxisLabelTextStyle={{ color: theme.text, fontSize: 12 }} // Customize x-axis labels
+                                height={500} // Chart height
+                                yAxisLabelContainerStyle={{
+                                    marginRight: 10, // Add a gap between the Y-axis line and labels
+                                }}
+                                isAnimated
+                                side="right"
+                                barStyle={{
 
 
-                                borderWidth: 0,
-                                shadowColor: '#999',
-                                shadowOffset: { width: 0, height: 2 },
-                                shadowOpacity: 0.8,
-                                shadowRadius: 6,
-                                elevation: 8,
-                            }}
+                                    borderWidth: 0,
+                                    shadowColor: '#999',
+                                    shadowOffset: { width: 0, height: 2 },
+                                    shadowOpacity: 0.8,
+                                    shadowRadius: 6,
+                                    elevation: 8,
+                                }}
 
-                            initialSpacing={20}
-                            barMarginBottom={5}//
-                            Enable animation
-                            spacing={20}
+                                initialSpacing={20}
+                                barMarginBottom={5}//
+                                Enable animation
+                                spacing={20}
 
-                        />
+                            />
+                        )}
+                        {selectedGraph === 'income' && (
+                            <BarChart
+                                data={[
+                                    { value: totalIncome, label: 'Income', frontColor: 'green' },
+                                ]}
+                                barWidth={screenWidth*0.09}
+                                renderTooltip={(item, index) => {
+                                    const value = item.label === 'Balance' ? balance : item.value;
+                                    return (
+                                        <View
+                                            style={{
+
+                                                marginBottom: -5550,
+                                                backgroundColor: '#DB7093',
+                                                paddingHorizontal: 6,
+                                                paddingVertical: 4,
+                                                borderRadius: 4,
+
+                                            }}>
+                                            <Text style={{ color: theme.text }}> {currency.label.split(' ')[0]}{value}</Text>
+                                        </View>
+                                    );
+                                }}
+                                barBorderRadius={6}
+                                yAxisThickness={1.5} // Y-axis line thickness
+                                yAxisColor={theme.text} // Y-axis line color
+                                xAxisThickness={1.5} // X-axis line thickness
+                                xAxisColor={theme.text}
+                                yAxisStepValue={5000}
+                                // X-axis line color
+                                noOfSections={8} // Divide y-axis into 5 sections
+                                maxValue={Math.max(totalIncome, totalExpense, balance) + 5000} // Close to the highest value
+                                yAxisTextStyle={{ color: theme.text, fontSize: 12 }} // Customize y-axis labels
+                                xAxisLabelTextStyle={{ color: theme.text, fontSize: 12 }} // Customize x-axis labels
+                                height={500} // Chart height
+                                yAxisLabelContainerStyle={{
+                                    marginRight: 10, // Add a gap between the Y-axis line and labels
+                                }}
+                                isAnimated
+                                side="right"
+                                barStyle={{
+
+
+                                    borderWidth: 0,
+                                    shadowColor: '#999',
+                                    shadowOffset: { width: 0, height: 2 },
+                                    shadowOpacity: 0.8,
+                                    shadowRadius: 6,
+                                    elevation: 8,
+                                }}
+
+                                initialSpacing={20}
+                                barMarginBottom={5}//
+                                Enable animation
+                                spacing={20}
+
+                            />
+
+                        )}
+
+
+                        {selectedGraph === 'expense' && (
+
+                            <BarChart
+                                data={[
+                                    { value: totalExpense, label: 'Expense', frontColor: 'red' },
+                                ]}
+                                barWidth={screenWidth*0.09}
+                                renderTooltip={(item, index) => {
+                                    const value = item.label === 'Balance' ? balance : item.value;
+                                    return (
+                                        <View
+                                            style={{
+
+                                                marginBottom: -5550,
+                                                backgroundColor: '#DB7093',
+                                                paddingHorizontal: 6,
+                                                paddingVertical: 4,
+                                                borderRadius: 4,
+
+                                            }}>
+                                            <Text style={{ color: theme.text }}> {currency.label.split(' ')[0]}{value}</Text>
+                                        </View>
+                                    );
+                                }}
+                                barBorderRadius={6}
+                                yAxisThickness={1.5} // Y-axis line thickness
+                                yAxisColor={theme.text} // Y-axis line color
+                                xAxisThickness={1.5} // X-axis line thickness
+                                xAxisColor={theme.text}
+                                yAxisStepValue={5000}
+                                // X-axis line color
+                                noOfSections={6} // Divide y-axis into 5 sections
+                                maxValue={Math.max(totalIncome, totalExpense, balance) + 5000} // Close to the highest value
+                                yAxisTextStyle={{ color: theme.text, fontSize: 12 }} // Customize y-axis labels
+                                xAxisLabelTextStyle={{ color: theme.text, fontSize: 12 }} // Customize x-axis labels
+                                height={500} // Chart height
+                                yAxisLabelContainerStyle={{
+                                    marginRight: 10, // Add a gap between the Y-axis line and labels
+                                }}
+                                isAnimated
+                                side="right"
+                                barStyle={{
+
+
+                                    borderWidth: 0,
+                                    shadowColor: '#999',
+                                    shadowOffset: { width: 0, height: 2 },
+                                    shadowOpacity: 0.8,
+                                    shadowRadius: 6,
+                                    elevation: 8,
+                                }}
+
+                                initialSpacing={20}
+                                barMarginBottom={5}//
+                                Enable animation
+                                spacing={20}
+
+                            />
+                        )}
+
+
                     </View>
                     {/* Modal for New Income */}
                     <Modal visible={isIncomeModalVisible} animationType="slide" transparent={true}>
                         <View style={styles.modalContainer}>
                             <View style={[styles.modalContent, { backgroundColor: backgroundColor }]}>
-                                <Text style={[styles.modalTitle, { color: textColor }]}>
+                                <Text style={[styles.modalTitle, { color: theme.text }]}>
                                     Add New <Text style={{ color: 'green' }}>Income</Text> Transaction
                                 </Text>
 
                                 <TextInput style={styles.input} placeholder="Transaction Description" placeholderTextColor={textColor} />
-                                <Text style={[styles.optionalText, { color: textColor }]}>Transaction Description (Optional)</Text>
+                                <Text style={[styles.optionalText, { color: theme.text }]}>Transaction Description (Optional)</Text>
 
                                 <TextInput style={styles.input} placeholder="Put the price" placeholderTextColor={textColor} />
-                                <Text style={[styles.requiredText, { color: textColor }]}>Transaction Amount (Required)</Text>
+                                <Text style={[styles.requiredText, { color: theme.text }]}>Transaction Amount (Required)</Text>
 
                                 {/* Category Selection */}
                                 <View style={styles.pickerContainer}>
-                                    <Text style={[styles.pickerLabel, { color: textColor }]}>Category</Text>
+                                    <Text style={[styles.pickerLabel, { color: theme.text }]}>Category</Text>
                                     <TouchableOpacity
                                         style={[
                                             styles.categoryBox,
-                                            { backgroundColor: cardBackgroundColor, borderColor: isDarkMode ? '#fff' : '#000' }
+                                            { backgroundColor: theme.background, borderColor: isDarkMode ? '#fff' : '#000' }
                                         ]}
                                         onPress={openCategoryModal}
                                     >
-                                        <Text style={[styles.categoryText, { color: textColor }]}>
-                                            {selectedCategory ? `Category: {currency.symbol}{selectedCategory}` : 'Select a category'}
+                                        <Text style={[styles.categoryText, { color: theme.text }]}>
+                                            {selectedCategory ? `Category: {currency.label.split(' ')[0]}{selectedCategory}` : 'Select a category'}
                                         </Text>
                                         <MaterialIcons name="arrow-drop-down" size={24} color={textColor} />
                                     </TouchableOpacity>
-                                    <Text style={[styles.pickerHint, { color: textColor }]}>Select a category for the transaction</Text>
+                                    <Text style={[styles.pickerHint, { color: theme.text }]}>Select a category for the transaction</Text>
                                 </View>
 
                                 {/* Date Picker */}
                                 <View style={styles.pickerContainer}>
-                                    <Text style={[styles.pickerLabel, { color: textColor }]}>Transaction date</Text>
+                                    <Text style={[styles.pickerLabel, { color: theme.text }]}>Transaction date</Text>
                                     <TouchableOpacity
-                                        style={[styles.datePickerButton, { backgroundColor: cardBackgroundColor }]}
+                                        style={[styles.datePickerButton, { backgroundColor: theme.background }]}
                                         onPress={() => setDatePickerVisible(true)}
                                     >
-                                        <Text style={[styles.pickerText, { color: textColor }]}>{transactionDate.toLocaleDateString('en-US')}</Text>
+                                        <Text style={[styles.pickerText, { color: theme.text }]}>{transactionDate.toLocaleDateString('en-US')}</Text>
                                         <MaterialIcons name="calendar-today" size={24} color={textColor} />
                                     </TouchableOpacity>
                                 </View>
@@ -859,11 +1008,11 @@ const DashboardScreen = () => {
                     <Modal visible={isCategoryModalVisible} animationType="slide" transparent={true}>
                         <View style={styles.modalContainer}>
                             <View style={[styles.modalContent, { backgroundColor: backgroundColor }]}>
-                                <Text style={[styles.modalTitle, { color: textColor }]}>Select a Category</Text>
+                                <Text style={[styles.modalTitle, { color: theme.text }]}>Select a Category</Text>
 
                                 {/* Create New Category Button */}
                                 <TouchableOpacity onPress={openCreateCategoryModal} style={styles.createNewCategoryButton}>
-                                    <Text style={[styles.createNewText, { color: textColor }]}>+ Create New</Text>
+                                    <Text style={[styles.createNewText, { color: theme.text }]}>+ Create New</Text>
                                 </TouchableOpacity>
 
                                 {/* Cancel Button */}
@@ -880,20 +1029,20 @@ const DashboardScreen = () => {
                     <Modal visible={isCreateCategoryModalVisible} animationType="slide" transparent={true}>
                         <View style={styles.modalContainer}>
                             <View style={[styles.modalContent, { backgroundColor: backgroundColor }]}>
-                                <Text style={[styles.modalTitle, { color: modalTextColor }]}>Create New Category</Text>
+                                <Text style={[styles.modalTitle, { color: theme.text }]}>Create New Category</Text>
 
                                 {/* Input for Category Name */}
                                 <TextInput
                                     placeholder="Category Name"
                                     value={newCategory}
                                     onChangeText={(text) => setNewCategory(text)}
-                                    style={[styles.input, { backgroundColor: inputBackgroundColor, color: modalTextColor }]}
+                                    style={[styles.input, { backgroundColor: theme.background, color: theme.text }]}
                                     placeholderTextColor={modalTextColor}
                                 />
 
                                 {/* Icon Selection */}
                                 <TouchableOpacity style={styles.emojiButton} onPress={() => setEmojiPickerVisible(true)}>
-                                    <Text style={{ color: modalTextColor }}>{selectedIcon ? selectedIcon : 'Click To Select Icon'}</Text>
+                                    <Text style={{ color: theme.text }}>{selectedIcon ? selectedIcon : 'Click To Select Icon'}</Text>
                                 </TouchableOpacity>
 
                                 {/* Save Button */}
@@ -927,40 +1076,40 @@ const DashboardScreen = () => {
                     {/* Modal for New Expense */}
                     <Modal visible={isExpenseModalVisible} animationType="slide" transparent={true}>
                         <View style={styles.modalContainer}>
-                            <View style={[styles.modalContent, { backgroundColor: backgroundColor }]}>
-                                <Text style={[styles.modalTitle, { color: textColor }]}>
+                            <View style={[styles.modalContent, { backgroundColor: theme.background }]}>
+                                <Text style={[styles.modalTitle, { color: theme.text }]}>
                                     Add New <Text style={{ color: 'red' }}>Expense</Text> Transaction
                                 </Text>
 
                                 <TextInput style={styles.input} placeholder="Transaction Description" placeholderTextColor={textColor} />
-                                <Text style={[styles.optionalText, { color: textColor }]}>Transaction Description (Optional)</Text>
+                                <Text style={[styles.optionalText, { color: theme.text }]}>Transaction Description (Optional)</Text>
 
                                 <TextInput style={styles.input} placeholder="Put the price" placeholderTextColor={textColor} />
-                                <Text style={[styles.requiredText, { color: textColor }]}>Transaction Amount (Required)</Text>
+                                <Text style={[styles.requiredText, { color: theme.text }]}>Transaction Amount (Required)</Text>
 
                                 {/* Category Selection */}
                                 <View style={styles.pickerContainer}>
-                                    <Text style={[styles.pickerLabel, { color: textColor }]}>Category</Text>
+                                    <Text style={[styles.pickerLabel, { color: theme.text }]}>Category</Text>
                                     <TouchableOpacity
-                                        style={[styles.categoryBox, { backgroundColor: cardBackgroundColor, borderColor: isDarkMode ? '#fff' : '#000' }]}
+                                        style={[styles.categoryBox, { backgroundColor: theme.background, borderColor: isDarkMode ? '#fff' : '#000' }]}
                                         onPress={openCategoryModal}  // This opens the category selection modal
                                     >
-                                        <Text style={[styles.categoryText, { color: textColor }]}>
-                                            {selectedCategory ? `Category: {currency.symbol}{selectedCategory}` : 'Select a category'}
+                                        <Text style={[styles.categoryText, { color: theme.text }]}>
+                                            {selectedCategory ? `Category: {currency.label.split(' ')[0]}{selectedCategory}` : 'Select a category'}
                                         </Text>
                                         <MaterialIcons name="arrow-drop-down" size={24} color={textColor} />
                                     </TouchableOpacity>
-                                    <Text style={[styles.pickerHint, { color: textColor }]}>Select a category for the transaction</Text>
+                                    <Text style={[styles.pickerHint, { color: theme.text }]}>Select a category for the transaction</Text>
                                 </View>
 
                                 {/* Date Picker */}
                                 <View style={styles.pickerContainer}>
-                                    <Text style={[styles.pickerLabel, { color: textColor }]}>Transaction date</Text>
+                                    <Text style={[styles.pickerLabel, { color: theme.text }]}>Transaction date</Text>
                                     <TouchableOpacity
-                                        style={[styles.datePickerButton, { backgroundColor: cardBackgroundColor }]}
+                                        style={[styles.datePickerButton, { backgroundColor: theme.background }]}
                                         onPress={() => setDatePickerVisible(true)}
                                     >
-                                        <Text style={[styles.pickerText, { color: textColor }]}>{transactionDate.toLocaleDateString('en-US')}</Text>
+                                        <Text style={[styles.pickerText, { color: theme.text }]}>{transactionDate.toLocaleDateString('en-US')}</Text>
                                         <MaterialIcons name="calendar-today" size={24} color={textColor} />
                                     </TouchableOpacity>
                                 </View>
@@ -993,7 +1142,7 @@ const DashboardScreen = () => {
 
                 </View>
             </ScrollView>
-        </Provider>
+        </Provider >
     );
 };
 
