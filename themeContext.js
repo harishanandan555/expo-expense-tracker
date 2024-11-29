@@ -88,6 +88,11 @@ export const ThemeProvider = ({ children }) => {
       tableHeaderText: '#000000',
       transactionBackground: '#ffffff',
       transactionText: '#000000',
+      //-----------------------------------------------
+      modalBackground: '#ffffff', // Background for the modal
+      modalContainer: '#f0f0f0', // Container background
+      inputBackground: '#ffffff', // Input background color
+      inputText: '#000000', // Input text color
       cardbackground: '#444',
       inputBorderColor: '#ccc'
     },
@@ -100,6 +105,11 @@ export const ThemeProvider = ({ children }) => {
       tableHeaderText: '#ffffff',
       transactionBackground: '#121212',
       transactionText: '#ffffff',
+      //-------------------------------------
+      modalBackground: '#222222', // Background for the modal
+      modalContainer: '#333333', // Container background
+      inputBackground: '#444444', // Input background color
+      inputText: '#ffffff', // Input text color
       cardbackground: '#444',
       inputBorderColor: '#FF6A00'
     },
