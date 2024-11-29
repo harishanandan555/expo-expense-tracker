@@ -106,9 +106,11 @@ const DashboardScreen = () => {
             const fetchCurrency = async () => {
                 try {
                     const storedCurrency = await AsyncStorage.getItem('selectedCurrency');
+
                     if (storedCurrency) {
                         setCurrency(JSON.parse(storedCurrency));
                     }
+
                 } catch (error) {
                     console.error('Error fetching currency:', error);
                 }
@@ -531,7 +533,7 @@ const DashboardScreen = () => {
                     <View>
                         <Text style={[styles.overviewLabel, { color: textColor }]}>Income</Text>
                         <Text style={[styles.overviewValue, { color: theme === 'dark' ? '#fff' : '#000' }]}>
-                        {currency.label.split(' ')[0]}{totalIncome || 0} </Text>
+                            {currency.symbol}{totalIncome || 0} </Text>
                     </View>
                 </View>
 
@@ -540,7 +542,7 @@ const DashboardScreen = () => {
                     <View>
                         <Text style={[styles.overviewLabel, { color: textColor }]}>Expense</Text>
                         <Text style={[styles.overviewValue, { color: theme === 'dark' ? '#fff' : '#000' }]}>
-                            {currency.label.split(' ')[0]}{totalExpense || 0}
+                            {currency.symbol}{totalExpense || 0}
                         </Text>
                     </View>
                 </View>
@@ -549,7 +551,7 @@ const DashboardScreen = () => {
                     <MaterialIcons name="account-balance-wallet" size={32} color="blue" />
                     <View>
                         <Text style={[styles.overviewLabel, { color: textColor }]}>Balance</Text>
-                        <Text style={[styles.overviewValue, { color: textColor }]}>{currency.label.split(' ')[0]}{balance || 0}</Text>
+                        <Text style={[styles.overviewValue, { color: textColor }]}>{currency.symbol}{balance || 0}</Text>
                     </View>
                 </View>
 
@@ -596,7 +598,7 @@ const DashboardScreen = () => {
                                                 </Text>
 
                                                 <Text style={[styles.amountText, { color: textColor }]}>
-                                                {currency.label.split(' ')[0]}{amount.toFixed(2)}
+                                                    {currency.symbol}{amount.toFixed(2)}
                                                 </Text>
                                             </View>
                                             <ProgressBar
@@ -650,7 +652,7 @@ const DashboardScreen = () => {
                                                 </Text>
 
                                                 <Text style={[styles.amountText, { color: textColor }]}>
-                                                {currency.label.split(' ')[0]}{amount.toFixed(2)}
+                                                    {currency.symbol}{amount.toFixed(2)}
                                                 </Text>
                                             </View>
                                             <ProgressBar
@@ -720,16 +722,16 @@ const DashboardScreen = () => {
 
 
                     {/* Income and Expense Toggle */}
-                    <View style={[styles.toggleContainer, { backgroundColor: backgroundColor}]}>
-    <TouchableOpacity style={[styles.toggleButton, styles.incomeButton]}>
-        <View style={[styles.icon, styles.incomeIcon]} />
-        <Text style={[styles.toggleText, {color: textColor}]}>Income</Text>
-    </TouchableOpacity>
-    <TouchableOpacity style={[styles.toggleButton, styles.expenseButton]}>
-        <View style={[styles.icon, styles.expenseIcon]} />
-        <Text style={[styles.toggleText, {color: textColor}]}>Expense</Text>
-    </TouchableOpacity>
-</View>
+                    <View style={[styles.toggleContainer, { backgroundColor: backgroundColor }]}>
+                        <TouchableOpacity style={[styles.toggleButton, styles.incomeButton]}>
+                            <View style={[styles.icon, styles.incomeIcon]} />
+                            <Text style={[styles.toggleText, { color: textColor }]}>Income</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={[styles.toggleButton, styles.expenseButton]}>
+                            <View style={[styles.icon, styles.expenseIcon]} />
+                            <Text style={[styles.toggleText, { color: textColor }]}>Expense</Text>
+                        </TouchableOpacity>
+                    </View>
 
                     <View
                         style={{
@@ -821,7 +823,7 @@ const DashboardScreen = () => {
                                         onPress={openCategoryModal}
                                     >
                                         <Text style={[styles.categoryText, { color: textColor }]}>
-                                            {selectedCategory ? `Category: {currency.label.split(' ')[0]}{selectedCategory}` : 'Select a category'}
+                                            {selectedCategory ? `Category: {currency.symbol}{selectedCategory}` : 'Select a category'}
                                         </Text>
                                         <MaterialIcons name="arrow-drop-down" size={24} color={textColor} />
                                     </TouchableOpacity>
@@ -944,7 +946,7 @@ const DashboardScreen = () => {
                                         onPress={openCategoryModal}  // This opens the category selection modal
                                     >
                                         <Text style={[styles.categoryText, { color: textColor }]}>
-                                            {selectedCategory ? `Category: {currency.label.split(' ')[0]}{selectedCategory}` : 'Select a category'}
+                                            {selectedCategory ? `Category: {currency.symbol}{selectedCategory}` : 'Select a category'}
                                         </Text>
                                         <MaterialIcons name="arrow-drop-down" size={24} color={textColor} />
                                     </TouchableOpacity>

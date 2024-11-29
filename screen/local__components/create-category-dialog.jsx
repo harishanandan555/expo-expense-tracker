@@ -19,7 +19,7 @@
 // });
 
 // export const CreateCategoryDialog = ({ type, onSuccessCallback }) => {
-  
+
 //     const [open, setOpen] = useState(false);
 //     const [userId, setUserId] = useState(null);
 //     const [userEmail, setUserEmail] = useState(null);
@@ -33,7 +33,7 @@
 //       },
 //     });
 
-    
+
 //     useEffect(() => {
 //         const fetchUserEmail = async () => {
 //             const userId = await AsyncStorage.getItem("userId");
@@ -45,8 +45,8 @@
 //         };
 //         fetchUserEmail();
 //     }, []);
-    
-  
+
+
 //     const onSubmit = useCallback(
 //       async (values) => {
 //         // Show "Creating Category..." Toast
@@ -54,24 +54,24 @@
 //           type: 'info',
 //           text1: 'Creating Category...',
 //         });
-  
+
 //         try {
 
 //             const response = await createCategory(values); // Call the correct function to create category
-    
+
 //             // Show success message with category name
 //             Toast.show({
 //                 type: 'success',
 //                 text1: `Category ${response.name} created successfully!`,
 //             });
-    
+
 //             // Call success callback
 //             onSuccessCallback(response);
-    
+
 //             // Reset the form and close the dialog
 //             reset();
 //             setOpen(false);
-  
+
 //         } catch (error) {
 //           console.error("Error:", error);
 //           Toast.show({
@@ -82,26 +82,26 @@
 //         }
 //       },[onSuccessCallback, reset]
 //     );
-  
+
 //     const createCategory = async (value) => {
-    
+
 //         try {
 //             // Validate the value
 //             const parsedBody = await CreateCategorySchema.validate(value, { abortEarly: false });
-    
+
 //             // Assuming the schema returns an object with an error property if invalid:
 //             if (parsedBody && parsedBody.errors && parsedBody.errors.length > 0) {
 //                 throw new Error(`Validation failed: ${parsedBody.errors.join(', ')}`);
 //             }
-    
+
 //             const { name, icon, type } = parsedBody;
-    
+
 //             // const hasAccess = await hasSubscription();
-    
+
 //             // if (!hasAccess && user.categoriesAttemps === 0) {
 //             //     return { error: true, redirect: "/upgrade?categoriesLimit=true" };
 //             // }
-            
+
 //             let data = {
 //                 name: name,
 //                 icon: icon,
@@ -115,10 +115,10 @@
 //             console.log("userId2: ", userid)
 //             // Store category
 //             const categories = await storeUserCategories(userid, data);
-    
+
 //             // Update category attempts
 //             // await updateCategoryAttempts(userId, hasAccess ? 0 : -1); // Pass -1 to decrement
-    
+
 //             return { categories };
 
 //         } catch (error) {
@@ -127,7 +127,7 @@
 //             // throw new Error(error?.message || 'An unknown error occurred');
 //         }
 //     };
-  
+
 //     return (
 //       <>
 //         {/* Trigger Button */}
@@ -137,7 +137,7 @@
 //         >
 //           <Text style={styles.triggerButtonText}>Create New</Text>
 //         </TouchableOpacity>
-  
+
 //         {/* Dialog Content */}
 //         <Modal visible={open} transparent animationType="slide">
 //           <View style={styles.modalOverlay}>
@@ -159,7 +159,7 @@
 //               <Text style={styles.dialogDescription}>
 //                 Categories are used to group your transactions.
 //               </Text>
-  
+
 //               {/* Form */}
 //               <View style={styles.formContainer}>
 //                 {/* Name Field */}
@@ -181,7 +181,7 @@
 //                     </View>
 //                   )}
 //                 />
-  
+
 //                 {/* Icon Field */}
 //                 <Controller
 //                   control={control}
@@ -223,7 +223,7 @@
 //                   )}
 //                 />
 //               </View>
-  
+
 //               {/* Dialog Footer */}
 //               <View style={styles.footer}>
 //                 <TouchableOpacity
@@ -250,7 +250,7 @@
 //             </View>
 //           </View>
 //         </Modal>
-  
+
 //         {/* Toast Notifications */}
 //         <Toast />
 //       </>
@@ -384,10 +384,13 @@
 
 
 import React, { useCallback, useState, useEffect  } from 'react';
-import { View, Text, TouchableOpacity, TextInput, Modal, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, Modal, StyleSheet, ActivityIndicator, Button } from 'react-native';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useForm, Controller } from 'react-hook-form';
-import EmojiSelector, { Categories } from 'react-native-emoji-selector';
+
+// import EmojiInput from 'react-native-emoji-input';
+import EmojiSelector from 'react-native-emoji-selector';
+
 import Toast from 'react-native-toast-message';
 import * as Yup from 'yup';
 
@@ -403,8 +406,8 @@ const CreateCategorySchema = Yup.object().shape({
     type: Yup.string().oneOf(['income', 'expense'], 'Invalid category type').required('Type is required'),
 });
 
-export const CreateCategoryDialog = ({ type, onSuccessCallback }) => {
-  
+export const CreateCategoryDialogButton = ({ type, onSuccessCallback }) => {
+
     const [open, setOpen] = useState(false);
     const [userId, setUserId] = useState(null);
     const [userEmail, setUserEmail] = useState(null);
@@ -420,7 +423,7 @@ export const CreateCategoryDialog = ({ type, onSuccessCallback }) => {
       },
     });
 
-    
+
     useEffect(() => {
         const fetchUserEmail = async () => {
             const userId = await AsyncStorage.getItem("userId");
@@ -432,7 +435,7 @@ export const CreateCategoryDialog = ({ type, onSuccessCallback }) => {
         };
         fetchUserEmail();
     }, []);
-    
+
     //
     const onSubmit = useCallback(
       async (values) => {
@@ -440,24 +443,24 @@ export const CreateCategoryDialog = ({ type, onSuccessCallback }) => {
           type: 'info',
           text1: 'Creating Category...',
         });
-    
+
         try {
           const response = await createCategory(values);
-    
+
           if (!response || !response.name) {
             throw new Error("Category creation failed.");
           }
-    
+
           Toast.show({
             type: 'success',
             text1: `Category ${response.name} created successfully!`,
           });
-    
+
           onSuccessCallback(response);
 
           reset();
           setOpen(false);
-          
+
         } catch (error) {
           console.error("Error:", error);
           Toast.show({
@@ -469,20 +472,20 @@ export const CreateCategoryDialog = ({ type, onSuccessCallback }) => {
       },
       [onSuccessCallback, reset]
     );
-  
+
     //
     const createCategory = async (value) => {
       try {
         // Validate input
         const parsedBody = await CreateCategorySchema.validate(value, { abortEarly: false });
-    
+
         const { name, icon, type } = parsedBody;
         const userid = auth.currentUser?.uid;
         if (!userid) throw new Error("User is not authenticated.");
-    
+
         // Prepare category data
         const data = { name, icon, type };
-    
+
         // Store category in Firestore
         await storeUserCategories(userid, data);
         return { name, icon, type }; // Return the created category details
@@ -491,17 +494,27 @@ export const CreateCategoryDialog = ({ type, onSuccessCallback }) => {
         throw new Error(error.message || "An unknown error occurred");
       }
     };
-  
+
     return (
-      <>
-        {/* Trigger Button */}
-        <TouchableOpacity
+      // <>
+
+
+        <View style={{ padding: 10 }}>{/* Trigger Button */}
+
+        {/* <TouchableOpacity
           style={styles.triggerButton}
           onPress={() => setOpen(true)}
         >
           <Text style={styles.triggerButtonText}>Create New</Text>
-        </TouchableOpacity>
-  
+        </TouchableOpacity> */}
+
+        <Button
+          title="Create New"
+          onPress={() => setOpen(true)}
+          color="#007bff" // You can customize the button color here
+        />
+
+
         {/* Dialog Content */}
         <Modal visible={open} transparent animationType="slide">
           <View style={styles.modalOverlay}>
@@ -523,7 +536,7 @@ export const CreateCategoryDialog = ({ type, onSuccessCallback }) => {
               <Text style={styles.dialogDescription}>
                 Categories are used to group your transactions.
               </Text>
-  
+
               {/* Form */}
               <View style={styles.formContainer}>
                 {/* Name Field */}
@@ -545,7 +558,7 @@ export const CreateCategoryDialog = ({ type, onSuccessCallback }) => {
                     </View>
                   )}
                 />
-  
+
                 {/* Icon Field */}
                 <Controller
                   control={control}
@@ -560,7 +573,7 @@ export const CreateCategoryDialog = ({ type, onSuccessCallback }) => {
                         {value ? (
                           <View style={styles.iconPreview}>
                             <Text style={styles.iconText}>{value}</Text>
-                            <Text>Click To Select Icon</Text>
+                            {/* <Text>Click To Select Icon</Text> */}
                           </View>
                         ) : (
                           <View style={styles.iconPreview}>
@@ -571,23 +584,43 @@ export const CreateCategoryDialog = ({ type, onSuccessCallback }) => {
                       </TouchableOpacity>
                       {isEmojiPickerOpen && (
                         <View style={styles.emojiSelectorContainer}>
+
+                          {/* <EmojiInput
+                            onEmojiSelected={(emoji) => {
+                              onChange(emoji);
+                              setIsEmojiPickerOpen(false);
+                            }}
+                            showSearch={true} // Show search bar
+                            categories={null} // Customize categories
+                          /> */}
+
                           <EmojiSelector
                             onEmojiSelected={(emoji) => {
                               onChange(emoji);
                               setIsEmojiPickerOpen(false);
                             }}
-                            category={Categories.Smileys}
+                            // category={Categories.Smileys}
+                            // categories={['people', 'nature', 'food', 'objects']}
+                            showSearchBar={true}
+                            searchPlaceholder="Search Emoji..."
+                            searchBarStyle={{ height: 40, borderRadius: 20, backgroundColor: '#f0f0f0', paddingLeft: 10 }}
+                            categoryStyle={{ fontSize: 18, fontWeight: 'bold', color: 'blue' }}
+                            // style={{
+                            //   height: 400,
+                            //   width: '100%',
+                            // }}
                           />
+
                         </View>
                       )}
-                      <Text style={styles.fieldDescription}>
+                      {/* <Text style={styles.fieldDescription}>
                         This Icon will appear in the category.
-                      </Text>
+                      </Text> */}
                     </View>
                   )}
                 />
               </View>
-  
+
               {/* Dialog Footer */}
               <View style={styles.footer}>
                 <TouchableOpacity
@@ -614,10 +647,11 @@ export const CreateCategoryDialog = ({ type, onSuccessCallback }) => {
             </View>
           </View>
         </Modal>
-  
+
         {/* Toast Notifications */}
         <Toast />
-      </>
+        </View>
+      // </>
     );
   };
 
@@ -702,6 +736,7 @@ const styles = StyleSheet.create({
         height: 300,
     },
     footer: {
+        paddingTop: 15,
         flexDirection: 'row',
         justifyContent: 'space-between',
     },
@@ -742,3 +777,4 @@ const styles = StyleSheet.create({
         fontSize: 14,
     },
 });
+

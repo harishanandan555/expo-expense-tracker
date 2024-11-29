@@ -30,9 +30,9 @@
 //           {/* <Stack.Screen name="landing" options={{ headerShown: false }} component={Landing} /> */}
 
 //           <Stack.Screen name="signin" options={{ headerShown: false }} component={SignInPage} />
-//           <Stack.Screen name="main" options={{ headerShown: false }} component={FooterNavigator} />
+//           <Stack.Screen name="Main" options={{ headerShown: false }} component={FooterNavigator} />
 
-//           <Stack.Screen name="NewIncome" options={{ headerShown: false }} component={NewIncomeScreen} initialParams={{ email: '' }} /> 
+//           <Stack.Screen name="NewIncome" options={{ headerShown: false }} component={NewIncomeScreen} initialParams={{ email: '' }} />
 //           <Stack.Screen name="NewExpense" options={{ headerShown: false }} component={NewExpenseScreen} />
 //           <Stack.Screen name="PhoneAuthentication" options={{ headerShown: false }} component={PhoneAuth} />
 //           <Stack.Screen name="EmailAuthentication" options={{ headerShown: false }} component={EmailAuth} />
@@ -106,27 +106,23 @@ import NewExpenseScreen from './screen/components/NewExpense';
 import PhoneAuth from './screen/auth/phoneAuth';
 import EmailAuth from './screen/auth/emailAuth';
 
-
 const Stack = createStackNavigator();
 
 export default function App() {
-  return (
+	return (
+		<ThemeProvider>
+			<NavigationContainer>
+				<Stack.Navigator initialRouteName="SignIn">
+				{/* <Stack.Navigator initialRouteName="Main"> */}
+					<Stack.Screen name="SignIn" component={SignInPage} options={{ headerShown: false }} />
+					<Stack.Screen name="Main" component={MainScreen} options={{ headerShown: false }} />
+					<Stack.Screen name="NewIncome" options={{ headerShown: false }} component={NewIncomeScreen} initialParams={{ email: '' }} />
+					<Stack.Screen name="NewExpense" options={{ headerShown: false }} component={NewExpenseScreen} />
+					<Stack.Screen name="PhoneAuthentication" options={{ headerShown: false }} component={PhoneAuth} />
+					<Stack.Screen name="EmailAuthentication" options={{ headerShown: false }} component={EmailAuth} />
+				</Stack.Navigator>
+			</NavigationContainer>
+		</ThemeProvider>
 
-    <ThemeProvider>
-      <NavigationContainer>
-        <Stack.Navigator initialRouteName="SignIn">
-          
-          <Stack.Screen name="SignIn" component={SignInPage} options={{ headerShown: false }} />
-          <Stack.Screen name="main" component={MainScreen} options={{ headerShown: false }} />
-
-           <Stack.Screen name="NewIncome" options={{ headerShown: false }} component={NewIncomeScreen} initialParams={{ email: '' }} /> 
-           <Stack.Screen name="NewExpense" options={{ headerShown: false }} component={NewExpenseScreen} />
-           <Stack.Screen name="PhoneAuthentication" options={{ headerShown: false }} component={PhoneAuth} />
-           <Stack.Screen name="EmailAuthentication" options={{ headerShown: false }} component={EmailAuth} />
-
-        </Stack.Navigator>
-      </NavigationContainer>
-    </ThemeProvider>
-
-  );
+	);
 }

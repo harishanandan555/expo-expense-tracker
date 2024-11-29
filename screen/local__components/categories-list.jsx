@@ -256,9 +256,9 @@
 //             <Text style={styles.categoryText}>All Categories</Text>
 //             <Text style={styles.sortedText}>Sorted by name</Text>
 //           </View>
-          
+
 //             <CreateCategoryDialog onSuccessCallback={fetchCategories} />
-          
+
 //         </View>
 
 //         <Separator />
@@ -348,11 +348,11 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { SkeletonWrapper } from "../global_components/skeleton-wrapper";
 import { Separator } from "../ui/separator";
 import { CategoryCard } from "./category-card";
-import { CreateCategoryDialog } from "./create-category-dialog";
-import { getUserCategories, getDefaultCategories } from "../services/firebaseSettings";
+import { CreateCategoryDialogButton } from "./create-category-dialog";
+import { getAllUserCategories, getAllDefaultCategories } from "../services/firebaseSettings";
 
 export const CategoriesList = ({ theme }) => {
-  
+
   const [categories, setCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -378,28 +378,22 @@ export const CategoriesList = ({ theme }) => {
     setError(null);
 
     try {
-      const [userIncomeCategories, userExpenseCategories] = await Promise.all([
-        getUserCategories(userId, "income") || [],
-        getUserCategories(userId, "expense") || [],
-      ]);
 
-      const [defaultIncomeCategories, defaultExpenseCategories] = await Promise.all([
-        getDefaultCategories("income") || [],
-        getDefaultCategories("expense") || [],
-      ]);
-
+      const userCategories = await getAllUserCategories(userId) || [];
+      const defaultCategories = await getAllDefaultCategories() || [];
       const combinedCategories = [
-        ...defaultIncomeCategories.map((category) => ({ ...category, isDefault: true, type: "income" })),
-        ...userIncomeCategories.map((category) => ({ ...category, isDefault: false, type: "income" })),
-        ...defaultExpenseCategories.map((category) => ({ ...category, isDefault: true, type: "expense" })),
-        ...userExpenseCategories.map((category) => ({ ...category, isDefault: false, type: "expense" })),
+        ...defaultCategories.map((category) => ({ ...category, isDefault: true })),
+        ...userCategories.map((category) => ({ ...category, isDefault: false })),
       ];
 
       setCategories(combinedCategories);
-    } catch (err) {
+
+    }
+    catch (err) {
       console.error("Error fetching categories:", err);
       setError(err.message || "Failed to fetch categories");
-    } finally {
+    }
+    finally {
       setIsLoading(false);
     }
   };
@@ -411,21 +405,30 @@ export const CategoriesList = ({ theme }) => {
   }, [userId]);
 
   return (
-    <SkeletonWrapper theme={theme} isLoading={isLoading} fullWidth>
-      <View style={[styles.card, { backgroundColor: theme.cardBackground }]}>
-        <View style={styles.cardHeader}>
-          <View style={styles.cardTitle}>
+    <View style={{ padding: 0 }}>
+
+    {/* <SkeletonWrapper theme={theme} isLoading={isLoading} fullWidth> */}
+
+      {/* <View style={[styles.card, { backgroundColor: theme.cardBackground }]}> */}
+
+        {/* <View style={styles.cardHeader}> */}
+          {/* <View style={styles.cardTitle}>
             <Text style={[styles.categoryText, { color: theme.textColor }]}>All Categories</Text>
             <Text style={[styles.sortedText, { color: theme.subTextColor }]}>Sorted by name</Text>
-          </View>
-          <CreateCategoryDialog theme={theme} onSuccessCallback={fetchCategories} />
-        </View>
+          </View> */}
+          {/* <CreateCategoryDialog theme={theme} onSuccessCallback={fetchCategories} /> */}
+        {/* </View> */}
+
+        <CreateCategoryDialogButton theme={theme} onSuccessCallback={fetchCategories} />
 
         <Separator theme={theme} />
 
         {categories.length > 0 ? (
+
           <View style={styles.categoryList}>
+
             {categories.map((category) => (
+
               <CategoryCard
                 theme={theme}
                 key={category.id}
@@ -434,14 +437,19 @@ export const CategoriesList = ({ theme }) => {
                 type={category.type}
                 onDeleteSuccess={fetchCategories}
               />
+
             ))}
+
           </View>
+
         ) : (
+
           <View style={styles.noDataContainer}>
             <Text style={[styles.noDataText, { color: theme.textColor }]}>
               No categories found. Create one to get started!
             </Text>
           </View>
+
         )}
 
         {error && (
@@ -449,8 +457,12 @@ export const CategoriesList = ({ theme }) => {
             <Text style={styles.errorText}>{error}</Text>
           </View>
         )}
-      </View>
-    </SkeletonWrapper>
+
+      {/* </View> */}
+
+    {/* </SkeletonWrapper> */}
+
+    </View>
   );
 };
 
