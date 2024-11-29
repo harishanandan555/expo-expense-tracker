@@ -110,9 +110,11 @@ const DashboardScreen = ({ theme }) => {
             const fetchCurrency = async () => {
                 try {
                     const storedCurrency = await AsyncStorage.getItem('selectedCurrency');
+
                     if (storedCurrency) {
                         setCurrency(JSON.parse(storedCurrency));
                     }
+
                 } catch (error) {
                     console.error('Error fetching currency:', error);
                 }
@@ -233,7 +235,7 @@ const DashboardScreen = ({ theme }) => {
             console.error("User ID is required.");
             return;
         }
-        
+
         const screenWidth = Dimensions.get('window').width;
 
 
@@ -1140,7 +1142,7 @@ const DashboardScreen = ({ theme }) => {
 
                 </View>
             </ScrollView>
-        </Provider>
+        </Provider >
     );
 };
 
