@@ -49,7 +49,7 @@
 
 
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { Appearance } from 'react-native'; // Import Appearance API
+import { Appearance, useColorScheme, StyleSheet } from 'react-native';
 
 const ThemeContext = createContext();
 
@@ -88,8 +88,13 @@ export const ThemeProvider = ({ children }) => {
       tableHeaderText: '#000000',
       transactionBackground: '#ffffff',
       transactionText: '#000000',
+      //-----------------------------------------------
+      modalBackground: '#ffffff', // Background for the modal
+      modalContainer: '#f0f0f0', // Container background
+      inputBackground: '#ffffff', // Input background color
+      inputText: '#000000', // Input text color
       cardbackground: '#444',
-      inputBorderColor:'#ccc'
+      inputBorderColor: '#ccc'
     },
     dark: {
       background: '#000000',
@@ -100,6 +105,11 @@ export const ThemeProvider = ({ children }) => {
       tableHeaderText: '#ffffff',
       transactionBackground: '#121212',
       transactionText: '#ffffff',
+      //-------------------------------------
+      modalBackground: '#222222', // Background for the modal
+      modalContainer: '#333333', // Container background
+      inputBackground: '#444444', // Input background color
+      inputText: '#ffffff', // Input text color
       cardbackground: '#444',
       inputBorderColor: '#FF6A00'
     },
@@ -113,3 +123,99 @@ export const ThemeProvider = ({ children }) => {
 };
 
 export const useTheme = () => useContext(ThemeContext);
+
+
+
+
+
+
+
+// import React, { createContext, useState, useContext, useEffect } from 'react';
+// import { Appearance, useColorScheme, StyleSheet } from 'react-native';
+
+// // Create the Theme Context
+// const ThemeContext = createContext();
+
+// // ThemeProvider Component
+// export const ThemeProvider = ({ children }) => {
+
+//   const systemTheme = useColorScheme(); // Automatically detects system theme
+
+//   const [currentTheme, setCurrentTheme] = useState(systemTheme || 'dark'); // Fallback to 'light'
+
+//   useEffect(() => {
+//     setCurrentTheme(systemTheme || 'dark'); // Update theme when system theme changes
+//   }, [systemTheme]);
+
+//   const toggleTheme = () => {
+//     setCurrentTheme((prevTheme) => (prevTheme === 'light' ? 'dark' : 'light'));
+//   };
+
+//   const themes = {
+//     light: {
+//       background: '#ffffff',
+//       text: '#000000',
+//       buttonBackground: '#ffffff',
+//       buttonBorder: '#333',
+//       buttonText: '#000000',
+//       tableHeaderBackground: '#ffffff',
+//       tableHeaderText: '#000000',
+//       transactionBackground: '#ffffff',
+//       transactionText: '#000000',
+//       cardbackground: '#444',
+//       inputBorderColor: '#ccc',
+//     },
+//     dark: {
+//       background: '#000000',
+//       text: '#ffffff',
+//       buttonBackground: '#333',
+//       buttonText: '#ffffff',
+//       tableHeaderBackground: '#333',
+//       tableHeaderText: '#ffffff',
+//       transactionBackground: '#121212',
+//       transactionText: '#ffffff',
+//       cardbackground: '#444',
+//       inputBorderColor: '#FF6A00',
+//     },
+//   };
+
+//   return (
+//     <ThemeContext.Provider value={{ theme: themes[currentTheme], toggleTheme }}>
+//       {children}
+//     </ThemeContext.Provider>
+//   );
+// };
+
+// // Hook to use the Theme Context
+// export const useTheme = () => useContext(ThemeContext);
+
+// // Example of a Themed Component
+// export const ThemedView = () => {
+//   const { theme, toggleTheme } = useTheme();
+
+//   return (
+//     <div
+//       style={{
+//         backgroundColor: theme.background,
+//         color: theme.text,
+//         height: '100vh',
+//         display: 'flex',
+//         justifyContent: 'center',
+//         alignItems: 'center',
+//       }}
+//     >
+//       <h1>Themed App</h1>
+//       <button
+//         onClick={toggleTheme}
+//         style={{
+//           backgroundColor: theme.buttonBackground,
+//           color: theme.buttonText,
+//           border: `1px solid ${theme.buttonBorder}`,
+//           padding: '10px 20px',
+//           cursor: 'pointer',
+//         }}
+//       >
+//       </button>
+//     </div>
+//   );
+// };
