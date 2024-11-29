@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, Modal, StyleSheet } from 'react-native';
+import { View, Text, TextInput, Modal, StyleSheet, TouchableOpacity } from 'react-native';
+import { useTheme } from '../../themeContext';
 
 const EditTransactionModal = ({ visible, transaction, onClose, onSave }) => {
   const [amount, setAmount] = useState(transaction.amount.toString());
   const [category, setCategory] = useState(transaction.category);
   const [description, setDescription] = useState(transaction.description);
   const [icon, setIcon] = useState(transaction.icon || '');
+  const { theme } = useTheme();
 
   const handleSave = () => {
     const updatedTransaction = {
@@ -27,35 +29,47 @@ const EditTransactionModal = ({ visible, transaction, onClose, onSave }) => {
       onRequestClose={onClose}
     >
       <View style={styles.modalContainer}>
-        <View style={styles.modalContent}>
-          <Text style={styles.modalTitle}>Edit Transaction</Text>
-          <Text>Amount:</Text>
+        <View style={[styles.modalContent, { backgroundColor: theme.modalContainer }]}>
+          <Text style={[styles.modalTitle, { color: theme.transactionText }]}>Edit Transaction</Text>
+          <Text style={{ color: theme.transactionText }}>Amount:</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: theme.inputBackground, color: theme.inputText }]}
             value={amount}
             keyboardType="numeric"
             onChangeText={setAmount}
           />
-          <Text>Category:</Text>
+          <Text style={{ color: theme.transactionText }}>Category:</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: theme.inputBackground, color: theme.inputText }]}
             value={category}
             onChangeText={setCategory}
           />
-          <Text>Description:</Text>
+          <Text style={{ color: theme.transactionText }}>Description:</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: theme.inputBackground, color: theme.inputText }]}
             value={description}
             onChangeText={setDescription}
           />
-          <Text>Icon:</Text>
+          <Text style={{ color: theme.transactionText }}>Icon:</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: theme.inputBackground, color: theme.inputText }]}
             value={icon}
             onChangeText={setIcon}
           />
-          <Button title="Save Changes" onPress={handleSave} />
-          <Button title="Cancel" onPress={onClose} />
+          <View style={styles.buttonContainer}>
+          <TouchableOpacity
+              onPress={handleSave}
+              style={[styles.button, { backgroundColor: theme.currentTheme === 'dark' ? '#ec971f' : '#449d44' }]}
+            >
+              <Text style={[styles.buttonText,{color: theme.inputText}]}>Save</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={onClose}
+              style={[styles.button, { backgroundColor: theme.currentTheme === 'dark' ? '#d9534f' : '#d9534f', color: theme.inputText }]}
+            >
+              <Text style={[styles.buttonText,{color: theme.inputText}]}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     </Modal>
@@ -72,7 +86,6 @@ const styles = StyleSheet.create({
   modalContent: {
     width: '80%',
     padding: 20,
-    backgroundColor: 'white',
     borderRadius: 10,
   },
   modalTitle: {
@@ -84,6 +97,24 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     marginBottom: 10,
     padding: 10,
+    borderRadius: 5,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
+    paddingLeft:10,
+    paddingRight:10
+  },
+  button: {
+    width: 75, // Increase button width
+    height:50,
+    textAlign:'center',
+    justifyContent:'center',
+    paddingLeft:20,
+    borderRadius:5,
+    borderColor:'#333',
+    borderWidth:1
   },
 });
 
