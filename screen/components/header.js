@@ -192,8 +192,11 @@ import { Menu, Provider, Avatar, Divider } from 'react-native-paper';
 import { auth } from '../../config/firebaseConfig';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
+import { useNavigation } from '@react-navigation/native';
 
-const Header = ({ navigation, isDarkMode, toggleTheme }) => {
+const Header = ({  isDarkMode, toggleTheme }) => {
+  const navigation = useNavigation();
+  console.log('Navigation prop:', navigation);
   const [menuVisible, setMenuVisible] = useState(false);
   const [userName, setUserName] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -227,14 +230,14 @@ const Header = ({ navigation, isDarkMode, toggleTheme }) => {
     setLoading(true);
     try {
       const currentUser = auth.currentUser;
-      if (currentUser.providerData.some(provider => provider.providerId === 'google.com')) {
+      if (currentUser?.providerData.some(provider => provider.providerId === 'google.com')) {
         // Revoke Google token and sign out
         await GoogleSignin.revokeAccess();
         await GoogleSignin.signOut();
       }
       await signOut(auth);
       Alert.alert("Logged Out", "You have successfully logged out.");
-      navigation.navigate("signin");
+      navigation.navigate("SignIn");
     } catch (error) {
       console.error(error);
       Alert.alert("Logout Error", error.message);
@@ -260,9 +263,10 @@ const Header = ({ navigation, isDarkMode, toggleTheme }) => {
             anchor={
               <TouchableOpacity onPress={() => setMenuVisible(true)}>
                 {userPhoto ? (
-                  <Avatar.Image size={45} source={{ uri: userPhoto }} style={styles.avatar} />
+                  <Avatar.Image size={45} source={{ uri: userPhoto }} style={[styles.avatar, { backgroundColor: 'transparent' }]} />
                 ) : (
                   <Avatar.Text size={45} label={getAvatarLabel()} style={[styles.avatar,  { backgroundColor: isDarkMode ? '#333' : '#f0f0f0' }]} />
+                  // <Avatar.Text size={45} label={getAvatarLabel()} style={[styles.avatar, { backgroundColor: 'transparent' }]}/>
                 )}
               </TouchableOpacity>
             }
