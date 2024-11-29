@@ -45,7 +45,6 @@
     "expo-linear-gradient": "~13.0.2",
     "expo-mail-composer": "~13.0.1",
     "expo-media-library": "^16.0.5",
-    "expo-permissions": "^14.4.0",
     "expo-print": "^13.0.1",
     "expo-random": "~14.0.1",
     "expo-router": "~3.5.24",
