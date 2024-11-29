@@ -192,8 +192,11 @@ import { Menu, Provider, Avatar, Divider } from 'react-native-paper';
 import { auth } from '../../config/firebaseConfig';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
+import { useNavigation } from '@react-navigation/native';
 
-const Header = ({ navigation, isDarkMode, toggleTheme }) => {
+const Header = ({  isDarkMode, toggleTheme }) => {
+  const navigation = useNavigation();
+  console.log('Navigation prop:', navigation);
   const [menuVisible, setMenuVisible] = useState(false);
   const [userName, setUserName] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -207,7 +210,7 @@ const Header = ({ navigation, isDarkMode, toggleTheme }) => {
 
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
-        const displayName = user.displayName || user.email?.split('@')[0] || 'User';
+        const displayName = user.displayName? user.displayName : user.email?.split('@')[0] || 'User';
         setUserName(displayName);
         setUserPhoto(user.photoURL);
       } else {
@@ -234,7 +237,7 @@ const Header = ({ navigation, isDarkMode, toggleTheme }) => {
       }
       await signOut(auth);
       Alert.alert("Logged Out", "You have successfully logged out.");
-      navigation.navigate("signin");
+      navigation.navigate("SignIn");
     } catch (error) {
       console.error(error);
       Alert.alert("Logout Error", error.message);
@@ -243,7 +246,12 @@ const Header = ({ navigation, isDarkMode, toggleTheme }) => {
     }
   };
 
-  const getAvatarLabel = () => userName ? userName.slice(0, 2).toUpperCase() : 'U';
+  const getAvatarLabel = () => {
+        if (userName) {
+        return userName.slice(0, 2).toUpperCase();
+        }
+        return 'U';
+    };
 
   return (
     <Provider>
@@ -251,20 +259,24 @@ const Header = ({ navigation, isDarkMode, toggleTheme }) => {
         <Image source={require('../../assets/wallet_logo.png')} style={styles.logo} />
         <Menu
             visible={menuVisible}
-            onDismiss={closeMenu}
+            onDismiss={() => setMenuVisible(false)}
             anchor={
-              <TouchableOpacity onPress={openMenu}>
+              <TouchableOpacity onPress={() => setMenuVisible(true)}>
                 {userPhoto ? (
-                  <Avatar.Image size={45} source={{ uri: userPhoto }} style={styles.avatar} />
+                  <Avatar.Image size={45} source={{ uri: userPhoto }} style={[styles.avatar, { backgroundColor: 'transparent' }]} />
                 ) : (
-                  <Avatar.Text size={45} label={getAvatarLabel()} style={styles.avatar} />
+                  <Avatar.Text size={45} label={getAvatarLabel()} style={[styles.avatar,  { backgroundColor: isDarkMode ? '#333' : '#f0f0f0' }]} />
+                  // <Avatar.Text size={45} label={getAvatarLabel()} style={[styles.avatar, { backgroundColor: 'transparent' }]}/>
                 )}
               </TouchableOpacity>
             }
-            style={[
-              styles.menu,
-              { backgroundColor: isDarkMode ? '#000' : '#fff' },
-            ]}
+            contentStyle={{
+              backgroundColor: isDarkMode ? '#333' : '#f9f9f9', // Menu background color
+            }}
+            // style={[
+            //   styles.menu,
+            //   { backgroundColor: isDarkMode ? '#000' : '#fff' },
+            // ]}
         >
             <Menu.Item
               onPress={() => {
@@ -303,9 +315,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 10,
     marginTop: 15,
+    padding:15,
+    marginLeft:10
   },
   avatar: {
     backgroundColor: 'transparent',
+    width: 50,
+    height: 50,
   },
   logo: {
     width: 50,
@@ -315,8 +331,8 @@ const styles = StyleSheet.create({
     marginTop: 0,
     // position:'absolute',
     // top:0,
-    // left:0,
-    // right:0,
+    // left:'60%',
+    // right:10,
     // zIndex:10,
   },
   menuItemText: {
