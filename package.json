@@ -35,7 +35,6 @@
     "date-fn": "^0.0.2",
     "date-fns": "^4.1.0",
     "dotenv": "^16.4.5",
-    "emoji-mart": "^5.6.0",
     "expo": "~51.0.39",
     "expo-asset": "~10.0.10",
     "expo-auth-session": "~5.5.2",
@@ -46,7 +45,6 @@
     "expo-linear-gradient": "~13.0.2",
     "expo-mail-composer": "~13.0.1",
     "expo-media-library": "^16.0.5",
-    "expo-permissions": "^14.4.0",
     "expo-print": "^13.0.1",
     "expo-random": "~14.0.1",
     "expo-router": "~3.5.24",
@@ -68,9 +66,6 @@
     "react-native-countup": "^0.0.2",
     "react-native-dropdown-picker": "^5.4.6",
     "react-native-elements": "^3.4.3",
-    "react-native-emoji": "^1.8.0",
-    "react-native-emoji-input": "^1.1.10",
-    "react-native-emoji-picker": "^0.2.2",
     "react-native-emoji-selector": "^0.2.0",
     "react-native-fs": "^2.20.0",
     "react-native-gesture-handler": "~2.16.1",
@@ -101,5 +96,6 @@
     "@babel/core": "^7.20.0",
     "@types/react": "~18.2.79"
   },
-  "private": true
+  "private": true,
+  "packageManager": "yarn@1.22.22+sha1.ac34549e6aa8e7ead463a7407e1c7390f61a6610"
 }
