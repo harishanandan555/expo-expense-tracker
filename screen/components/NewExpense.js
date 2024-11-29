@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
+    KeyboardAvoidingView,
     View,
     Text,
     TextInput,
@@ -8,8 +9,11 @@ import {
     Switch,
     Modal,
     Alert,
-    ScrollView,
-    FlatList
+    FlatList,
+    TouchableWithoutFeedback,
+    Platform,
+    Keyboard,
+    ScrollView
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons'; // For icons
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
@@ -24,7 +28,7 @@ import { CreateCategoryDialog } from '../local__components/create-category-dialo
 import { useTheme } from '../../themeContext';
 
 
-const NewExpenseScreen = ({ navigation, route }) => {
+const NewExpenseScreen = ({ navigation, route, isVisible, onClose}) => {
     const { theme } = useTheme(); 
     const [transactionDate, setTransactionDate] = useState(new Date());
     const [isDatePickerVisible, setDatePickerVisible] = useState(false);
@@ -41,6 +45,8 @@ const NewExpenseScreen = ({ navigation, route }) => {
     const [isCategoryModalVisible, setCategoryModalVisible] = useState(false);
     const modalBackgroundColor = isDarkMode ? '#2C2C2E' : '#fff';
     const [isCreateCategoryModalVisible, setCreateCategoryModalVisible] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [filteredCategories, setFilteredCategories] = useState(categories || []);
     const inputBackgroundColor = isDarkMode ? '#333' : '#f4f4f4';
     const [dbLoaded, setDbLoaded] = useState(false);
     const [expenses, setExpenses] = useState([]);
@@ -86,6 +92,16 @@ const NewExpenseScreen = ({ navigation, route }) => {
 
 
 
+    useEffect(() => {
+        if (searchQuery.trim() === '') {
+          setFilteredCategories(categories); // Show all categories if the search is empty
+        } else {
+          const filtered = categories.filter((category) =>
+            category.name.toLowerCase().includes(searchQuery.toLowerCase()) // Case-insensitive search
+          );
+          setFilteredCategories(filtered);
+        }
+      }, [searchQuery, categories]);
 
 
 
@@ -105,7 +121,6 @@ const NewExpenseScreen = ({ navigation, route }) => {
                 return;
             }
 
-            console.log('Retrieved userId:', userId);
 
             // Get a reference to the "users" collection in Firebase
             const usersCollection = collection(db, 'users');
@@ -179,7 +194,7 @@ const NewExpenseScreen = ({ navigation, route }) => {
   
       setIsLoading(true);
       setError(null);
-      console.log("expense ", type)
+    
       try {
         const userCategories = await getUserCategories(userId, type) || [];
         const defaultCategories = await getDefaultCategories(type) || [];
@@ -191,6 +206,7 @@ const NewExpenseScreen = ({ navigation, route }) => {
         // console.log("combinedCategories: ", combinedCategories)
   
         setCategories(combinedCategories);
+        setFilteredCategories(combinedCategories);
   
       } catch (err) {
         console.error("Error fetching categories:", err);
@@ -209,77 +225,82 @@ const NewExpenseScreen = ({ navigation, route }) => {
 
 
     return (
-
-        <View style={[styles.container, { backgroundColor }]}>
+        <Modal
+        visible={isVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={onClose}
+      >
+        <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <ScrollView
+                contentContainerStyle={[
+                    styles.scrollContent,
+                    { backgroundColor: theme.background },
+                ]}
+            >
+        <View style={[styles.container, { backgroundColor:theme.background }]}>
+        <Text style={[styles.screenTitle, { color: theme.text }]}>New Expense</Text>
             {/* Header with Dark/Light Mode Toggle */}
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                    <MaterialIcons name="arrow-back" size={24} color={textColor} />
-                </TouchableOpacity>
-                <Text style={[styles.screenTitle, { color: textColor }]}>New Expense</Text>
-                <Switch
-                    value={isDarkMode}
-                    onValueChange={toggleDarkMode}
-                    thumbColor={isDarkMode ? "#FF6A00" : "#f4f3f4"}
-                    trackColor={{ false: "#767577", true: "#FF6A00" }}
-                />
-            </View>
+            
 
-            <Text style={[styles.modalTitle, { color: textColor }]}>
+            <Text style={[styles.modalTitle, { color: theme.text }]}>
                 Add New <Text style={{ color: 'green' }}>Expense</Text> Transaction
             </Text>
 
             {/* Transaction Description Input */}
             <TextInput
-                style={[styles.input, { borderColor: inputBorderColor, color: textColor, backgroundColor: cardBackgroundColor }]}
+                style={[styles.input, { borderColor: theme.inputBorderColor, color: theme.text, backgroundColor: theme.background }]}
                 placeholder="Your description..."
-                placeholderTextColor={placeholderTextColor}
+                placeholderTextColor={theme.text}
                 value={transactionDescription}
                 onChangeText={setTransactionDescription}
             />
-            <Text style={[styles.optionalText, { color: placeholderTextColor }]}>Transaction Description (Optional)</Text>
+            <Text style={[styles.optionalText, { color: theme.text }]}>Transaction Description (Optional)</Text>
 
             {/* Transaction Amount Input */}
             <TextInput
-                style={[styles.input, { borderColor: inputBorderColor, color: textColor, backgroundColor: cardBackgroundColor }]}
+               style={[styles.input, { borderColor: theme.inputBorderColor, color: theme.text, backgroundColor: theme.background }]}
                 placeholder="Put the price"
-                placeholderTextColor={placeholderTextColor}
-                keyboardType="numeric"
+                placeholderTextColor={theme.text}                keyboardType="numeric"
                 value={transactionAmount}
                 onChangeText={setTransactionAmount}
             />
-            <Text style={[styles.requiredText, { color: placeholderTextColor }]}>Transaction Amount (Required)</Text>
+            <Text style={[styles.requiredText, { color: theme.text }]}>Transaction Amount (Required)</Text>
 
             {/* Category and Date Picker */
-            }<Text style={[{ color: textColor }]}>
+            }<Text style={[{ color: theme.text }]}>
                 {selectedCategory ? `Category: ${selectedCategory}` : 'Select a category'}
             </Text>
 
             <View style={styles.row}>
                 <View style={styles.column}>
                     <TouchableOpacity
-                        style={[styles.categoryBox, { borderColor: inputBorderColor }]}
+                        style={[styles.categoryBox, { borderColor: theme.inputBorderColor }]}
                         onPress={openCategoryModal}
                     >
-                        <Text style={[styles.categoryText, { color: textColor }]}>
+                        <Text style={[styles.categoryText, { color: theme.text }]}>
                             {selectedCategory ? `Category: ${selectedCategory}` : 'Select a category'}
                         </Text>
-                        <MaterialIcons name="arrow-drop-down" size={24} color={textColor} />
+                        <MaterialIcons name="arrow-drop-down" size={24} color={theme.text} />
                     </TouchableOpacity>
-                    <Text style={[styles.optionalText, { color: placeholderTextColor }]}>Select a category for the transaction</Text>
+                    <Text style={[styles.optionalText, { color: theme.text}]}>Select a category for the transaction</Text>
                 </View>
 
                 <View style={styles.column}>
                     <TouchableOpacity
-                        style={[styles.datePickerButton, { borderColor: inputBorderColor }]}
+                        style={[styles.datePickerButton, { borderColor: theme.inputBorderColor }]}
                         onPress={() => setDatePickerVisible(true)}
                     >
-                        <Text style={[styles.datePickerText, { color: textColor }]}>
+                        <Text style={[styles.datePickerText, { color: theme.text }]}>
                             {format(transactionDate, 'MMMM do, yyyy')}
                         </Text>
-                        <MaterialIcons name="calendar-today" size={24} color={textColor} />
+                        <MaterialIcons name="calendar-today" size={24} color={theme.text} />
                     </TouchableOpacity>
-                    <Text style={[styles.optionalText, { color: placeholderTextColor }]}>Select a date for your transaction</Text>
+                    <Text style={[styles.optionalText, { color: theme.text}]}>Select a date for your transaction</Text>
                 </View>
             </View>
 
@@ -298,38 +319,40 @@ const NewExpenseScreen = ({ navigation, route }) => {
             <TouchableOpacity onPress={() => {
                 navigation.navigate('main')
 
-            }} style={[styles.cancelButton, { backgroundColor: cancelButtonColor }]}>
+            }} style={[styles.cancelButton, { backgroundColor: theme.cardbackground }]}>
                 <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
 
             {/* Modal for Category Selection */}
             <Modal visible={isCategoryModalVisible} animationType="slide" transparent={true}>
                 <View style={styles.modalContainer}>
-                    <View style={[styles.modalContent, { backgroundColor: modalBackgroundColor }]}>
+                    <View style={[styles.modalContent, { backgroundColor: theme.background }]}>
                         <TextInput
-                            style={[styles.searchInput, { borderColor: inputBorderColor, color: textColor, backgroundColor: inputBackgroundColor }]}
+                            style={[styles.searchInput, { borderColor: theme.inputBorderColor, color: theme.text, backgroundColor: theme.background }]}
                             placeholder="Search category..."
-                            placeholderTextColor={placeholderTextColor}
+                            placeholderTextColor={theme.text}
+                            value={searchQuery} // Bind the search query state
+                            onChangeText={(text) => setSearchQuery(text)}
                         />
                         {/* Create New Button */}
                         <TouchableOpacity style={styles.createNewButton} onPress={openCreateCategoryModal}>
-                            <MaterialIcons name="add" size={24} color={textColor} />
+                            
                             <CreateCategoryDialog type={type} onSuccessCallback={fetchCategories} />
                         </TouchableOpacity>
                         <FlatList
-                            data={categories} // Display categories here
+                            data={filteredCategories} // Display categories here
                             keyExtractor={(item) => item.id}
                             numColumns={1}
                             renderItem={({ item }) => (
                                 <TouchableOpacity
-                                    style={[styles.categoryItem, {backgroundColor:backgroundColor}]}
+                                    style={[styles.categoryItem, {backgroundColor:theme.background}]}
                                     onPress={() => {
                                         setSelectedCategory(item.name); // Set selected category
                                         setCategoryModalVisible(false); // Close modal
                                     }}
                                 >
                                     <Text style={styles.categoryIcon}>{item.icon}</Text>
-                                    <Text style={[styles.categoryName, { color: textColor }]}>{item.name}</Text>
+                                    <Text style={[styles.categoryName, { color: theme.text }]}>{item.name}</Text>
                                 </TouchableOpacity>
                             )}
                             contentContainerStyle={styles.categoryList}
@@ -348,12 +371,12 @@ const NewExpenseScreen = ({ navigation, route }) => {
             <Modal visible={isCreateCategoryModalVisible} animationType="slide" transparent={true}>
                 <View style={styles.modalContainer}>
                     <View style={[styles.modalContent, { backgroundColor: modalBackgroundColor }]}>
-                        <Text style={[styles.modalTitle, { color: textColor }]}>Create Income category</Text>
+                        <Text style={[styles.modalTitle, { color: theme.text }]}>Create Income category</Text>
                         <Text style={[styles.subText, { color: placeholderTextColor }]}>Categories are used to group your transactions.</Text>
 
                         {/* Category Name Input */}
                         <TextInput
-                            style={[styles.input, { borderColor: inputBorderColor, color: textColor, backgroundColor: inputBackgroundColor }]}
+                            style={[styles.input, { borderColor: theme.inputBorderColor, color: theme.text, backgroundColor: inputBackgroundColor }]}
                             placeholder="Category"
                             value={newCategory}
                             onChangeText={setNewCategory}
@@ -362,8 +385,8 @@ const NewExpenseScreen = ({ navigation, route }) => {
                         <Text style={[styles.subText, { color: placeholderTextColor }]}>This is how your category will appear</Text>
 
                         {/* Icon Selection */}
-                        <TouchableOpacity style={[styles.iconSelector, { borderColor: inputBorderColor, backgroundColor: inputBackgroundColor }]} onPress={() => setEmojiPickerVisible(true)}>
-                            <Text style={[styles.iconText, { color: textColor }]}>{selectedIcon ? selectedIcon : 'Click To Select Icon'}</Text>
+                        <TouchableOpacity style={[styles.iconSelector, { borderColor: theme.inputBorderColor, backgroundColor: inputBackgroundColor }]} onPress={() => setEmojiPickerVisible(true)}>
+                            <Text style={[styles.iconText, { color: theme.text }]}>{selectedIcon ? selectedIcon : 'Click To Select Icon'}</Text>
                         </TouchableOpacity>
                         <Text style={[styles.subText, { color: placeholderTextColor }]}>This Icon will appear in the category.</Text>
 
@@ -397,22 +420,27 @@ const NewExpenseScreen = ({ navigation, route }) => {
 
 
         </View>
+        </ScrollView>
+        </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
+        </Modal>
 
     );
 };
 
 const styles = StyleSheet.create({
-    container1: {
-        flex: 1,
-    },
     container: {
         flex: 1,
         padding: 20,
         justifyContent: 'center',
     },
+    scrollContent: {
+        flexGrow: 1, // Ensures the content can grow and scroll
+    
+    },
     header: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
+        justifyContent: 'space-evenly',
         alignItems: 'center',
         marginBottom: 20,
     },
@@ -422,6 +450,7 @@ const styles = StyleSheet.create({
     screenTitle: {
         fontSize: 20,
         fontWeight: 'bold',
+        textAlign:"center",
     },
     modalTitle: {
         fontSize: 20,
@@ -452,12 +481,12 @@ const styles = StyleSheet.create({
     },
     column: {
         flex: 1,
-        paddingRight: 10,
+        paddingRight: 3,
     },
     categoryBox: {
         borderWidth: 1,
         borderRadius: 10,
-        padding: 10,
+        padding: 12,
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -466,7 +495,7 @@ const styles = StyleSheet.create({
     datePickerButton: {
         borderWidth: 1,
         borderRadius: 10,
-        padding: 10,
+        padding: 5,
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -486,40 +515,6 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: "white"
     },
-    sectionTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        marginTop: 20,
-    },
-    expenseItem: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: 10,
-        marginVertical: 5,
-        backgroundColor: '#f9f9f9',
-        borderRadius: 5,
-    },
-    categoryList: {
-        flexDirection: 'column', // Render items in a single column
-        paddingHorizontal: 10,
-    },
-    categoryItem: {
-        flexDirection: 'row', // Align icon and text side by side within the row
-        alignItems: 'center',
-        marginVertical: 5, // Add vertical space between items
-        padding: 10,
-        paddingHorizontal: 40,
-        borderRadius: 10,
-        borderWidth: 1,
-        borderColor: '#CCC',
-        backgroundColor: '#2C2C2E',
-        width: '100%', // Occupy the full width of the container
-    },
-    expenseText: {
-        fontSize: 16,
-    },
-
     cancelButton: {
         marginTop: 10,
         borderRadius: 10,
@@ -531,6 +526,8 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: '#fff',
     },
+
+
     modalContainer: {
         flex: 1,
         justifyContent: 'center',
@@ -544,7 +541,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#1C1C1E',
         borderRadius: 10,
         alignItems: 'center',
-        maxHeight: '70%',
+        maxHeight: '70%', // Set a maximum height to prevent overflow
     },
     searchInput: {
         borderWidth: 1,
@@ -565,6 +562,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
         marginLeft: 10,
     },
+
     smallCancelButton: {
         marginTop: 20,
         padding: 10,
@@ -609,6 +607,22 @@ const styles = StyleSheet.create({
     buttonText: {
         color: '#fff',
         fontWeight: 'bold',
+    },
+    categoryList: {
+        flexDirection: 'column', // Render items in a single column
+        paddingHorizontal: 10,
+    },
+    categoryItem: {
+        flexDirection: 'row', // Align icon and text side by side within the row
+        alignItems: 'center',
+        marginVertical: 5, // Add vertical space between items
+        padding: 10,
+        paddingHorizontal: 40,
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: '#CCC',
+        backgroundColor: '#2C2C2E',
+        width: '100%', // Occupy the full width of the container
     },
 });
 

@@ -206,12 +206,12 @@ const DashboardScreen = ({ theme }) => {
                 setBalance(calculatedBalance);
                 setLastUpdated(lastUpdatedTime);
 
-                console.log("Updated financial data:", {
-                    totalIncome: calculatedTotalIncome,
-                    totalExpense: calculatedTotalExpense,
-                    balance: calculatedBalance,
-                    lastUpdated: lastUpdatedTime,
-                });
+                // console.log("Updated financial data:", {
+                //     totalIncome: calculatedTotalIncome,
+                //     totalExpense: calculatedTotalExpense,
+                //     balance: calculatedBalance,
+                //     lastUpdated: lastUpdatedTime,
+                // });
             } else {
                 console.error("User document does not exist.");
             }
@@ -258,7 +258,7 @@ const DashboardScreen = ({ theme }) => {
                     // Update the state with the new income data
                     setIncomeCategory(incomeData);
                 } else {
-                    console.error("No income data found for this user.");
+                    // console.error("No income data found for this user.");
                     setIncomeCategory([]); // Reset to empty if no data is found
                 }
             } else {

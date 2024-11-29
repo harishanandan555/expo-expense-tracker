@@ -23,6 +23,8 @@ export const ThemeProvider = ({ children }) => {
       tableHeaderText: '#000000',
       transactionBackground: '#ffffff',
       transactionText: '#000000',
+      cardbackground: '#444',
+      inputBorderColor:'#ccc'
     },
     dark: {
       background: '#000000',
@@ -33,6 +35,8 @@ export const ThemeProvider = ({ children }) => {
       tableHeaderText: '#ffffff',
       transactionBackground: '#121212',
       transactionText: '#ffffff',
+      cardbackground: '#444',
+      inputBorderColor: '#FF6A00'
     },
   };
 
