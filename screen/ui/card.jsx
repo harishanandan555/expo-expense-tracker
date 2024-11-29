@@ -1,7 +1,7 @@
 // import React from "react";
 // import { View, Text } from "react-native";
 
-// import { cn } from "../lib/utils"; 
+// import { cn } from "../lib/utils";
 
 // export const Card = React.forwardRef(({ className, ...props }, ref) => (
 //   <View
@@ -106,6 +106,7 @@ export const Card = React.forwardRef(({ theme, className, ...props }, ref) => (
         shadowRadius: 1,
         elevation: 1, // For Android shadow
         borderColor: theme?.text || "#000", // Use theme text color for border
+        marginBottom: 15,
       },
       className, // Assuming `cn` is already resolved to styles
     ]}
@@ -118,7 +119,7 @@ export const CardHeader = React.forwardRef(({ theme, className, ...props }, ref)
   <View
     ref={ref}
     style={[
-      { padding: 16, flexDirection: "column" },
+      { padding: 10, flexDirection: "column" },
       className,
     ]}
     {...props}
@@ -131,7 +132,7 @@ export const CardTitle = React.forwardRef(({ theme, className, ...props }, ref) 
     ref={ref}
     style={[
       {
-        fontSize: 24,
+        fontSize: 25,
         fontWeight: "600",
         lineHeight: 28,
         textAlign: "center",
@@ -164,7 +165,7 @@ export const CardContent = React.forwardRef(({ theme, className, ...props }, ref
   <View
     ref={ref}
     style={[
-      { padding: 16, paddingTop: 0 },
+      { padding: 0, paddingTop: 0, paddingBottom: 10 },
       className,
     ]}
     {...props}

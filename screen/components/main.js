@@ -10,14 +10,14 @@
 //     light: {
 //       background: '#ffffff',
 //       text: '#000000',
-//       buttonBackground: '#ffffff', 
+//       buttonBackground: '#ffffff',
 //       buttonBorder: '#333',
 //       buttonText: '#000000',
 //       tableHeaderBackground: '#ffffff',
 //       tableHeaderText: '#000000',
 //       transactionBackground: '#ffffff',
 //       transactionText: '#000000',
-    
+
 //     },
 //     dark: {
 //       background: '#000000',
@@ -169,8 +169,8 @@
 
 
 import React, { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { useTheme } from '../../themeContext'; // Import ThemeContext
+import { View, StyleSheet, StatusBar } from 'react-native';
+import { useTheme } from '../../themeContext';
 import Header from './header';
 import Footer from './footer';
 import DashboardScreen from './dashboard';
@@ -178,8 +178,9 @@ import TransactionScreen from './transaction';
 import SettingScreen from './Setting';
 
 export default function MainScreen() {
-  const { theme, toggleTheme } = useTheme(); // Use ThemeContext
+  const { theme, toggleTheme } = useTheme();
   const [currentScreen, setCurrentScreen] = useState('Dashboard');
+  // const [currentScreen, setCurrentScreen] = useState('Settings');
 
   const renderCurrentScreen = () => {
     switch (currentScreen) {
@@ -196,6 +197,13 @@ export default function MainScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
+
+      {/* Status Bar */}
+      <StatusBar
+        barStyle={theme.text === '#ffffff' ? 'light-content' : 'dark-content'}
+        backgroundColor={theme.background}
+      />
+
       {/* Header Section */}
       <View style={[styles.header, { backgroundColor: theme.background }]}>
         <Header isDarkMode={theme.text === '#ffffff'} toggleTheme={toggleTheme} />
@@ -208,6 +216,7 @@ export default function MainScreen() {
       <View style={[styles.footer, { backgroundColor: theme.background }]}>
         <Footer theme={theme} setCurrentScreen={setCurrentScreen} />
       </View>
+
     </View>
   );
 }
@@ -215,22 +224,20 @@ export default function MainScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 10, // Ensures no extra space at the top
   },
   header: {
+    // position: 'absolute',
+    // top: 0,
+    // left: 0,
+    // right: 0,
+    // zIndex: 10,
     height: '10%',
-    position:'absolute',
-    top:0,
-    left:0,
-    right:0,
-    zIndex:10,
-    marginTop: 10, // Removes any default margin or padding at the top
   },
   body: {
     flex: 1,
-    // height: '80%',
+    height: '80%',
   },
   footer: {
-    height: '10%',
+    height: '8%',
   },
 });

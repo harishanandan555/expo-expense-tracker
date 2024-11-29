@@ -6,7 +6,7 @@ import { db } from "../../config/firebaseConfig";
 //User--------------------------------------------------------------------------------------------------------------
 export async function storeUser(user) {
   try {
-    await setDoc( doc(db, "users", user.id), {
+    await setDoc(doc(db, "users", user.id), {
       id: user.id,
       displayName: user.displayName,
       email: user.email,
@@ -14,11 +14,11 @@ export async function storeUser(user) {
       emailVerified: user.emailVerified,
       photoURL: user.photoURL
     }).then((response) => {
-        console.log('User data saved in Firestore');
+      console.log('User data saved in Firestore');
     })
-    .catch((error) => {
-      console.error('Error saving user data in Firestore:', error.message);
-    });
+      .catch((error) => {
+        console.error('Error saving user data in Firestore:', error.message);
+      });
   } catch (e) {
     console.error('Error adding user: ', e);
     throw new Error(`Error storing user: ${e}`);
@@ -31,7 +31,7 @@ export async function getUserById(id) {
   }
 
   const userDoc = doc(db, 'users', id);  // Reference to the document in 'users' collection by userId
-  
+
   try {
     const docSnapshot = await getDoc(userDoc); // Get the document snapshot
 
@@ -221,7 +221,7 @@ export async function updateSettingCurrencyUser(userId, currency) {
   if (!querySnapshot.empty) {
     const docRef = doc(db, 'Settings', querySnapshot.docs[0].id);
     await updateDoc(docRef, { currency, updatedAt: new Date() });
-    
+
     return { id: docRef.id, userId, currency, updatedAt: new Date() };
   }
 
@@ -229,7 +229,7 @@ export async function updateSettingCurrencyUser(userId, currency) {
 }
 
 //DefaultCategory------------------------------------------------------------------------------------------------------
-export async function getDefaultCategories(type) {
+export async function getDefaultCategoriesByType(type) {
   if (!type) {
     console.error('Error: Type is undefined or null');
     throw new Error('Type is required to fetch DefaultCategories data.');
@@ -243,6 +243,21 @@ export async function getDefaultCategories(type) {
       // orderBy('name', 'asc')    // Order categories by name
     );
     const querySnapshot = await getDocs(queryRef);
+    const categories = querySnapshot.docs.map(doc => ({
+      ...doc.data(),
+    }));
+
+    return categories;
+  } catch (error) {
+    console.error('Error fetching DefaultCategory data:', error);
+    throw new Error(`Error retrieving DefaultCategory data: ${error.message}`);
+  }
+}
+
+export async function getAllDefaultCategories() {
+  try {
+    const collectionRef = collection(db, 'DefaultCategories');
+    const querySnapshot = await getDocs(collectionRef); // Fetch all documents in the collection
     const categories = querySnapshot.docs.map(doc => ({
       ...doc.data(),
     }));
@@ -297,7 +312,7 @@ export async function storeUserCategories(userId, data) {
   }
 }
 
-export async function getUserCategories(userId, type) {
+export async function getUserCategoriesByType(userId, type) {
   try {
     if (!userId) {
       throw new Error("User ID is required.");
@@ -315,6 +330,42 @@ export async function getUserCategories(userId, type) {
       collectionRef,
       where("userId", "==", userId), // Filter by userId
       where("type", "==", type) // Filter by type
+    );
+
+    // Fetch the documents matching the query
+    const querySnapshot = await getDocs(queryRef);
+
+    // Map through the documents and extract their data
+    const categories = querySnapshot.docs.map((doc) => ({
+      id: doc.id, // Include document ID if needed
+      ...doc.data(),
+    }));
+
+    return categories;
+  } catch (error) {
+    console.error("Error fetching categories:", error.message);
+    throw new Error(`Error retrieving categories: ${error.message}`);
+  }
+}
+
+export async function getAllUserCategories(userId) {
+  try {
+    if (!userId) {
+      throw new Error("User ID is required.");
+    }
+
+    // if (!type) {
+    //   throw new Error("Category type is required.");
+    // }
+
+    // Reference to the 'UserCategories' collection
+    const collectionRef = collection(db, "UserCategories");
+
+    // Query to filter by userId and type
+    const queryRef = query(
+      collectionRef,
+      where("userId", "==", userId), // Filter by userId
+      // where("type", "==", type) // Filter by type
     );
 
     // Fetch the documents matching the query
@@ -388,7 +439,7 @@ export async function deleteCategoryByUserId(id, userId, categoryData) {
 
     console.log(`Category with id: ${id} deleted successfully.`);
     return { success: true };
-    
+
   } catch (error) {
     console.error("Error deleting category:", error.message);
     return { success: false, message: `Error deleting category: ${error.message}` };

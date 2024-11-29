@@ -33,7 +33,7 @@
 //   return (
 //     <QueryClientProvider client={queryClient}>
 //       <View style={styles.container}>
-        
+
 //           {/* Header */}
 //           <View style={styles.header}>
 //             <TypographyH2>Settings</TypographyH2>
@@ -50,7 +50,7 @@
 //               <CurrencyComboBox />
 //             </CardContent>
 //           </Card>
-            
+
 //           {/* Billing Section */}
 //           <BillingSection />
 
@@ -130,28 +130,40 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../ui
 import { CurrencyComboBox } from '../global_components/currency-combo-box';
 import { CategoriesList } from '../local__components/categories-list';
 
-const SettingsScreen = ({theme}) => {
+const SettingsScreen = ({ theme }) => {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
+
         <Card theme={theme}>
+
           <CardHeader theme={theme}>
+
             <CardTitle theme={theme}>Currency</CardTitle>
             <CardDescription theme={theme}>Set your default currency.</CardDescription>
+
           </CardHeader>
+
           <CardContent>
             <CurrencyComboBox />
           </CardContent>
+
         </Card>
+
         <Card theme={theme}>
+
           <CardHeader theme={theme}>
-            <CardTitle theme={theme}>All Categories</CardTitle>
+            <CardTitle theme={theme}>Categories</CardTitle>
+            <CardDescription theme={theme}>Sorted by name</CardDescription>
           </CardHeader>
+
           <CardContent>
             <CategoriesList theme={theme} types={['income', 'expense']} />
           </CardContent>
+
         </Card>
+
       </ScrollView>
     </View>
   );

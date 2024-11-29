@@ -20,7 +20,7 @@
 
 // //   // console.log("children: ", children)
 // //   console.log("category: ", category)
-  
+
 // //   const queryClient = useQueryClient();
 
 // //   const [isModalVisible, setModalVisible] = useState(false);
@@ -33,7 +33,7 @@
 
 // //       const { name, type } = validatedData;
 // //       const response = await deleteCategoryByUserId(name, type); // Replace with actual function call
-      
+
 // //       if (!response?.success) {
 // //         throw new Error(response?.message || "Failed to delete category");
 // //       }
@@ -126,7 +126,7 @@
 //     try {
 //       const validatedData = await DeleteCategorySchema.validate({ name, type }, { abortEarly: false });
 //       const response = await deleteCategoryByUserId(name, type); // Ensure this function is implemented correctly
-      
+
 //       if (!response?.success) {
 //         throw new Error(response?.message || "Failed to delete category");
 //       }
@@ -273,7 +273,7 @@
 
 
 import React, { useState } from "react";
-import { View, Text, Modal, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, Modal, TouchableOpacity, StyleSheet, Button } from "react-native";
 import { useMutation } from "@tanstack/react-query";
 import Toast from "react-native-toast-message";
 import * as Yup from "yup";
@@ -323,7 +323,7 @@ export const DeleteCategoryDialog = ({ children, category, onSuccessCallback }) 
   // });
 
   // const userId = auth.currentUser?.uid;
-  
+
   // const handleDelete = () => {
   //   mutate({ id: category.id, name: category.name, type: category.type, userId });
   // };
@@ -358,22 +358,49 @@ export const DeleteCategoryDialog = ({ children, category, onSuccessCallback }) 
   };
 
   return (
+    // <>
+    //   <TouchableOpacity onPress={() => setModalVisible(true)}>{children}</TouchableOpacity>
+
+    //   <Modal visible={isModalVisible} transparent>
+    //     <View style={styles.modalOverlay}>
+    //       <View style={styles.modalContent}>
+    //         <Text>Delete {category.icon} {category.name} category?</Text>
+    //         <TouchableOpacity onPress={handleDelete}>
+    //           <Text>Confirm</Text>
+    //         </TouchableOpacity>
+    //         <TouchableOpacity onPress={() => setModalVisible(false)}>
+    //           <Text>Cancel</Text>
+    //         </TouchableOpacity>
+    //       </View>
+    //     </View>
+    //   </Modal>
+    // </>
+
     <>
-      <TouchableOpacity onPress={() => setModalVisible(true)}>{children}</TouchableOpacity>
-      <Modal visible={isModalVisible} transparent>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text>Delete {category.icon} {category.name} category?</Text>
-            <TouchableOpacity onPress={handleDelete}>
-              <Text>Confirm</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => setModalVisible(false)}>
-              <Text>Cancel</Text>
-            </TouchableOpacity>
-          </View>
+    {/* The trigger button is outside the modal */}
+    <Button title="Delete" onPress={() => setModalVisible(true)} />
+
+    <Modal visible={isModalVisible} transparent animationType="fade">
+
+      <View style={styles.modalOverlay}>
+
+        <View style={styles.modalContent}>
+
+          <Text> Delete {category.icon} {category.name} category? </Text>
+
+          {/* Confirm deletion */}
+          <Button title="Confirm" onPress={handleDelete} color="red" />
+
+          {/* Cancel deletion */}
+          <Button title="Cancel" onPress={() => setModalVisible(false)} color="gray" />
+
         </View>
-      </Modal>
-    </>
+
+      </View>
+
+    </Modal>
+
+  </>
   );
 };
 

@@ -152,13 +152,7 @@ export const CategoryCard = ({ category, isDefault, onDeleteSuccess, theme }) =>
       <Text style={[styles.icon, { color: theme.icon }]}>{category.icon || "❓"}</Text>
       <Text style={[styles.categoryName, { color: theme.text }]}>{category.name}</Text>
       {!isDefault && (
-        <DeleteCategoryDialog category={category} onSuccessCallback={onDeleteSuccess}>
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity style={[styles.button, { backgroundColor: theme.buttonBackground }]}>
-              <Feather name="trash-2" size={20} color={theme.buttonIcon} />
-            </TouchableOpacity>
-          </View>
-        </DeleteCategoryDialog>
+        <DeleteCategoryDialog category={category} onSuccessCallback={onDeleteSuccess} />
       )}
     </View>
   );

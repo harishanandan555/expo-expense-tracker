@@ -296,7 +296,7 @@ const TransactionScreen = ({theme}) => {
           style: "cancel"
         },
         {
-          text: "Edit",
+          text: "Save",
           onPress: async () => {
             try {
               console.log("Editing transaction:", transaction);
@@ -813,7 +813,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
-    marginTop:60
   },
   headerTitle: { 
     fontSize: 24,
