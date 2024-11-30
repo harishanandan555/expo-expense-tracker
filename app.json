@@ -24,7 +24,10 @@
       "bundleIdentifier": "com.mangoleeftechlabspvtltd.expensetracker"
     },
     "android": {
-      "permissions": [],
+      "permissions": [ 
+      "WRITE_EXTERNAL_STORAGE",
+      "READ_EXTERNAL_STORAGE"
+    ],
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
