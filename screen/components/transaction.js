@@ -9,7 +9,6 @@ import * as Print from 'expo-print';
 import { shareAsync } from 'expo-sharing';
 import * as FileSystem from 'expo-file-system';
 import Icon from "react-native-vector-icons/MaterialIcons";
-import { useNavigation } from '@react-navigation/native';
 import { auth, db } from "../../config/firebaseConfig";
 import { onAuthStateChanged } from 'firebase/auth';
 import { updateDoc, doc, getDoc } from 'firebase/firestore';
@@ -33,8 +32,6 @@ const TransactionScreen = ({theme}) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState(null);
 
-  
-  const navigation = useNavigation();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
