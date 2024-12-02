@@ -346,121 +346,120 @@ export default function SignInPage({ navigation }) {
         backgroundColor="#000000"
       />
 
-      {/* Body Section */}
-      <Modal
-        visible={showAlert}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowAlert(false)}
-      >
-        <View style={styles.alertBackground}>
-          <View style={styles.alertContainer}>
-            {/* Heading for Alert */}
-            <Text style={styles.alertHeading}>Alert</Text>
+  {/* Body Section */ }
+  <Modal
+    visible={showAlert}
+    transparent
+    animationType="fade"
+    onRequestClose={() => setShowAlert(false)}
+  >
+    <View style={styles.alertBackground}>
+      <View style={styles.alertContainer}>
+        <Text style={styles.alertHeading}>Alert</Text>
 
-            {/* Alert message */}
-            <Text style={styles.alertText}>{alertMessage}</Text>
 
-            <TouchableOpacity
-              onPress={() => setShowAlert(false)}
-              style={styles.alertButton}
-            >
-              <Text style={styles.alertButtonText}>OK</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+        <Text style={styles.alertText}>{alertMessage}</Text>
 
-      </Modal>
-
-      {!userInfo ? (
-        <View style={styles.authContainer}>
-          {/* Logo */}
-          <Image
-            source={require("../../assets/wallet_logo.png")}
-            style={styles.logo}
-          ></Image>
-
-          {/* Title */}
-          <Text style={styles.title}>Welcome!</Text>
-          {/* Email Input */}
-          <TextInput
-            style={styles.input}
-            placeholder="Enter email"
-            placeholderTextColor={"white"}
-            value={input}
-            onChangeText={setInput}
-            keyboardType="default"
-            autoCapitalize="none"
-            autoCorrect={false}
-            onBlur={handleContinue}
-          />
-
-          {/* Password Input - shown only if email is entered */}
-          {emailEntered && (
-            <>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter password*"
-                placeholderTextColor={"white"}
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-              {/* Forgot Password Text */}
-              <TouchableOpacity onPress={handlePasswordReset}>
-                <Text style={styles.resetPasswordText}>Forgot Password?</Text>
-              </TouchableOpacity>
-            </>
-          )}
-
-          {/* Sign In Button - shown only after entering password */}
-          {emailEntered && (
-            <TouchableOpacity style={styles.phoneButton} onPress={handleSignIn}>
-              <Text style={styles.buttonText}>Sign In</Text>
-            </TouchableOpacity>
-          )}
-
-          <Text style={styles.infoText}>
-            Don't have an account?{" "}
-            <Text style={styles.linkText} onPress={handleContinueToSignup}>
-              Click Here
-            </Text>
-          </Text>
-
-          {/* Google Sign-In Button */}
-          <TouchableOpacity
-            style={styles.signInButton}
-            onPress={() =>
-              onGoogleButtonPress()
-              // .then(() =>
-              //   // console.log("Signed in with Google!")
-              // )
-            }
-          >
-            <Image
-              source={require("../../assets/google-signin-button.png")}
-              style={styles.googleIcon}
-            />
-          </TouchableOpacity>
-          {loading && <ActivityIndicator size="large" color="#0000ff" />}
-          {/* {loading && <Text style={styles.loadingText}>Loading...</Text>} */}
-        </View>
-      ) : (
-        <View style={styles.input}>
-          {/* <Text>Welcome, {user.name}</Text> */}
-          <Text style={[styles.text, { color: 'white' }]} >{userInfo?.email}</Text>
-        </View>
-      )}
-
-      {/* Sign-out button */}
-
-      {userInfo && (
-        <Button title="Sign Out" onPress={signOutUser} />
-      )}
-
+        <TouchableOpacity
+          onPress={() => setShowAlert(false)}
+          style={styles.alertButton}
+        >
+          <Text style={styles.alertButtonText}>OK</Text>
+        </TouchableOpacity>
+      </View>
     </View>
+
+  </Modal>
+
+  {
+    !userInfo ? (
+      <View style={styles.authContainer}>
+        <Image
+          source={require("../../assets/wallet_logo.png")}
+          style={styles.logo}
+        ></Image>
+
+        <Text style={styles.title}>Welcome!</Text>
+
+        <TextInput
+          style={styles.input}
+          placeholder="Enter email"
+          placeholderTextColor={"white"}
+          value={input}
+          onChangeText={setInput}
+          keyboardType="default"
+          autoCapitalize="none"
+          autoCorrect={false}
+          onBlur={handleContinue}
+        />
+
+
+        {emailEntered && (
+          <>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter password*"
+              placeholderTextColor={"white"}
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+
+            <TouchableOpacity onPress={handlePasswordReset}>
+              <Text style={styles.resetPasswordText}>Forgot Password?</Text>
+            </TouchableOpacity>
+          </>
+        )}
+
+
+        {emailEntered && (
+          <TouchableOpacity style={styles.phoneButton} onPress={handleSignIn}>
+            <Text style={styles.buttonText}>Sign In</Text>
+          </TouchableOpacity>
+        )}
+
+        <Text style={styles.infoText}>
+          Don't have an account?{" "}
+          <Text style={styles.linkText} onPress={handleContinueToSignup}>
+            Click Here
+          </Text>
+        </Text>
+
+
+        <TouchableOpacity
+          style={styles.signInButton}
+          onPress={() =>
+            onGoogleButtonPress()
+            // .then(() =>
+            //   // console.log("Signed in with Google!")
+            // )
+          }
+        >
+          <Image
+            source={require("../../assets/google-signin-button.png")}
+            style={styles.googleIcon}
+          />
+        </TouchableOpacity>
+        {loading && <ActivityIndicator size="large" color="#0000ff" />}
+        {/* {loading && <Text style={styles.loadingText}>Loading...</Text>}  */}
+      </View>
+    ) : (
+    <View style={styles.input}>
+      {/* { <Text>Welcome, {user.name}</Text> } */}
+      <Text style={[styles.text, { color: 'white' }]} >{userInfo?.email}</Text>
+    </View>
+  )
+  }
+
+  {
+    userInfo && (
+      <Button title="Sign Out" onPress={signOutUser} />
+    )
+  }
+
+    </View >
   );
 }
 
