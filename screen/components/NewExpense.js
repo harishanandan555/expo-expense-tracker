@@ -19,13 +19,13 @@ import { MaterialIcons } from '@expo/vector-icons'; // For icons
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { format } from 'date-fns'; // For date formatting
 import EmojiSelector from 'react-native-emoji-selector'; // For emoji picking
-import { useSQLiteContext } from 'expo-sqlite/next'; // Import SQLite context
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { collection, doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../../config/firebaseConfig';
 import { getDefaultCategoriesByType, getUserCategoriesByType } from '../services/firebaseSettings';
 import { CreateCategoryDialogButton } from '../local__components/create-category-dialog';
 import { useTheme } from '../../themeContext';
+import Toast from 'react-native-toast-message';
 
 
 const NewExpenseScreen = ({ navigation, route, isVisible, onClose }) => {
@@ -107,12 +107,14 @@ const NewExpenseScreen = ({ navigation, route, isVisible, onClose }) => {
 
 
 
+   
+
     const handleSaveExpense = async () => {
         if (!transactionAmount || !selectedCategory || !transactionDate) {
             Alert.alert('Error', 'Please fill out all required fields: amount, category, and date.');
             return;
         }
-
+    
         try {
             // Retrieve userId from AsyncStorage
             const userId = await AsyncStorage.getItem('userId');
@@ -120,12 +122,11 @@ const NewExpenseScreen = ({ navigation, route, isVisible, onClose }) => {
                 Alert.alert('Error', 'User ID not found. Please sign in again.');
                 return;
             }
-
-
+    
             // Get a reference to the "users" collection in Firebase
             const usersCollection = collection(db, 'users');
             const userRef = doc(usersCollection, userId);
-
+    
             // Prepare new expense transaction
             const newExpense = {
                 description: transactionDescription,
@@ -134,7 +135,7 @@ const NewExpenseScreen = ({ navigation, route, isVisible, onClose }) => {
                 icon: selectedIcon,
                 date: transactionDate.toISOString(),
             };
-
+    
             // Fetch existing user data
             const userDoc = await getDoc(userRef);
             if (userDoc.exists()) {
@@ -155,16 +156,23 @@ const NewExpenseScreen = ({ navigation, route, isVisible, onClose }) => {
                     { merge: true }
                 );
             }
-
-            console.log('Expense transaction saved to Firebase.');
-            Alert.alert('Success', 'Expense transaction saved successfully!');
-
+    
+            // Display success message
+            Toast.show({
+                type: 'success',
+                text1: 'Success',
+                text2: 'Expense transaction saved successfully!',
+                visibilityTime: 4000, // Duration in ms
+                position: 'top', // Position on screen
+                topOffset: 60,
+            });
+    
             // Reset input fields
             setTransactionDescription('');
             setTransactionAmount('');
             setSelectedCategory(null);
             setSelectedIcon(null);
-
+    
             // Navigate back to the main screen with a refresh flag
             navigation.navigate('Main', { refresh: true });
         } catch (error) {
@@ -172,6 +180,7 @@ const NewExpenseScreen = ({ navigation, route, isVisible, onClose }) => {
             Alert.alert('Error', `Could not save expense transaction: ${error.message}`);
         }
     };
+    
 
 
     const [userId, setUserId] = useState(null);

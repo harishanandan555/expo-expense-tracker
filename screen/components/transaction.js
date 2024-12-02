@@ -14,8 +14,6 @@ import { auth, db } from "../../config/firebaseConfig";
 import { onAuthStateChanged } from 'firebase/auth';
 import { updateDoc, doc, getDoc } from 'firebase/firestore';
 import EditTransactionModal from './EditTransaction';
-import { LineChart } from 'react-native-svg-charts';
-// import * as MailComposer from 'expo-mail-composer';
 
 
 const TransactionScreen = ({theme}) => { 
