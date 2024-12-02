@@ -387,10 +387,7 @@ import React, { useCallback, useState, useEffect  } from 'react';
 import { View, Text, TouchableOpacity, TextInput, Modal, StyleSheet, ActivityIndicator, Button } from 'react-native';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useForm, Controller } from 'react-hook-form';
-
-// import EmojiInput from 'react-native-emoji-input';
 import EmojiSelector from 'react-native-emoji-selector';
-
 import Toast from 'react-native-toast-message';
 import * as Yup from 'yup';
 

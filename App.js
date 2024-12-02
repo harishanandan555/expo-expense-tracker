@@ -22,7 +22,7 @@ export default function App() {
 		<ThemeProvider>
 			<NavigationContainer>
 				<Stack.Navigator initialRouteName="SignIn">
-					{/* {/ <Stack.Navigator initialRouteName="Main"> /} */}
+					{/* <Stack.Navigator initialRouteName="Main"> */}
 					<Stack.Screen name="SignIn" component={SignInPage} options={{ headerShown: false }} />
 					<Stack.Screen name="Main" component={MainScreen} options={{ headerShown: false }} />
 					<Stack.Screen name="NewIncome" options={{ headerShown: false }} component={NewIncomeScreen} initialParams={{ email: '' }} />
