@@ -229,107 +229,119 @@ const DashboardScreen = ({ theme }) => {
 
 
     const fetchIncomeData = () => {
-        const id = auth.currentUser?.uid; // Get the user ID
-
-        if (!id) {
-            console.error("User ID is required.");
-            return;
-        }
-
-        const screenWidth = Dimensions.get('window').width;
-
-
-        // Reference to the user's Firestore document
-        const userDocRef = doc(db, "users", id);
-
-        // Set up real-time listener
-        const unsubscribe = onSnapshot(userDocRef, (docSnapshot) => {
-            if (docSnapshot.exists()) {
-                const userInfo = docSnapshot.data();
-
-                if (userInfo && userInfo.income) {
-                    // Transform income data into a usable structure
-                    const incomeData = userInfo.income.map((item) => ({
-                        category: item.category,
-                        amount: item.amount,
-                        date: item.date,
-                        description: item.description,
-                        icon: item.icon || "💰", // Default icon if none is provided
-                    }));
-
-                    // Update the state with the new income data
-                    setIncomeCategory(incomeData);
-                } else {
-                    // console.error("No income data found for this user.");
-                    setIncomeCategory([]); // Reset to empty if no data is found
-                }
-            } else {
-                console.error("User document does not exist.");
+        try {
+            const id = auth.currentUser?.uid; // Get the user ID
+    
+            if (!id) {
+                console.error("User ID is required.");
+                return;
             }
-        }, (error) => {
-            console.error("Error listening to user document:", error);
-        });
-
-        // Return unsubscribe function to clean up the listener when no longer needed
-        return unsubscribe;
+    
+            
+    
+            // Reference to the user's Firestore document
+            const userDocRef = doc(db, "users", id);
+    
+            // Set up real-time listener
+            const unsubscribe = onSnapshot(
+                userDocRef,
+                (docSnapshot) => {
+                    try {
+                        if (docSnapshot.exists()) {
+                            const userInfo = docSnapshot.data();
+    
+                            if (userInfo && userInfo.income) {
+                                // Transform income data into a usable structure
+                                const incomeData = userInfo.income.map((item) => ({
+                                    category: item.category,
+                                    amount: item.amount,
+                                    date: item.date,
+                                    description: item.description,
+                                    icon: item.icon || "💰", // Default icon if none is provided
+                                }));
+    
+                                // Update the state with the new income data
+                                setIncomeCategory(incomeData);
+                            } else {
+                                // console.error("No income data found for this user.");
+                                setIncomeCategory([]); // Reset to empty if no data is found
+                            }
+                        } else {
+                            console.error("User document does not exist.");
+                        }
+                    } catch (innerError) {
+                        console.error("Error processing document snapshot:", innerError);
+                    }
+                },
+                (error) => {
+                    console.error("Error listening to user document:", error);
+                }
+            );
+    
+            // Return unsubscribe function to clean up the listener when no longer needed
+            return unsubscribe;
+        } catch (error) {
+            console.error("Error in fetchIncomeData:", error);
+        }
     };
-
+    
 
     const fetchExpenseData = () => {
-        const id = auth.currentUser?.uid; // Get the user ID
-
-        if (!id) {
-            console.error("User ID is required.");
-            return;
-        }
-
-        // Reference to the user's Firestore document
-        const userDocRef = doc(db, "users", id);
-
-        // Set up real-time listener
-        const unsubscribe = onSnapshot(userDocRef, (docSnapshot) => {
-            if (docSnapshot.exists()) {
-                const userInfo = docSnapshot.data();
-
-                if (userInfo && userInfo.expenses) {
-                    // Transform expenses data into a usable structure
-                    const expenseData = userInfo.expenses.map((item) => ({
-                        category: item.category,
-                        amount: item.amount,
-                        date: item.date,
-                        description: item.description,
-                        icon: item.icon || "💸", // Default icon if none is provided
-                    }));
-
-                    // Update the state with the new expense data
-                    setExpenses(expenseData);
-                } else {
-                    console.error("No expense data found for this user.");
-                    setExpenses([]); // Reset to empty if no data is found
-                }
-            } else {
-                console.error("User document does not exist.");
-            }
-        }, (error) => {
-            console.error("Error listening to user document:", error);
-        });
-
-        // Return unsubscribe function to clean up the listener when no longer needed
-        return unsubscribe;
-    };
-
-
-    const handleGoogleLogout = async () => {
         try {
-            await GoogleSignin.signOut();
-            await AsyncStorage.removeItem('userInfo');
-            await AsyncStorage.removeItem('userEmail'); // Clear stored email if needed
-            setUserInfos(null);
-            navigation.replace('signin'); // Navigate back to the SignInPage
+            const id = auth.currentUser?.uid; // Get the user ID
+    
+            if (!id) {
+                console.error("User ID is required.");
+                return;
+            }
+    
+            // Reference to the user's Firestore document
+            const userDocRef = doc(db, "users", id);
+    
+            // Set up real-time listener
+            const unsubscribe = onSnapshot(
+                userDocRef,
+                (docSnapshot) => {
+                    try {
+                        if (docSnapshot.exists()) {
+                            const userInfo = docSnapshot.data();
+    
+                            if (userInfo && userInfo.expenses) {
+                                // Transform expenses data into a usable structure
+                                const expenseData = userInfo.expenses.map((item) => ({
+                                    category: item.category,
+                                    amount: item.amount,
+                                    date: item.date,
+                                    description: item.description,
+                                    icon: item.icon || "💸", // Default icon if none is provided
+                                }));
+    
+                                // Update the state with the new expense data
+                                setExpenses(expenseData);
+                            } else {
+                                console.error("No expense data found for this user.");
+                                setExpenses([]); // Reset to empty if no data is found
+                            }
+                        } else {
+                            console.error("User document does not exist.");
+                        }
+                    } catch (innerError) {
+                        console.error("Error processing document snapshot:", innerError);
+                    }
+                },
+                (error) => {
+                    console.error("Error listening to user document:", error);
+                }
+            );
+    
+            // Return unsubscribe function to clean up the listener when no longer needed
+            return unsubscribe;
         } catch (error) {
-            console.error('Error signing out from Google:', error);
+            console.error("Error in fetchExpenseData:", error);
         }
     };
+    
+
 
 
 
@@ -382,7 +394,7 @@ const DashboardScreen = ({ theme }) => {
 
 
 
-    const formatDate = (date) => format(date, 'yyyy-MM-dd');
+    
 
 
     useEffect(() => {
@@ -412,8 +424,7 @@ const DashboardScreen = ({ theme }) => {
 
 
 
-    const openMenu = () => setMenuVisible(true);
-    const closeMenu = () => setMenuVisible(false);
+  
 
     // Extracting user initials
 
@@ -427,13 +438,13 @@ const DashboardScreen = ({ theme }) => {
     }, []);
 
 
-    const fixedMaxValue = Math.max(totalIncome, totalExpense, balance, 5000) + 5000;
+    
     // Determine colors based on the theme
     const isDarkMode = theme === 'dark';
     const backgroundColor = isDarkMode ? '#000' : '#fff';
-    const cardBackgroundColor = isDarkMode ? '#121212' : '#f4f4f4';
+  
     const textColor = isDarkMode ? '#fff' : '#000';
-    const inputBackgroundColor = isDarkMode ? '#333' : '#fff';
+   
     const modalTextColor = isDarkMode ? '#fff' : '#000';
     // Function to format the date
 
@@ -634,7 +645,8 @@ const DashboardScreen = ({ theme }) => {
                         </>
                     ) : (
                         <ScrollView style={styles.scrollArea}>
-                            <View style={styles.listContainer}>
+                           <View style={[styles.sectionContainer, { backgroundColor: theme.background }]}>
+
                                 {Object.values(
                                     expenses.reduce((acc, curr) => {
                                         if (!acc[curr.category]) {
@@ -1622,7 +1634,6 @@ const styles = StyleSheet.create({
     amountText: {
         fontSize: 16,
         fontWeight: "bold",
-        marginLeft: 15,
     },
     fullWidthProgressBar: {
         height: 12, // Increase height for better visibility

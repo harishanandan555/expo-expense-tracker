@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { StyleSheet, Modal, ActivityIndicator } from "react-native";
+import { StyleSheet, Modal, ActivityIndicator, StatusBar } from "react-native";
 import {
   View,
   Text,
@@ -8,21 +8,23 @@ import {
   TouchableOpacity,
   Image,
 } from "react-native";
-// import auth from '@react-native-firebase/auth';
 import * as WebBrowser from "expo-web-browser";
-import { auth, db } from "../../config/firebaseConfig";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
-// import "expo-dev-client";
 import { signInWithEmailAndPassword, sendPasswordResetEmail, fetchSignInMethodsForEmail } from "firebase/auth";
 import { GoogleAuthProvider, signInWithCredential } from "firebase/auth";
 import { collection, getDocs, query, where, doc, setDoc } from "firebase/firestore";
+
+import { useTheme } from '../../themeContext';
+import { auth, db } from "../../config/firebaseConfig";
+
 //---------------------------------------------------------------------------------------------------------------------------
 // Complete any pending authentication sessions
 WebBrowser.maybeCompleteAuthSession();
 
 export default function SignInPage({ navigation }) {
 
+  const { theme } = useTheme();
   const [input, setInput] = useState("");
   const [userInfo, setUserInfo] = useState(null);
   const [password, setPassword] = useState("");
@@ -337,6 +339,14 @@ export default function SignInPage({ navigation }) {
 
   return (
     <View style={styles.container}>
+
+   
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor="#000000"
+      />
+
+     
       <Modal
         visible={showAlert}
         transparent
@@ -345,10 +355,9 @@ export default function SignInPage({ navigation }) {
       >
         <View style={styles.alertBackground}>
           <View style={styles.alertContainer}>
-            {/* Heading for Alert */}
             <Text style={styles.alertHeading}>Alert</Text>
 
-            {/* Alert message */}
+            
             <Text style={styles.alertText}>{alertMessage}</Text>
 
             <TouchableOpacity
@@ -359,19 +368,18 @@ export default function SignInPage({ navigation }) {
             </TouchableOpacity>
           </View>
         </View>
+
       </Modal>
 
       {!userInfo ? (
         <View style={styles.authContainer}>
-          {/* Logo */}
           <Image
             source={require("../../assets/wallet_logo.png")}
             style={styles.logo}
           ></Image>
 
-          {/* Title */}
           <Text style={styles.title}>Welcome!</Text>
-          {/* Email Input */}
+        
           <TextInput
             style={styles.input}
             placeholder="Enter email"
@@ -384,7 +392,7 @@ export default function SignInPage({ navigation }) {
             onBlur={handleContinue}
           />
 
-          {/* Password Input - shown only if email is entered */}
+         
           {emailEntered && (
             <>
               <TextInput
@@ -397,14 +405,14 @@ export default function SignInPage({ navigation }) {
                 autoCapitalize="none"
                 autoCorrect={false}
               />
-              {/* Forgot Password Text */}
+             
               <TouchableOpacity onPress={handlePasswordReset}>
                 <Text style={styles.resetPasswordText}>Forgot Password?</Text>
               </TouchableOpacity>
             </>
           )}
 
-          {/* Sign In Button - shown only after entering password */}
+         
           {emailEntered && (
             <TouchableOpacity style={styles.phoneButton} onPress={handleSignIn}>
               <Text style={styles.buttonText}>Sign In</Text>
@@ -418,7 +426,7 @@ export default function SignInPage({ navigation }) {
             </Text>
           </Text>
 
-          {/* Google Sign-In Button */}
+         
           <TouchableOpacity
             style={styles.signInButton}
             onPress={() =>
@@ -434,20 +442,19 @@ export default function SignInPage({ navigation }) {
             />
           </TouchableOpacity>
           {loading && <ActivityIndicator size="large" color="#0000ff" />}
-          {/* {loading && <Text style={styles.loadingText}>Loading...</Text>} */}
+          {/* {loading && <Text style={styles.loadingText}>Loading...</Text>}  */}
         </View>
       ) : (
         <View style={styles.input}>
-          {/* <Text>Welcome, {user.name}</Text> */}
+          {/* { <Text>Welcome, {user.name}</Text> } */}
           <Text style={[styles.text, { color: 'white' }]} >{userInfo?.email}</Text>
         </View>
       )}
 
-      {/* Sign-out button */}
-
       {userInfo && (
         <Button title="Sign Out" onPress={signOutUser} />
       )}
+
     </View>
   );
 }
