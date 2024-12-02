@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { StyleSheet, Modal, ActivityIndicator } from "react-native";
+import { StyleSheet, Modal, ActivityIndicator, StatusBar } from "react-native";
 import {
   View,
   Text,
@@ -8,21 +8,23 @@ import {
   TouchableOpacity,
   Image,
 } from "react-native";
-// import auth from '@react-native-firebase/auth';
 import * as WebBrowser from "expo-web-browser";
-import { auth, db } from "../../config/firebaseConfig";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
-// import "expo-dev-client";
 import { signInWithEmailAndPassword, sendPasswordResetEmail, fetchSignInMethodsForEmail } from "firebase/auth";
 import { GoogleAuthProvider, signInWithCredential } from "firebase/auth";
 import { collection, getDocs, query, where, doc, setDoc } from "firebase/firestore";
+
+import { useTheme } from '../../themeContext';
+import { auth, db } from "../../config/firebaseConfig";
+
 //---------------------------------------------------------------------------------------------------------------------------
 // Complete any pending authentication sessions
 WebBrowser.maybeCompleteAuthSession();
 
 export default function SignInPage({ navigation }) {
 
+  const { theme } = useTheme();
   const [input, setInput] = useState("");
   const [userInfo, setUserInfo] = useState(null);
   const [password, setPassword] = useState("");
@@ -337,6 +339,14 @@ export default function SignInPage({ navigation }) {
 
   return (
     <View style={styles.container}>
+
+      {/* Status Bar */}
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor="#000000"
+      />
+
+      {/* Body Section */}
       <Modal
         visible={showAlert}
         transparent
@@ -359,6 +369,7 @@ export default function SignInPage({ navigation }) {
             </TouchableOpacity>
           </View>
         </View>
+
       </Modal>
 
       {!userInfo ? (
@@ -448,6 +459,7 @@ export default function SignInPage({ navigation }) {
       {userInfo && (
         <Button title="Sign Out" onPress={signOutUser} />
       )}
+
     </View>
   );
 }
