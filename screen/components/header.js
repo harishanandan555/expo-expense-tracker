@@ -196,7 +196,7 @@ import { useNavigation } from '@react-navigation/native';
 
 const Header = ({ isDarkMode, toggleTheme }) => {
   const navigation = useNavigation();
-  console.log('Navigation prop:', navigation);
+  // console.log('Navigation prop:', navigation);
   const [menuVisible, setMenuVisible] = useState(false);
   const [userName, setUserName] = useState(null);
   const [loading, setLoading] = useState(false);
