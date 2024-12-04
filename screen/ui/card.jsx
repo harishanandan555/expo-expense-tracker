@@ -97,16 +97,26 @@ export const Card = React.forwardRef(({ theme, className, ...props }, ref) => (
     ref={ref}
     style={[
       {
-        borderRadius: 8,
-        borderWidth: 1,
-        backgroundColor: theme?.background || "#fff", // Use theme background
-        shadowColor: "#000",
+        padding:5,
+        // borderRadius: 8,
+        // borderWidth: 1,
+        backgroundColor: theme?.cardBackground || "#fff", // Use theme background
+        // shadowColor: "#000",
+        // shadowOffset: { width: 0, height: 1 },
+        // shadowOpacity: 0.2,
+        // elevation: 4,
+        // shadowRadius: 1,
+        // elevation: 1, // For Android shadow
+        // borderColor: theme?.text || "#000", // Use theme text color for border
+        marginBottom: 25,
+        //==========================
+        shadowColor: '#000',
+        borderRadius: 10,
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.2,
-        shadowRadius: 1,
-        elevation: 1, // For Android shadow
-        borderColor: theme?.text || "#000", // Use theme text color for border
-        marginBottom: 15,
+        shadowRadius: 4,
+        elevation: 1, 
+        
       },
       className, // Assuming `cn` is already resolved to styles
     ]}

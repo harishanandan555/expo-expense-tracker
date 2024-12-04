@@ -285,7 +285,6 @@ export default function SignInPage({ navigation }) {
       const userCredential = await signInWithCredential(auth, googleCredential);
       const firebaseUser = userCredential.user;
 
-      // console.log("Google Sign-In successful:", firebaseUser);
 
       // Save user info in AsyncStorage
       await AsyncStorage.setItem("userId", firebaseUser.uid);
