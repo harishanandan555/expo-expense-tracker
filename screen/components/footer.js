@@ -79,33 +79,33 @@
 
 
 
-import React from 'react'; 
+import React from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 
 export default function Footer({ theme, setCurrentScreen }) {
   return (
-    <View style={[styles.container, { backgroundColor: theme.buttonBackground }]}>
-      <TouchableOpacity 
-        onPress={() => setCurrentScreen('Dashboard')} 
+    <View style={[styles.container, { backgroundColor: theme.footerBackground }]}>
+      <TouchableOpacity
+        onPress={() => setCurrentScreen('Dashboard')}
         style={styles.button}
         accessibilityLabel="Go to Dashboard"
       >
-        <Icon name="home-outline" size={24} color={theme.text} />
+        <Icon name="home-outline" size={24} color={theme.footerIconText} />
       </TouchableOpacity>
-      <TouchableOpacity 
-        onPress={() => setCurrentScreen('Transactions')} 
+      <TouchableOpacity
+        onPress={() => setCurrentScreen('Transactions')}
         style={styles.button}
         accessibilityLabel="Go to Transactions"
       >
-        <Icon name="wallet-outline" size={24} color={theme.text} />
+        <Icon name="wallet-outline" size={24} color={theme.footerIconText} />
       </TouchableOpacity>
-      <TouchableOpacity 
-        onPress={() => setCurrentScreen('Settings')} 
+      <TouchableOpacity
+        onPress={() => setCurrentScreen('Settings')}
         style={styles.button}
         accessibilityLabel="Go to Settings"
       >
-        <Icon name="settings-outline" size={24} color={theme.text} />
+        <Icon name="settings-outline" size={24} color={theme.footerIconText} />
       </TouchableOpacity>
     </View>
   );
