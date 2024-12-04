@@ -94,7 +94,16 @@ export const ThemeProvider = ({ children }) => {
       inputBackground: '#ffffff', // Input background color
       inputText: '#000000', // Input text color
       cardbackground: '#444',
-      inputBorderColor: '#ccc'
+      inputBorderColor: '#ccc',
+      cardBackground: '#FFFFFF',
+      borderColor:'#000000',
+      //=====================================
+      shadowColor: '#000',
+      borderRadius: 10,
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.2,
+      shadowRadius: 4,
+      elevation: 3, 
     },
     dark: {
       background: '#000000',
@@ -111,7 +120,16 @@ export const ThemeProvider = ({ children }) => {
       inputBackground: '#444444', // Input background color
       inputText: '#ffffff', // Input text color
       cardbackground: '#444',
-      inputBorderColor: '#FF6A00'
+      inputBorderColor: '#FF6A00',
+      cardBackground: '#333333',
+      borderColor:'#ffffff',
+      //=========================
+      shadowColor: '#000',
+      borderRadius: 10,
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.2,
+      shadowRadius: 4,
+      elevation: 3, 
     },
   };
 

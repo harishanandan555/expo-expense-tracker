@@ -504,7 +504,7 @@ const styles = StyleSheet.create({
     datePickerButton: {
         borderWidth: 1,
         borderRadius: 10,
-        padding: 5,
+        padding: 7,
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
