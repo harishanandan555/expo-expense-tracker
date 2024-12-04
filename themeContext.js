@@ -114,7 +114,7 @@ export const ThemeProvider = ({ children }) => {
       text: '#ffffff',
       buttonBackground: '#FF8C00',    //#FF6A00
       footerBackground: '#333',
-      transactionDropdownBackground:'#333',
+      transactionDropdownBackground: '#333',
       footerIconText: '#FF6A00',
       buttonText: '#ffffff',
       tableHeaderBackground: '#333',

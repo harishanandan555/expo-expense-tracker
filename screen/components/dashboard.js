@@ -217,7 +217,6 @@ const DashboardScreen = ({ theme }) => {
                     balance: calculatedBalance,
                     lastUpdated: lastUpdatedTime,
                 });
-
             } else {
                 console.error("User document does not exist.");
             }
@@ -598,153 +597,153 @@ const DashboardScreen = ({ theme }) => {
                     <View style={styles.textContainer}>
                         <Text style={[styles.overviewLabel, { color: theme.text }]}> Income </Text>
                         <Text style={[styles.overviewValue, { color: theme.text }]}> {currency.label.split(' ')[0]}{totalIncome || 0} </Text>
-                    </View>
-                </View>
+            </View>
+        </View>
 
-                <View style={[styles.overviewCard, { backgroundColor: theme.cardBackground }]}>
+        <View style={[styles.overviewCard, { backgroundColor: theme.cardBackground }]}>
                     <View style={[styles.iconContainer, { backgroundColor: '#ffebee' }]}>
                         <MaterialIcons name="trending-down" size={32} color="red" />
-                    </View>
-                    <View style={styles.textContainer}>
-                        <Text style={[styles.overviewLabel, { color: theme.text }]}>Expense</Text>
-                        <Text style={[styles.overviewValue, { color: theme.text }]}>
-                            {currency.label.split(' ')[0]}{totalExpense || 0}
-                        </Text>
-                    </View>
-                </View>
+        </View>
+        <View style={styles.textContainer}>
+            <Text style={[styles.overviewLabel, { color: theme.text }]}>Expense</Text>
+            <Text style={[styles.overviewValue, { color: theme.text }]}>
+                {currency.label.split(' ')[0]}{totalExpense || 0}
+            </Text>
+        </View>
+    </View>
 
-                <View style={[styles.overviewCard, { backgroundColor: theme.cardBackground }]}>
+        <View style={[styles.overviewCard, { backgroundColor: theme.cardBackground }]}>
 
-                    <View style={[styles.iconContainer, { backgroundColor: '#e3f2fd' }]}>
-                        <MaterialIcons name="account-balance-wallet" size={32} color="blue" />
-                    </View>
+            <View style={[styles.iconContainer, { backgroundColor: '#e3f2fd' }]}>
+                <MaterialIcons name="account-balance-wallet" size={32} color="blue" />
+            </View>
 
-                    <View style={styles.textContainer}>
-                        <Text style={[styles.overviewLabel, { color: theme.text }]}>Balance</Text>
-                        <Text style={[styles.overviewValue, { color: theme.text }]}>{currency.label.split(' ')[0]}{balance || 0}</Text>
-                    </View>
+            <View style={styles.textContainer}>
+                <Text style={[styles.overviewLabel, { color: theme.text }]}>Balance</Text>
+                <Text style={[styles.overviewValue, { color: theme.text }]}>{currency.label.split(' ')[0]}{balance || 0}</Text>
+            </View>
 
-                </View>
+        </View>
 
-                {/* <Separator theme={theme} /> */}
+    {/* <Separator theme={theme} /> */ }
 
-                <Card theme={theme}>
+    <Card theme={theme}>
 
-                    <Text style={[styles.sectionTitle, { color: theme.text }]}>Income</Text>
-                    {/* <View style={ { backgroundColor: theme.background,  }}> */}
-                    <View >
-                        {IncomeCategory.length === 0 ? (
-                            <>
-                                <Text style={[styles.noDataText, { color: theme.text }]}>No income data available.</Text>
-                                <Text style={styles.noDataSubtext}>Add new income to see details.</Text>
-                            </>
-                        ) : (
-
-
-                            <View style={[styles.sectionContainer]}>
-                                {Object.values(
-                                    IncomeCategory.reduce((acc, curr) => {
-                                        if (!acc[curr.category]) {
-                                            acc[curr.category] = { ...curr, amount: 0 }; // Initialize with category data
-                                        }
-                                        acc[curr.category].amount += curr.amount; // Aggregate the amounts
-                                        return acc;
-                                    }, {})
-                                ).map((item, index) => {
-                                    const totalIncome = IncomeCategory.reduce((sum, income) => sum + income.amount, 0);
-
-                                    const amount = item.amount || 0;
-                                    const percentage = totalIncome ? (amount / totalIncome) * 100 : 0;
-
-                                    return (
-                                        <View key={index} style={[styles.listItem,]}>
-                                            <View style={styles.itemHeader}>
-                                                <Text style={[styles.emoji, { color: theme.text }]}>{item.icon}</Text>
-                                                <Text style={[styles.itemCategory, { color: theme.text, marginLeft: -30 }]} >{item.category}{" "}</Text>
-                                                <Text style={[styles.percentageText, { color: theme.text }]}>({percentage.toFixed(0)}%){" "} </Text>
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>Income</Text>
+        {/* <View style={ { backgroundColor: theme.background,  }}> */}
+        <View >
+            {IncomeCategory.length === 0 ? (
+                <>
+                    <Text style={[styles.noDataText, { color: theme.text }]}>No income data available.</Text>
+                    <Text style={styles.noDataSubtext}>Add new income to see details.</Text>
+                </>
+            ) : (
 
 
-                                                <Text style={[styles.amountText, { color: theme.text }]}>
-                                                    {currency.label.split(' ')[0]}{amount.toFixed(2)}
-                                                </Text>
-                                            </View>
-                                            <ProgressBar
-                                                progress={percentage / 100}
-                                                color="#10B981" // Green for income
-                                                style={styles.fullWidthProgressBar}
-                                            />
-                                        </View>
-                                    );
-                                })}
+                                <View style={[styles.sectionContainer]}>
+                                        {Object.values(
+                                            IncomeCategory.reduce((acc, curr) => {
+                                                if (!acc[curr.category]) {
+                                                    acc[curr.category] = { ...curr, amount: 0 }; // Initialize with category data
+                                                }
+                                                acc[curr.category].amount += curr.amount; // Aggregate the amounts
+                                                return acc;
+                                            }, {})
+                                        ).map((item, index) => {
+                                            const totalIncome = IncomeCategory.reduce((sum, income) => sum + income.amount, 0);
 
-                            </View>
+                                            const amount = item.amount || 0;
+                                            const percentage = totalIncome ? (amount / totalIncome) * 100 : 0;
+
+                                            return (
+                                                <View key={index} style={[styles.listItem,]}>
+                                                    <View style={styles.itemHeader}>
+                                                        <Text style={[styles.emoji, { color: theme.text }]}>{item.icon}</Text>
+                                                        <Text style={[styles.itemCategory, { color: theme.text, marginLeft: -60 }]} >{item.category}</Text>
+                                                        <Text style={[styles.percentageText, { color: theme.text, marginLeft: -40 }]}>({percentage.toFixed(0)}%){" "} </Text>
+
+
+                                                        <Text style={[styles.amountText, { color: theme.text }]}>
+                                                            {currency.label.split(' ')[0]}{amount.toFixed(2)}
+                                                        </Text>
+                                                    </View>
+                                                    <ProgressBar
+                                                        progress={percentage / 100}
+                                                        color="#10B981" // Green for income
+                                                        style={styles.fullWidthProgressBar}
+                                                    />
+                                                </View>
+                                            );
+                                        })}
+
+                                </View>
 
 
                         )}
-                    </View>
-                </Card>
+                    </View >
+                </Card >
 
                 <Card theme={theme}>
-                    <Text style={[styles.sectionTitle, { color: theme.text }]}>Expense</Text>
-                    <View >
-                        {expenses.length === 0 ? (
-                            // Display this message if there is no data
-                            <>
-                                <Text style={[styles.noDataText, { color: theme.text }]}>No data for the selected period.</Text>
-                                <Text style={styles.noDataSubtext}>Try to select a different period or add expenses.</Text>
-                            </>
-                        ) : (
+                        <Text style={[styles.sectionTitle, { color: theme.text }]}>Expense</Text>
+                        <View >
+                            {expenses.length === 0 ? (
+                                // Display this message if there is no data
+                                <>
+                                    <Text style={[styles.noDataText, { color: theme.text }]}>No data for the selected period.</Text>
+                                    <Text style={styles.noDataSubtext}>Try to select a different period or add expenses.</Text>
+                                </>
+                            ) : (
 
-                            <View style={[styles.sectionContainer]}>
+                                <View style={[styles.sectionContainer]}>
 
-                                {Object.values(
-                                    expenses.reduce((acc, curr) => {
-                                        if (!acc[curr.category]) {
-                                            acc[curr.category] = { ...curr, amount: 0 }; // Initialize with category data
-                                        }
-                                        acc[curr.category].amount += curr.amount; // Aggregate the amounts
-                                        return acc;
-                                    }, {})
-                                ).map((item, index) => {
-                                    const totalIncome = expenses.reduce((sum, income) => sum + income.amount, 0);
+                                    {Object.values(
+                                        expenses.reduce((acc, curr) => {
+                                            if (!acc[curr.category]) {
+                                                acc[curr.category] = { ...curr, amount: 0 }; // Initialize with category data
+                                            }
+                                            acc[curr.category].amount += curr.amount; // Aggregate the amounts
+                                            return acc;
+                                        }, {})
+                                    ).map((item, index) => {
+                                        const totalIncome = expenses.reduce((sum, income) => sum + income.amount, 0);
 
-                                    const amount = item.amount || 0;
-                                    const percentage = totalIncome ? (amount / totalIncome) * 100 : 0;
+                                        const amount = item.amount || 0;
+                                        const percentage = totalIncome ? (amount / totalIncome) * 100 : 0;
 
-                                    return (
+                                        return (
                                         <View key={index} style={[styles.listItem,]}>
-                                            <View style={styles.itemHeader}>
-                                                <Text style={[styles.emoji, { color: theme.text, }]}>{item.icon}</Text>
-                                                <Text style={[styles.itemCategory, { color: theme.text, marginLeft: -30 }]} >{item.category}{" "}</Text>
-                                                <Text style={[styles.percentageText, { color: theme.text }]}>
-                                                    ({percentage.toFixed(0)}%){"   "}
-                                                </Text>
+                                                            <View style={styles.itemHeader}>
+                                                                <Text style={[styles.emoji, { color: theme.text, }]}>{item.icon}</Text>
+                                                                <Text style={[styles.itemCategory, { color: theme.text, marginLeft: -60 }]} >{item.category}</Text>
+                                                                <Text style={[styles.percentageText, { color: theme.text, marginLeft: -40 }]}>
+                                                                    ({percentage.toFixed(0)}%){"   "}
+                                                                </Text>
 
 
-                                                <Text style={[styles.amountText, { color: theme.text }]}>
-                                                    {currency.label.split(' ')[0]}{amount.toFixed(2)}
-                                                </Text>
-                                            </View>
-                                            <ProgressBar
-                                                progress={percentage / 100}
-                                                color="#FF0000" // Green color for progress
-                                                style={styles.fullWidthProgressBar}
-                                            />
-                                        </View>
+                                                                <Text style={[styles.amountText, { color: theme.text }]}>
+                                                                    {currency.label.split(' ')[0]}{amount.toFixed(2)}
+                                                                </Text>
+                                                            </View>
+                                                            <ProgressBar
+                                                                progress={percentage / 100}
+                                                                color="#FF0000" // Green color for progress
+                                                                style={styles.fullWidthProgressBar}
+                                                            />
+                                                        </View>
 
-                                    );
+                                                        );
                                 })}
-                            </View>
+                                                </View>
 
-                        )}
+                    )}
 
-                    </View>
-                </Card>
+                </View>
+                </Card >
 
 
-                {/* <Separator theme={theme} /> */}
+    {/* <Separator theme={theme} /> */ }
 
-                {/* History Section */}
+{/* History Section */ }
                 <Text style={[styles.sectionTitle, { color: theme.text }]}>History</Text>
                 <View style={[styles.historyContainer, { backgroundColor: theme.background }]}>
                     {/* Switch between Year and Month */}
@@ -1206,7 +1205,7 @@ const DashboardScreen = ({ theme }) => {
 
 
                 </View>
-            </ScrollView>
+            </ScrollView >
         </Provider >
     );
 };
@@ -1249,6 +1248,9 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         // marginTop: 4,
         padding: 20,
+        // marginBottom: 20,
+        //
+        // marginTop:10,
         // marginBottom: 20,
     },
     newIncomeButton: {
@@ -1334,6 +1336,17 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.2,
         shadowRadius: 4,
         elevation: 3,
+    },
+    iconContainer: {
+        width: 50,
+        height: 50,
+        borderRadius: 25,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 15,
+    },
+    textContainer: {
+        flex: 1,
     },
     iconContainer: {
         width: 50,
@@ -1443,7 +1456,6 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.2,
         shadowRadius: 4,
     },
-
     noDataText: {
         fontSize: 16,
     },
@@ -1615,7 +1627,6 @@ const styles = StyleSheet.create({
     container: {
         padding: 20,
     },
-
     categoryContainer: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -1719,7 +1730,7 @@ const styles = StyleSheet.create({
     fullWidthProgressBar: {
         height: 12, // Increase height for better visibility
         borderRadius: 6, // Rounded corners for better design
-        // Background for unfilled part
+       // Background for unfilled part
     },
     monthItem: {
         padding: 15,

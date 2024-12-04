@@ -283,6 +283,7 @@ const NewIncomeScreen = ({ route, isVisible, onClose }) => {
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             >
                 <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                    
                     <ScrollView
                         contentContainerStyle={[
                             styles.scrollContent,
@@ -558,14 +559,14 @@ const styles = StyleSheet.create({
     datePickerButton: {
         borderWidth: 1,
         borderRadius: 10,
-        padding: 5,
+        padding: 14,
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         marginBottom: 5,
     },
     datePickerText: {
-        fontSize: 16,
+        fontSize: 14,
     },
     saveButton: {
         marginTop: 20,
