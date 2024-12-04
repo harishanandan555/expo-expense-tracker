@@ -1250,7 +1250,7 @@ const styles = StyleSheet.create({
         padding: 20,
         // marginBottom: 20,
         //
-        // marginTop:10,
+        marginTop:10,
         // marginBottom: 20,
     },
     newIncomeButton: {
