@@ -262,7 +262,7 @@ const UpdateUserCurrency = async (currencyValue) => {
 };
 
 
-export function CurrencyComboBox() {
+export function CurrencyComboBox({theme}) {
   const [open, setOpen] = useState(false);
   const [selectedOption, setSelectedOption] = useState(null);
   const [settings, setSettings] = useState({ isFetching: true, data: null });
@@ -317,7 +317,7 @@ export function CurrencyComboBox() {
       <Button
         title={selectedOption ? selectedOption.label : "Set Currency"}
         onPress={() => setOpen(!open)} // Toggle dropdown
-        color="#007bff"
+        color={theme.buttonBackground}
       />
 
       {open && (

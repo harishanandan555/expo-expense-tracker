@@ -403,7 +403,7 @@ const CreateCategorySchema = Yup.object().shape({
     type: Yup.string().oneOf(['income', 'expense'], 'Invalid category type').required('Type is required'),
 });
 
-export const CreateCategoryDialogButton = ({ type, onSuccessCallback }) => {
+export const CreateCategoryDialogButton = ({ theme, type, onSuccessCallback }) => {
 
     const [open, setOpen] = useState(false);
     const [userId, setUserId] = useState(null);
@@ -508,7 +508,7 @@ export const CreateCategoryDialogButton = ({ type, onSuccessCallback }) => {
         <Button
           title="Create New"
           onPress={() => setOpen(true)}
-          color="#007bff" // You can customize the button color here
+          color={theme.buttonBackground}
         />
 
 

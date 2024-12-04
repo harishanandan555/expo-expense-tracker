@@ -48,6 +48,7 @@
 
 
 
+
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { Appearance, useColorScheme, StyleSheet } from 'react-native';
 
@@ -81,7 +82,10 @@ export const ThemeProvider = ({ children }) => {
     light: {
       background: '#ffffff',
       text: '#000000',
-      buttonBackground: '#ffffff',
+      footerBackground: '#ffffff',
+      transactionDropdownBackground: '#ffffff',
+      footerIconText: '#FF6A00',
+      buttonBackground: '#FF8C00',   //#FF6A00
       buttonBorder: '#333',
       buttonText: '#000000',
       tableHeaderBackground: '#ffffff',
@@ -94,12 +98,24 @@ export const ThemeProvider = ({ children }) => {
       inputBackground: '#ffffff', // Input background color
       inputText: '#000000', // Input text color
       cardbackground: '#444',
-      inputBorderColor: '#ccc'
+      inputBorderColor: '#ccc',
+      cardBackground: '#FFFFFF',
+      borderColor: '#000000',
+      //=====================================
+      shadowColor: '#000',
+      borderRadius: 10,
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.2,
+      shadowRadius: 4,
+      elevation: 3,
     },
     dark: {
       background: '#000000',
       text: '#ffffff',
-      buttonBackground: '#333',
+      buttonBackground: '#FF8C00',    //#FF6A00
+      footerBackground: '#333',
+      transactionDropdownBackground:'#333',
+      footerIconText: '#FF6A00',
       buttonText: '#ffffff',
       tableHeaderBackground: '#333',
       tableHeaderText: '#ffffff',
@@ -111,7 +127,16 @@ export const ThemeProvider = ({ children }) => {
       inputBackground: '#444444', // Input background color
       inputText: '#ffffff', // Input text color
       cardbackground: '#444',
-      inputBorderColor: '#FF6A00'
+      inputBorderColor: '#FF6A00',
+      cardBackground: '#333333',
+      borderColor: '#ffffff',
+      //=========================
+      shadowColor: '#000',
+      borderRadius: 10,
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.2,
+      shadowRadius: 4,
+      elevation: 3,
     },
   };
 

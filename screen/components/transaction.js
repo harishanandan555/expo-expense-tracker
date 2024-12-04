@@ -479,10 +479,10 @@ const TransactionScreen = ({ theme }) => {
       });
       console.log("File shared successfully");
 
-}catch (error) {
-  console.error("Error writing or sharing file:", error);
-  Alert.alert("Error", "Failed to write or share the CSV file.");
-}
+    } catch (error) {
+      console.error("Error writing or sharing file:", error);
+      Alert.alert("Error", "Failed to write or share the CSV file.");
+    }
   };
 
   const generateHtml = (transactionsData) => {
@@ -544,7 +544,7 @@ const TransactionScreen = ({ theme }) => {
       <body>
         <img src="${logoBase64}" alt="Logo" class="logo" />
         <h1>Transaction Report</h1>
-       
+
         <table>
           <thead>
             <tr>
@@ -625,7 +625,7 @@ const TransactionScreen = ({ theme }) => {
                 <Picker selectedValue={selectedCategory} onValueChange={(itemValue) => setSelectedCategory(itemValue)}
                   style={[styles.picker,
                   {
-                    backgroundColor: theme.buttonBackground,
+                    backgroundColor: theme.transactionDropdownBackground,
                     borderColor: theme.buttonBorder,
                     color: theme.text
                   }]}
@@ -642,7 +642,7 @@ const TransactionScreen = ({ theme }) => {
               <View style={styles.pickerContainer}>
                 <Picker selectedValue={selectedType} onValueChange={(itemValue) => setSelectedType(itemValue)}
                   style={[styles.picker, {
-                    backgroundColor: theme.buttonBackground,
+                    backgroundColor: theme.transactionDropdownBackground,
                     borderColor: theme.buttonBorder,
                     color: theme.text,
                   },
@@ -664,7 +664,7 @@ const TransactionScreen = ({ theme }) => {
                   style={[
                     styles.picker,
                     {
-                      backgroundColor: theme.buttonBackground,
+                      backgroundColor: theme.transactionDropdownBackground,
                       borderColor: theme.buttonBorder,
                       color: theme.text,
                     },
@@ -682,7 +682,7 @@ const TransactionScreen = ({ theme }) => {
                 style={[
                   styles.datePickerButton,
                   {
-                    backgroundColor: theme.buttonBackground,
+                    backgroundColor: theme.transactionDropdownBackground,
                     borderColor: theme.buttonBorder,
                   },
                 ]}
