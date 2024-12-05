@@ -1246,11 +1246,8 @@ const styles = StyleSheet.create({
     buttonsContainer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        // marginTop: 4,
         padding: 20,
-        // marginBottom: 20,
-        //
-        // marginTop:10,
+        marginTop:10,
         // marginBottom: 20,
     },
     newIncomeButton: {
