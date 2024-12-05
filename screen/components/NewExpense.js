@@ -162,9 +162,7 @@ const NewExpenseScreen = ({ navigation, route, isVisible, onClose }) => {
                 type: 'success',
                 text1: 'Success',
                 text2: 'Expense transaction saved successfully!',
-                visibilityTime: 4000, // Duration in ms
-                position: 'top', // Position on screen
-                topOffset: 60,
+                
             });
     
             // Reset input fields
@@ -426,6 +424,15 @@ const NewExpenseScreen = ({ navigation, route, isVisible, onClose }) => {
                                     </TouchableOpacity>
                                 </View>
                             </Modal>
+                            <Toast
+        style={{
+          position: "absolute",
+          top: 50,
+          left: 0,
+          right: 0,
+          
+        }}
+      />
 
 
                         </View>

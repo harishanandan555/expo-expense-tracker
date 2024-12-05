@@ -172,61 +172,106 @@ const DashboardScreen = ({ theme }) => {
     }, []);
     const calculateAndSaveFinancialData = () => {
         const userId = auth.currentUser?.uid;
-
+    
         if (!userId) {
             console.error("User ID is required. Cannot update financial data.");
             return;
         }
-
+    
         // Reference to the user's document in Firestore
         const userDocRef = doc(db, "users", userId);
-
+    
         // Set up real-time listener
-        const unsubscribe = onSnapshot(userDocRef, (docSnapshot) => {
-
-            if (docSnapshot.exists()) {
-                const userInfo = docSnapshot.data();
-
-                const financialData = userInfo.financialData || {};
-                const lastUpdatedTime = financialData.lastUpdated || "Not Available";
-
-                // Calculate total income
-                const calculatedTotalIncome = (userInfo.income || []).reduce(
-                    (sum, incomeItem) => sum + (incomeItem.amount || 0),
-                    0
-                );
-
-                // Calculate total expenses
-                const calculatedTotalExpense = (userInfo.expenses || []).reduce(
-                    (sum, expenseItem) => sum + (expenseItem.amount || 0),
-                    0
-                );
-
-                // Calculate the balance
-                const calculatedBalance = calculatedTotalIncome - calculatedTotalExpense;
-
-                // Update the state variables
-                setTotalIncome(calculatedTotalIncome);
-                setTotalExpense(calculatedTotalExpense);
-                setBalance(calculatedBalance);
-                setLastUpdated(lastUpdatedTime);
-
-                console.log("Updated financial data:", {
-                    totalIncome: calculatedTotalIncome,
-                    totalExpense: calculatedTotalExpense,
-                    balance: calculatedBalance,
-                    lastUpdated: lastUpdatedTime,
-                });
-            } else {
-                console.error("User document does not exist.");
+        const unsubscribe = onSnapshot(
+            userDocRef,
+            (docSnapshot) => {
+                if (docSnapshot.exists()) {
+                    const userInfo = docSnapshot.data();
+    
+                    const financialData = userInfo.financialData || {};
+                    const lastUpdatedTime = financialData.lastUpdated || "Not Available";
+    
+                    // Find the latest dates from income and expenses
+                    const latestIncomeDate = userInfo.income?.length
+                        ? new Date(Math.max(...userInfo.income?.map((item) => new Date(item.date).getTime())))
+                        : null;
+                    const latestExpenseDate = userInfo.expenses?.length
+                        ? new Date(Math.max(...userInfo.expenses.map((item) => new Date(item.date).getTime())))
+                        : null;
+    
+                    // Determine the most recent date
+                    let lastUpdatedDate = null;
+                    if (latestIncomeDate && latestExpenseDate) {
+                        lastUpdatedDate = latestIncomeDate > latestExpenseDate ? latestIncomeDate : latestExpenseDate;
+                    } else if (latestIncomeDate) {
+                        lastUpdatedDate = latestIncomeDate;
+                    } else if (latestExpenseDate) {
+                        lastUpdatedDate = latestExpenseDate;
+                    }
+    
+                    // Format the lastUpdatedDate to ISO string
+                    const formattedLastUpdatedDate = lastUpdatedDate
+                        ? lastUpdatedDate.toISOString()
+                        : "Not Available";
+    
+                    // Calculate total income
+                    const calculatedTotalIncome = (userInfo.income || []).reduce(
+                        (sum, incomeItem) => sum + (incomeItem.amount || 0),
+                        0
+                    );
+    
+                    // Calculate total expenses
+                    const calculatedTotalExpense = (userInfo.expenses || []).reduce(
+                        (sum, expenseItem) => sum + (expenseItem.amount || 0),
+                        0
+                    );
+    
+                    // Calculate the balance
+                    const calculatedBalance = calculatedTotalIncome - calculatedTotalExpense;
+    
+                    // Update Firestore document without using `await`
+                    setDoc(
+                        userDocRef,
+                        {
+                            financialData: {
+                                balance: calculatedBalance,
+                                totalIncome: calculatedTotalIncome,
+                                totalExpense: calculatedTotalExpense,
+                                lastUpdated: formattedLastUpdatedDate,
+                            },
+                        },
+                        { merge: true }
+                    ).then(() => {
+                        console.log("Financial data updated successfully in Firestore.");
+                    }).catch((error) => {
+                        console.error("Error updating financial data in Firestore:", error);
+                    });
+    
+                    // Update the state variables
+                    setTotalIncome(calculatedTotalIncome);
+                    setTotalExpense(calculatedTotalExpense);
+                    setBalance(calculatedBalance);
+                    setLastUpdated(formattedLastUpdatedDate);
+    
+                    console.log("Updated financial data:", {
+                        totalIncome: calculatedTotalIncome,
+                        totalExpense: calculatedTotalExpense,
+                        balance: calculatedBalance,
+                        lastUpdated: formattedLastUpdatedDate,
+                    });
+                } else {
+                    console.error("User document does not exist.");
+                }
+            },
+            (error) => {
+                console.error("Error listening to user financial data:", error);
             }
-        }, (error) => {
-            console.error("Error listening to user financial data:", error);
-        });
-
+        );
+    
         // Return unsubscribe function to clean up the listener when no longer needed
         return unsubscribe;
     };
+    
 
 
 
@@ -1250,7 +1295,7 @@ const styles = StyleSheet.create({
         padding: 20,
         // marginBottom: 20,
         //
-        // marginTop:10,
+        marginTop:10,
         // marginBottom: 20,
     },
     newIncomeButton: {
