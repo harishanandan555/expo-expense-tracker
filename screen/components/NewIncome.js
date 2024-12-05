@@ -559,14 +559,14 @@ const styles = StyleSheet.create({
     datePickerButton: {
         borderWidth: 1,
         borderRadius: 10,
-        padding: 14,
+        padding: 15,
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         marginBottom: 5,
     },
     datePickerText: {
-        fontSize: 14,
+        fontSize: 13,
     },
     saveButton: {
         marginTop: 20,

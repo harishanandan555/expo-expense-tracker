@@ -508,9 +508,8 @@ export const CreateCategoryDialogButton = ({ theme, type, onSuccessCallback }) =
         <Button
           title="Create New"
           onPress={() => setOpen(true)}
-          color={theme.buttonBackground}
+          color='#FF8C00'
         />
-
 
         {/* Dialog Content */}
         <Modal visible={open} transparent animationType="slide">
