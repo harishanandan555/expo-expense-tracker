@@ -636,7 +636,7 @@ const TransactionScreen = ({ theme }) => {
       <body>
         <img src="${logoBase64}" alt="Logo" class="logo" />
         <h1>Transaction Report</h1>
-       
+
         <table>
           <thead>
             <tr>
@@ -742,7 +742,7 @@ const TransactionScreen = ({ theme }) => {
                   style={[
                     styles.picker,
                     {
-                      backgroundColor: theme.buttonBackground,
+                      backgroundColor: theme.transactionDropdownBackground,
                       borderColor: theme.buttonBorder,
                       color: theme.text,
                       paddingRight: 8,
@@ -776,7 +776,7 @@ const TransactionScreen = ({ theme }) => {
                   style={[
                     styles.picker,
                     {
-                      backgroundColor: theme.buttonBackground,
+                      backgroundColor: theme.transactionDropdownBackground,
                       borderColor: theme.buttonBorder,
                       color: theme.text,
                     },
@@ -804,7 +804,7 @@ const TransactionScreen = ({ theme }) => {
                   style={[
                     styles.picker,
                     {
-                      backgroundColor: theme.buttonBackground,
+                      backgroundColor: theme.transactionDropdownBackground,
                       borderColor: theme.buttonBorder,
                       color: theme.text,
                     },
@@ -826,7 +826,7 @@ const TransactionScreen = ({ theme }) => {
                 style={[
                   styles.datePickerButton,
                   {
-                    backgroundColor: theme.buttonBackground,
+                    backgroundColor: theme.transactionDropdownBackground,
                     borderColor: "#ccc",
                   },
                 ]}

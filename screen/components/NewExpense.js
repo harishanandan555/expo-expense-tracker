@@ -162,9 +162,7 @@ const NewExpenseScreen = ({ navigation, route, isVisible, onClose }) => {
                 type: 'success',
                 text1: 'Success',
                 text2: 'Expense transaction saved successfully!',
-                visibilityTime: 4000, // Duration in ms
-                position: 'top', // Position on screen
-                topOffset: 60,
+                
             });
     
             // Reset input fields
@@ -426,6 +424,15 @@ const NewExpenseScreen = ({ navigation, route, isVisible, onClose }) => {
                                     </TouchableOpacity>
                                 </View>
                             </Modal>
+                            <Toast
+        style={{
+          position: "absolute",
+          top: 50,
+          left: 0,
+          right: 0,
+          
+        }}
+      />
 
 
                         </View>
@@ -504,7 +511,7 @@ const styles = StyleSheet.create({
     datePickerButton: {
         borderWidth: 1,
         borderRadius: 10,
-        padding: 5,
+        padding: 7,
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',

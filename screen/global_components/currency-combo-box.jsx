@@ -241,19 +241,20 @@ const mockCurrencies = [
   { value: "RWF", label: "FRw Rwandan Franc", locale: "rw-RW", symbol: "FRw", country: "Rwanda" },
 ];
 
-// Simulate fetching user settings
-const fetchUserSettings = async () => {
-  // Simulating a network delay
+let currentUserCurrency = null; // No default value
+const fetchUserSettings = async (currency = null) => {
   return new Promise((resolve) => {
     setTimeout(() => {
-      resolve({ currency: "INR" }); // Default currency for testing
+      if (currency) {
+        currentUserCurrency = currency; // Update backend-stored value
+      }
+      resolve({ currency: currentUserCurrency });
     }, 1000);
   });
 };
 
 // Mock UpdateUserCurrency function
 const UpdateUserCurrency = async (currencyValue) => {
-  // Simulating a successful currency update
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve({ currency: currencyValue });
@@ -261,21 +262,39 @@ const UpdateUserCurrency = async (currencyValue) => {
   });
 };
 
-
-export function CurrencyComboBox() {
+export function CurrencyComboBox({ theme }) {
   const [open, setOpen] = useState(false);
   const [selectedOption, setSelectedOption] = useState(null);
   const [settings, setSettings] = useState({ isFetching: true, data: null });
 
   useEffect(() => {
     const getSettings = async () => {
-      const data = await fetchUserSettings();
-      setSettings({ isFetching: false, data });
-
-      const currency = mockCurrencies.find((currency) => currency.value === data.currency);
-
-      if (currency) setSelectedOption(currency);
-
+      try {
+        const storedCurrency = await AsyncStorage.getItem("selectedCurrency");
+        if (storedCurrency) {
+          const parsedCurrency = JSON.parse(storedCurrency);
+          const settings = await fetchUserSettings(parsedCurrency.value);
+          const currency = mockCurrencies.find((c) => c.value === settings.currency);
+          if (currency) {
+            setSelectedOption(currency);
+          }
+        } else {
+          const settings = await fetchUserSettings();
+          if (settings.currency) {
+            const defaultCurrency = mockCurrencies.find((c) => c.value === settings.currency);
+            if (defaultCurrency) {
+              setSelectedOption(defaultCurrency);
+              await AsyncStorage.setItem("selectedCurrency", JSON.stringify(defaultCurrency));
+            }
+          } else {
+            console.log("No currency set. Prompting user to select.");
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching user settings:", error);
+      } finally {
+        setSettings({ isFetching: false });
+      }
     };
 
     getSettings();
@@ -283,22 +302,16 @@ export function CurrencyComboBox() {
 
   const onSelectOption = useCallback(async (currency) => {
     if (!currency) {
-      Toast.show({ text1: "Please select currency!", type: "error" });
+      Toast.show({ text1: "Please select a currency!", type: "error" });
       return;
     }
 
     Toast.show({ text1: "Updating Currency...", type: "info" });
 
     try {
-      // Update the currency via API or backend
       await UpdateUserCurrency(currency.value);
-
-      // Save the selected currency to AsyncStorage
       await AsyncStorage.setItem("selectedCurrency", JSON.stringify(currency));
-
-      // Update the selected option state
       setSelectedOption(mockCurrencies.find((c) => c.value === currency.value) || null);
-
       Toast.show({ text1: "Currency updated successfully!", type: "success" });
     } catch (error) {
       console.error("Error updating currency:", error);
@@ -306,40 +319,37 @@ export function CurrencyComboBox() {
     }
   }, []);
 
-
   if (settings.isFetching) {
-    return <Text>Loading...</Text>; // Simplified loading state for testing
+    return <Text>Loading...</Text>;
   }
 
   return (
     <View style={{ padding: 10 }}>
-
       <Button
         title={selectedOption ? selectedOption.label : "Set Currency"}
-        onPress={() => setOpen(!open)} // Toggle dropdown
-        color="#007bff"
+        onPress={() => setOpen(!open)}
+        color={theme?.buttonBackground || "blue"}
       />
 
-      {open && (
-        <OptionList setOpen={setOpen} setSelectedOption={onSelectOption} />
-      )}
+      {open && <OptionList setOpen={setOpen} setSelectedOption={onSelectOption} />}
 
-      <Toast style={{
-          position: 'absolute',
+      <Toast
+        style={{
+          position: "absolute",
           top: 0,
           left: 0,
           right: 0,
           zIndex: 10,
-        }}/>
-
+        }}
+      />
     </View>
   );
 }
 
 function OptionList({ setOpen, setSelectedOption }) {
   return (
-    <View style={{ marginTop: 0 }}>
-      <Text>Filter currency...</Text>
+    <View style={{ marginTop: 10 }}>
+      <Text>Select a currency:</Text>
       {mockCurrencies.map((currency) => (
         <Button
           key={currency.value}
