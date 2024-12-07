@@ -249,6 +249,17 @@ const NewExpenseScreen = ({ navigation, route, isVisible, onClose }) => {
                             { backgroundColor: theme.background },
                         ]}
                     >
+
+                              <Toast
+                                    style={{
+                                    position: "absolute",
+                                    top: 50,
+                                    bottom:30,
+                                    left: 0,
+                                    right: 0,
+          
+                                        }}
+                              />
                         <View style={[styles.container, { backgroundColor: theme.background }]}>
                             <Text style={[styles.screenTitle, { color: theme.text }]}>New Expense</Text>
                             {/* Header with Dark/Light Mode Toggle */}
@@ -424,15 +435,7 @@ const NewExpenseScreen = ({ navigation, route, isVisible, onClose }) => {
                                     </TouchableOpacity>
                                 </View>
                             </Modal>
-                            <Toast
-        style={{
-          position: "absolute",
-          top: 50,
-          left: 0,
-          right: 0,
-          
-        }}
-      />
+                            
 
 
                         </View>
