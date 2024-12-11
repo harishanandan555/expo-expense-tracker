@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, Image, TouchableWithoutFeedback } from "react-native";
+import { View, Text,TextInput, StyleSheet, FlatList, TouchableOpacity, Alert, Modal, TouchableWithoutFeedback } from "react-native";
 import { Provider } from 'react-native-paper';
 import { Picker } from "@react-native-picker/picker";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
@@ -9,13 +9,15 @@ import * as Print from 'expo-print';
 import { shareAsync } from 'expo-sharing';
 import * as FileSystem from 'expo-file-system';
 import Icon from "react-native-vector-icons/MaterialIcons";
+import { MaterialIcons } from '@expo/vector-icons';
 import { auth, db } from "../../config/firebaseConfig";
 import { onAuthStateChanged } from 'firebase/auth';
 import { updateDoc, doc, getDoc } from 'firebase/firestore';
 import EditTransactionModal from './EditTransaction';
 import TransactionHistoryModal from './TransactionHistory';
+import { useNavigation } from '@react-navigation/native';
 
-const TransactionScreen = ({ theme }) => {
+const TransactionScreen = ({ theme}) => {
   const [selectedCategory, setSelectedCategory] = useState("Category");
   const [selectedType, setSelectedType] = useState("Type");
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
@@ -33,19 +35,74 @@ const TransactionScreen = ({ theme }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [historyModalVisible, setHistoryModalVisible] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterModalVisible, setFilterModalVisible] = useState(false);
+  const navigation = useNavigation();
+  
+  const [tempSelectedCategory, setTempSelectedCategory] = useState("placeholder");
+  const [tempSelectedType, setTempSelectedType] = useState("placeholder");
+  const [tempSelectedDate, setTempSelectedDate] = useState(null);
+  const [filteredTransactions, setFilteredTransactions] = useState(null);
+
+  // const handleApplyFilters = () => {
+  //   setSelectedCategory(tempSelectedCategory);
+  //   setSelectedType(tempSelectedType);
+  //   setSelectedDate(tempSelectedDate);
+  //   setFilterModalVisible(false);
+  // };
+  const handleApplyFilters = () => {
+    let filteredTransactions = transactionsData;
+
+    // Apply Category Filter
+    if (tempSelectedCategory && tempSelectedCategory !== "placeholder") {
+      filteredTransactions = filteredTransactions.filter(
+        (transaction) => transaction.category === tempSelectedCategory
+      );
+    }
+
+    // Apply Type Filter
+    if (tempSelectedType && tempSelectedType !== "placeholder") {
+      filteredTransactions = filteredTransactions.filter(
+        (transaction) => transaction.type === tempSelectedType
+      );
+    }
+
+    // Apply Date Filter
+    if (tempSelectedDate) {
+      filteredTransactions = filteredTransactions.filter(
+        (transaction) =>
+          new Date(transaction.date).toDateString() ===
+          new Date(tempSelectedDate).toDateString()
+      );
+    }
+
+    // Update the state
+    setFilteredTransactions(filteredTransactions);
+    setFilterModalVisible(false);
+  };
+
+  const handleResetFilters = () => {
+    setTempSelectedCategory("placeholder");
+    setTempSelectedType("placeholder");
+    setTempSelectedDate(null);
+    setFilteredTransactions(transactionsData);
+  };
+
+  const handleCancelFilters = () => {
+    setFilterModalVisible(false);
+  };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         await fetchTransactions(user.uid);
-        // await copyDataToHistory(user.uid); // Call to copy data to History
       } else {
         setTransactionsData([]);
       }
     });
     return unsubscribe;
   }, []);
-
+  
   const fetchTransactions = async (uid) => {
     try {
       const userDocRef = doc(db, 'users', uid);
@@ -56,63 +113,69 @@ const TransactionScreen = ({ theme }) => {
         const incomeData = data.income || [];
         const expenseData = data.expenses || [];
   
-        // Function to validate and format date
         const validateDate = (dateString) => {
           const dateObj = new Date(dateString);
-          return isNaN(dateObj.getTime()) ? null : dateObj;
-        };
+          return !isNaN(dateObj.getTime()) ? dateObj : null;
+      };
   
-        // Combine income and expense data into a single array
         const allTransactions = [
-          ...incomeData.map(item => ({
+          ...incomeData.map((item) => ({
             ...item,
             type: 'Income',
-            date: validateDate(item.date),  // Validate and format date
+            date: validateDate(item.date),
           })),
-          ...expenseData.map(item => ({
+          ...expenseData.map((item) => ({
             ...item,
             type: 'Expense',
-            date: validateDate(item.date),  // Validate and format date
+            date: validateDate(item.date),
           })),
         ];
   
-        // Filter out transactions with invalid dates
-        const validTransactions = allTransactions.filter(transaction => transaction.date !== null);
+        const validTransactions = allTransactions.filter(
+          (transaction) => transaction.date !== null
+        );
   
-        // Set transactions data only if it's not empty
         if (validTransactions.length > 0) {
           setTransactionsData(validTransactions);
-          console.log("Fetched transactions:", validTransactions);
+          // console.log(
+          //   'Valid transactions in transaction screen:',
+          //   validTransactions
+          // );
         } else {
-          setNoTransactionsMessage("No transactions found.");
+          setNoTransactionsMessage('No transactions found.');
           setTransactionsFound(false);
         }
   
-        // Extract unique categories and transaction types
-        const uniqueCategories = [...new Set(validTransactions.map(item => item.category))];
+        const uniqueCategories = [
+          ...new Set(validTransactions.map((item) => item.category)),
+        ];
         const uniqueTransactionTypes = ['Income', 'Expense'];
   
         setCategories(uniqueCategories);
         setTransactionTypes(uniqueTransactionTypes);
   
         if (validTransactions.length === 0) {
-          setNoTransactionsMessage("No transactions found.");
+          setNoTransactionsMessage('No transactions found.');
           setTransactionsFound(false);
         } else {
-          setNoTransactionsMessage("");
+          setNoTransactionsMessage('');
           setTransactionsFound(true);
         }
       } else {
-        setNoTransactionsMessage("User data not found.");
+        setNoTransactionsMessage('User data not found.');
         setTransactionsFound(false);
       }
     } catch (error) {
-      console.error("Error fetching transactions: ", error);
-      setNoTransactionsMessage("Error fetching transactions.");
+      console.error('Error fetching transactions: ', error);
+      setNoTransactionsMessage('Error fetching transactions.');
       setTransactionsFound(false);
     }
   };
-
+  
+  const refreshTransactions = (uid) => {
+    fetchTransactions(uid); // Pass `uid` to re-fetch transactions
+  };
+  
   // const copyDataToHistory = async (uid) => {                         dont remove
   //   try {
   //     const userDocRef = doc(db, 'users', uid);
@@ -162,59 +225,76 @@ const TransactionScreen = ({ theme }) => {
   const showDatePicker = () => { setDatePickerVisibility(true); };
   const hideDatePicker = () => { setDatePickerVisibility(false); };
 
-
   const handleConfirm = (date) => {
     const formattedDate = format(date, "yyyy-MM-dd");
-    setSelectedDate(formattedDate);
+    
+    // Validate the date before using it
+    if (!isNaN(date.getTime())) {
+        setSelectedDate(formattedDate);
 
-    const filteredTransactions = transactionsData.filter(
-      (transaction) => format(new Date(transaction.date), "yyyy-MM-dd") === formattedDate
-    );
+        const filteredTransactions = transactionsData.filter(
+            (transaction) => format(new Date(transaction.date), "yyyy-MM-dd") === formattedDate
+        );
 
-    if (filteredTransactions.length === 0) {
-      setSelectedDate(null);
-      setNoTransactionsMessage("No transactions found.");
-      setTransactionsFound(false);
+        if (filteredTransactions.length === 0) {
+            setNoTransactionsMessage("No transactions found.");
+            setTransactionsFound(false);
+        } else {
+            setNoTransactionsMessage("");
+            setTransactionsFound(true);
+        }
     } else {
-      setSelectedDate(formattedDate);
-      setNoTransactionsMessage("");
-      setTransactionsFound(true);
+        Alert.alert("Error", "Selected date is invalid.");
     }
 
     hideDatePicker();
-  };
+};
 
   const filterTransactions = () => {
     const filtered = transactionsData.filter((transaction) => {
-      const transactionDate = format(new Date(transaction.date), "yyyy-MM-dd"); // Ensure this is in the correct format
+      const transactionDate = new Date(transaction.date);
+      const formattedDate = format(transactionDate, "yyyy-MM-dd");
+  
+      const matchesSearchTerm =
+      searchTerm.trim() === "" ||
+      transaction.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      transaction.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      transaction.type.toLowerCase().includes(searchTerm.toLowerCase());
+  
       return (
         (selectedCategory === "Category" || transaction.category === selectedCategory) &&
         (selectedType === "Type" || transaction.type === selectedType) &&
-        (selectedDate ? transactionDate === selectedDate : true)
-      );
+        (selectedDate ? formattedDate === selectedDate : true) &&
+        matchesSearchTerm
+    );
     });
-    // return filtered;
-    const groupedTransactions = filtered.reduce((acc, transaction) => {
+  
+    // Sort transactions by date in descending order
+    const sortedTransactions = filtered.sort(
+      (a, b) => new Date(b.date) - new Date(a.date)
+  );
+
+  const groupedTransactions = sortedTransactions.reduce((acc, transaction) => {
       if (!acc[transaction.category]) {
-        acc[transaction.category] = { ...transaction, totalAmount: transaction.amount };
+          acc[transaction.category] = { ...transaction, totalAmount: transaction.amount };
       } else {
-        acc[transaction.category].totalAmount += transaction.amount;
+          acc[transaction.category].totalAmount += transaction.amount;
       }
       return acc;
-    }, {});
+  }, {});
   
     return Object.values(groupedTransactions);
   };
-
+  
   const deleteTransaction = async (transaction) => {
     const user = auth.currentUser;
     if (!user) {
       Alert.alert("Error", "User not authenticated.");
       return;
     }
-
+  
     const userDocRef = doc(db, "users", user.uid);
-
+  
     Alert.alert(
       "Confirm Deletion",
       `Are you sure you want to delete this ${transaction.type}?`,
@@ -228,36 +308,50 @@ const TransactionScreen = ({ theme }) => {
           onPress: async () => {
             try {
               console.log("Deleting transaction:", transaction);
-
+  
               const userDocSnapshot = await getDoc(userDocRef);
               if (userDocSnapshot.exists()) {
                 const expenses = userDocSnapshot.data().expenses || [];
                 const income = userDocSnapshot.data().income || [];
-
+  
                 const transactionIndex =
                   transaction.type.toLowerCase() === "expense"
-                    ? expenses.findIndex(
-                        (item) =>
+                    ? expenses.findIndex((item) => {
+                        const isMatch =
                           item.amount === transaction.amount &&
-                          item.category === transaction.category &&
-                          item.date === transaction.date &&
-                          item.description === transaction.description &&
-                          (item.icon === transaction.icon ||
-                            (item.icon === null && transaction.icon === null))
-                      )
-                    : income.findIndex(
-                        (item) =>
+                          item.category.trim() === transaction.category.trim() && // Trim whitespace
+                          item.description.trim() === transaction.description.trim() && // Trim whitespace
+                          item.icon === transaction.icon &&
+                          new Date(item.date).getTime() === new Date(transaction.date).getTime(); // Compare dates
+  
+                        console.log("Comparing:", {
+                          item,
+                          transaction,
+                          isMatch,
+                        });
+  
+                        return isMatch;
+                      })
+                    : income.findIndex((item) => {
+                        const isMatch =
                           item.amount === transaction.amount &&
-                          item.category === transaction.category &&
-                          item.date === transaction.date &&
-                          item.description === transaction.description &&
-                          (item.icon === transaction.icon ||
-                            (item.icon === null && transaction.icon === null))
-                      );
-
+                          item.category.trim() === transaction.category.trim() && // Trim whitespace
+                          item.description.trim() === transaction.description.trim() && // Trim whitespace
+                          item.icon === transaction.icon &&
+                          new Date(item.date).getTime() === new Date(transaction.date).getTime(); // Compare dates
+  
+                        console.log("Comparing:", {
+                          item,
+                          transaction,
+                          isMatch,
+                        });
+  
+                        return isMatch;
+                      });
+  
                 console.log("Transaction index found:", transactionIndex);
-                console.log("Expenses:", expenses);
-
+                console.log("Expenses:", JSON.stringify(expenses, null, 2));
+  
                 if (transactionIndex !== -1) {
                   if (transaction.type.toLowerCase() === "expense") {
                     expenses.splice(transactionIndex, 1);
@@ -266,33 +360,25 @@ const TransactionScreen = ({ theme }) => {
                     income.splice(transactionIndex, 1);
                     await updateDoc(userDocRef, { income });
                   }
-
+  
                   console.log("Transaction deleted successfully.");
-
                   setTransactionsData((prevTransactions) =>
                     prevTransactions.filter(
                       (item) =>
                         !(
                           item.amount === transaction.amount &&
-                          item.category === transaction.category &&
-                          item.date === transaction.date &&
-                          item.description === transaction.description &&
-                          (item.icon === transaction.icon ||
-                            (item.icon === null && transaction.icon === null))
+                          item.category.trim() === transaction.category.trim() && // Trim whitespace
+                          item.description.trim() === transaction.description.trim() && // Trim whitespace
+                          new Date(item.date).getTime() === new Date(transaction.date).getTime() // Compare dates
                         )
                     )
                   );
-
-                  Alert.alert("Success", "Transaction deleted successfully.");
                 } else {
-                  Alert.alert("Error", "Transaction not found.");
+                  console.log("Transaction not found for deletion.");
                 }
-              } else {
-                console.error("User document not found in Firestore.");
-                Alert.alert("Error", "User document not found.");
               }
             } catch (error) {
-              console.error("Error deleting transaction: ", error);
+              console.error("Error deleting transaction:", error);
               Alert.alert("Error", "Could not delete transaction.");
             }
           },
@@ -301,112 +387,115 @@ const TransactionScreen = ({ theme }) => {
     );
   };
 
-  const editTransaction = async (transaction, updatedTransaction) => {
+  const editTransaction = async (transaction) => {
     const user = auth.currentUser;
     if (!user) {
-      Alert.alert("Error", "User not authenticated.");
-      return;
+        Alert.alert("Error", "User not authenticated.");
+        return;
     }
-
-    const userDocRef = doc(db, 'users', user.uid);
+    
+    const userDocRef = doc(db, "users", user.uid);
 
     Alert.alert(
-      "Confirm Edit",
-      `Are you sure you want to edit this ${transaction.type}?`,
-      [
-        {
-          text: "Cancel",
-          style: "cancel"
-        },
-        {
-          text: "Save",
-          onPress: async () => {
-            try {
-              console.log("Editing transaction:", transaction);
-              console.log("Updated transaction:", updatedTransaction);
+        "Confirm Edit",
+        `Are you sure you want to edit this ${transaction.type}?`,
+        [
+            {
+                text: "Cancel",
+                style: "cancel",
+            },
+            {
+                text: "Save",
+                onPress: async () => {
+                    try {
+                        console.log("Editing transaction:", transaction);
 
-              const userDocSnapshot = await getDoc(userDocRef);
-              if (userDocSnapshot.exists()) {
-                const expenses = userDocSnapshot.data().expenses || [];
-                const income = userDocSnapshot.data().income || [];
+                        const userDocSnapshot = await getDoc(userDocRef);
+                        if (userDocSnapshot.exists()) {
+                            const expenses = userDocSnapshot.data().expenses || [];
+                            const income = userDocSnapshot.data().income || [];
 
-                const transactionIndex =
-                  transaction.type.toLowerCase() === "expense"
-                    ? expenses.findIndex(
-                        (item) =>
-                          item.amount === transaction.amount &&
-                          item.category === transaction.category &&
-                          item.date === transaction.date &&
-                          item.description === transaction.description &&
-                          (item.icon === transaction.icon ||
-                            (item.icon === null && transaction.icon === null))
-                      )
-                    : income.findIndex(
-                        (item) =>
-                          item.amount === transaction.amount &&
-                          item.category === transaction.category &&
-                          item.date === transaction.date &&
-                          item.description === transaction.description &&
-                          (item.icon === transaction.icon ||
-                            (item.icon === null && transaction.icon === null))
-                      );
+                            const targetArray =
+                                transaction.type.toLowerCase() === "expense" ? expenses : income;
 
-                console.log("Transaction index found:", transactionIndex);
+                            // Validate and convert transaction.date
+                            console.log("Transaction date:", transaction.date);
+                            const transactionDate = new Date(transaction.date); // Convert to Date object
+                            
+                            console.log("Parsed transaction date:", transactionDate);
+                            if (isNaN(transactionDate.getTime())) {
+                                Alert.alert("Error", "Invalid transaction date.");
+                                return;
+                            }
 
-                if (transactionIndex !== -1) {
-                  if (transaction.type.toLowerCase() === "expense") {
-                    expenses[transactionIndex] = {
-                      ...updatedTransaction,
-                      type: "Expense",
-                    };
-                    await updateDoc(userDocRef, { expenses });
-                  } else {
-                    income[transactionIndex] = {
-                      ...updatedTransaction,
-                      type: "Income",
-                    };
-                    await updateDoc(userDocRef, { income });
-                  }
+                            // Find the transaction to edit based on a combination of fields
+                            const transactionIndex = targetArray.findIndex(item => {
+                              const itemDate = new Date(item.date);
 
-                  console.log("Transaction edited successfully.");
+                              console.log("Item date:", item.date);
+                              console.log("Parsed item date:", itemDate);
+                              if (isNaN(itemDate.getTime())) {
+                                  return false; // Skip invalid dates
+                              }
+                                // Date comparison
+                                return itemDate.toISOString() === transactionDate.toISOString() &&
+                                item.description.trim() === transaction.description.trim() &&
+                                item.category.trim() === transaction.category.trim();
+                            });
 
-                  // Update local state
-                  setTransactionsData((prevTransactions) =>
-                    prevTransactions.map((item) =>
-                      item.amount === transaction.amount &&
-                      item.category === transaction.category &&
-                      item.date === transaction.date &&
-                      item.description === transaction.description &&
-                      (item.icon === transaction.icon ||
-                        (item.icon === null && transaction.icon === null))
-                        ? { ...updatedTransaction, type: transaction.type }
-                        : item
-                    )
-                  );
+                            if (transactionIndex !== -1) {
+                                // Update the transaction directly
+                                targetArray[transactionIndex] = { ...targetArray[transactionIndex], ...transaction };
 
-                  Alert.alert("Success", "Transaction edited successfully.");
-                } else {
-                  Alert.alert("Error", "Transaction not found.");
-                }
-              } else {
-                console.error("User document not found in Firestore.");
-                Alert.alert("Error", "User document not found.");
-              }
-            } catch (error) {
-              console.error("Error editing transaction: ", error);
-              Alert.alert("Error", "Could not edit transaction.");
-            }
-          },
-        },
-      ]
+                                // Update Firestore
+                                if (transaction.type.toLowerCase() === "expense") {
+                                    await updateDoc(userDocRef, { expenses: targetArray });
+                                } else {
+                                    await updateDoc(userDocRef, { income: targetArray });
+                                }
+
+                                console.log("Transaction edited successfully.");
+                                Alert.alert("Success", "Transaction updated successfully.");
+
+                                // Update local state if needed
+                                setTransactionsData(prevTransactions =>
+                                  prevTransactions.map(item => {
+                                      const itemDate = new Date(item.date); // Assuming date is stored as ISO string
+
+                                      if (isNaN(itemDate.getTime())) {
+                                          return item; // Skip invalid dates
+                                      }
+                                      return itemDate.toISOString() === transactionDate.toISOString() &&
+                                             item.description.trim() === transaction.description.trim() &&
+                                             item.category.trim() === transaction.category.trim()
+                                          ? { ...item, ...transaction }
+                                          : item;
+                                  })
+                              );
+                            } else {
+                                console.log("Transaction not found for editing.");
+                                Alert.alert("Error", "Transaction not found.");
+                            }
+                        } else {
+                            console.log("User document does not exist.");
+                            Alert.alert("Error", "User document does not exist.");
+                        }
+                    } catch (error) {
+                        console.error("Error editing transaction:", error);
+                        Alert.alert("Error", "An error occurred while editing the transaction.");
+                    }
+                },
+            },
+        ]
     );
-  };
+};
 
-  const handleEditTransaction = async (updatedTransaction) => {
-    await editTransaction(selectedTransaction, updatedTransaction);
+
+const handleEditTransaction =  (updatedData) => {
+  console.log("Updated transaction received:", updatedData);// Log selected transaction
     setModalVisible(false);
     setSelectedTransaction(null); // Reset selected transaction
-  };
+};
 
   const formatDate = (date) => {
     return format(new Date(date), 'yyyy-MM-dd');
@@ -422,16 +511,16 @@ const TransactionScreen = ({ theme }) => {
   };
 
   const renderTransactionItem = ({ item, index }) => {
-    const uniqueId = `${item.date}-${item.category}-${item.amount}-${index}`; // Combine fields + index for uniqueness
+    const uniqueId = `${item.date}-${item.category}-${item.description}-${item.amount}-${index}`; // Combine fields + index for uniqueness
     const isMenuVisible = menuVisible === uniqueId; // Compare with menuVisible state
 
     return (
       <View style={[ styles.transactionRow, { backgroundColor: theme.transactionBackground },]} >
-        {/* <Text
+        <Text
           style={[styles.transactionCell, { color: theme.transactionText }]}
         >
           {formatDate(item.date)}
-        </Text> */}
+        </Text>
         <Text style={[styles.transactionCell, { color: theme.transactionText }]} >
           {item.category}
         </Text>
@@ -711,26 +800,208 @@ const TransactionScreen = ({ theme }) => {
 
   return (
     <Provider>
-      <TouchableWithoutFeedback onPress={() => setMenuVisible(null)} accessible={false}>
+      <TouchableWithoutFeedback  onPress={() => setMenuVisible(null)} accessible={false}  >
         <View style={[styles.container, { backgroundColor: theme.background }]}>
           <View style={styles.transactionsContainer}>
+            
             <View style={styles.headerContainer}>
               <TouchableOpacity style={styles.headerTitleContainer}>
                 <Text style={[styles.headerTitle, { color: theme.text }]}>
                   Transactions History
                 </Text>
               </TouchableOpacity>
+            </View>
 
-              <TouchableOpacity
-                onPress={handleRefresh}
-                style={styles.iconContainer}
-              >
+            <TextInput
+              style={[
+                styles.searchInput,
+                {
+                  backgroundColor: theme.transactionDropdownBackground,
+                  color: theme.text,
+                },
+              ]}
+              placeholder="Search transactions..."
+              placeholderTextColor={theme.text}
+              value={searchTerm}
+              onChangeText={(text) => setSearchTerm(text)}
+            />
+
+            <View style={styles.filterExportContainer}>
+              <View style={styles.pickerContainer}>
+                <Picker
+                  selectedValue={selectedExportOption}
+                  onValueChange={handleExportOption}
+                  style={[
+                    styles.picker,
+                    {
+                      backgroundColor: theme.transactionDropdownBackground,
+                      borderColor: theme.buttonBorder,
+                      color: theme.text,
+                      zIndex: 10,
+                      paddingRight:1
+                    },
+                  ]}
+                  dropdownIconColor={theme.text}
+                >
+                  <Picker.Item
+                    label="Download Transactions"
+                    value="placeholder"
+                    style={{ color: "gray" }}
+                  />
+                  <Picker.Item label="CSV" value="CSV" />
+                  <Picker.Item label="PDF" value="PDF" />
+                </Picker>
+              </View>
+
+              {/* Filter Button */}
+              <TouchableOpacity onPress={() => setFilterModalVisible(true)} style={styles.filterButton} >
+               <Icon name="filter-list" size={30} color={theme.text} />
+              </TouchableOpacity>
+
+              {/* Refresh Button */}
+              <TouchableOpacity onPress={handleRefresh} style={styles.iconContainer}>
                 <Icon name="refresh" size={30} color={theme.text} />
               </TouchableOpacity>
             </View>
 
-            {/* Filter Section */}
-            <View style={styles.filterContainer}>
+             {/* Filter Modal */}
+            <View>
+              <Modal
+                transparent={true}
+                visible={filterModalVisible}
+                animationType="slide"
+                onRequestClose={() => setFilterModalVisible(false)}
+              >
+                <View style={[styles.modalContainer]}>
+                  <View
+                    style={[
+                      styles.modalContent,
+                      {
+                        backgroundColor: theme.transactionDropdownBackground,
+                        color: theme.text,
+                      },
+                    ]}
+                  >
+                    <Text style={[styles.modalTitle, { color: theme.text }]}> Filters </Text>
+
+                    {/* Category Picker */}
+                    <View style={styles.pickerContainer}>
+                      <Picker
+                        selectedValue={selectedCategory}
+                        onValueChange={(itemValue) => {
+                          if (itemValue !== "placeholder") {
+                            setSelectedCategory(itemValue);
+                          }
+                        }}
+                        style={[
+                          styles.picker,
+                          {
+                            backgroundColor:
+                              theme.transactionDropdownBackground,
+                            borderColor: theme.buttonBorder,
+                            color: theme.text,
+                          },
+                        ]}
+                        dropdownIconColor={theme.text}
+                      >
+                        <Picker.Item
+                          label="Category"
+                          value="placeholder"
+                          style={{ color: "gray" }}
+                        />
+                        {categories.map((category) => (
+                          <Picker.Item
+                            key={category}
+                            label={category}
+                            value={category}
+                          />
+                        ))}
+                      </Picker>
+                    </View>
+
+                    {/* Type Picker */}
+                    <View style={styles.pickerContainer}>
+                      <Picker
+                        selectedValue={selectedType}
+                        onValueChange={(itemValue) => {
+                          if (itemValue !== "placeholder") {
+                            setSelectedType(itemValue);
+                          }
+                        }}
+                        style={[
+                          styles.picker,
+                          {
+                            backgroundColor:
+                              theme.transactionDropdownBackground,
+                            borderColor: theme.buttonBorder,
+                            color: theme.text,
+                          },
+                        ]}
+                        dropdownIconColor={theme.text}
+                      >
+                        <Picker.Item
+                          label="Type"
+                          value="placeholder"
+                          style={{ color: "gray" }}
+                        />
+                        {transactionTypes.map((type) => (
+                          <Picker.Item key={type} label={type} value={type} />
+                        ))}
+                      </Picker>
+                    </View>
+
+                    {/* Date Picker */}
+                    <TouchableOpacity
+                      style={[
+                        styles.datePickerButton,
+                        {
+                          backgroundColor: theme.transactionDropdownBackground,
+                        },
+                      ]}
+                      onPress={showDatePicker}
+                    >
+                      <Text
+                        style={[styles.datePickerText, { color: theme.text }]}
+                      >
+                        {tempSelectedDate
+                          ? `Selected Date: ${tempSelectedDate}`
+                          : "Select Date"}
+                      </Text>
+                    </TouchableOpacity>
+                    <DateTimePickerModal
+                      isVisible={isDatePickerVisible}
+                      mode="date"
+                      onConfirm={handleConfirm}
+                      onCancel={hideDatePicker}
+                    />
+
+                    {/* Apply/Cancel Buttons */}
+                    <View style={styles.modalActions}>
+                      <TouchableOpacity
+                        onPress={handleApplyFilters}
+                        style={[styles.applyButton, { color: theme.text }]}
+                      >
+                        <Text style={{ color: theme.buttonText }}>Apply</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={handleCancelFilters}
+                        style={[styles.cancelButton, { color: theme.text }]}
+                      >
+                        <Text style={{ color: theme.buttonText }}>Cancel</Text>
+                      </TouchableOpacity>
+                      {/* <TouchableOpacity
+                        onPress={handleResetFilters}
+                        style={styles.resetButton}
+                      >
+                        <Text style={{ color: theme.buttonText }}>Reset</Text>
+                      </TouchableOpacity> */}
+                    </View>
+                  </View>
+                </View>
+              </Modal>
+
+              {/* Filter Section */}
+              {/* <View style={styles.filterContainer}>
               <View style={styles.pickerContainer}>
                 <Picker
                   selectedValue={selectedCategory}
@@ -745,7 +1016,6 @@ const TransactionScreen = ({ theme }) => {
                       backgroundColor: theme.transactionDropdownBackground,
                       borderColor: theme.buttonBorder,
                       color: theme.text,
-                      paddingRight: 8,
                     },
                   ]}
                   dropdownIconColor={theme.text}
@@ -763,7 +1033,7 @@ const TransactionScreen = ({ theme }) => {
                     />
                   ))}
                 </Picker>
-              </View>
+             </View>
 
               <View style={styles.pickerContainer}>
                 <Picker
@@ -778,9 +1048,9 @@ const TransactionScreen = ({ theme }) => {
                     {
                       backgroundColor: theme.transactionDropdownBackground,
                       borderColor: theme.buttonBorder,
-                      color: theme.text,
-                    },
-                  ]}
+                  color: theme.text,
+                },
+              ]}
                   dropdownIconColor={theme.text}
                 >
                   <Picker.Item
@@ -790,39 +1060,13 @@ const TransactionScreen = ({ theme }) => {
                   />
                   {transactionTypes.map((type) => (
                     <Picker.Item key={type} label={type} value={type} />
-                  ))}
-                </Picker>
+              ))}
+            </Picker>
               </View>
-            </View>
+            </View> */}
 
-            <View style={styles.filterContainer}>
-              {/* Export Options Picker */}
-              <View style={styles.pickerContainer}>
-                <Picker
-                  selectedValue={selectedExportOption}
-                  onValueChange={handleExportOption}
-                  style={[
-                    styles.picker,
-                    {
-                      backgroundColor: theme.transactionDropdownBackground,
-                      borderColor: theme.buttonBorder,
-                      color: theme.text,
-                    },
-                  ]}
-                  dropdownIconColor={theme.text}
-                >
-                  <Picker.Item
-                    label="Export"
-                    value="placeholder"
-                    style={{ color: "gray" }}
-                  />
-                  <Picker.Item label="CSV" value="CSV" />
-                  <Picker.Item label="PDF" value="PDF" />
-                </Picker>
-              </View>
-
-              {/* Date Picker Button */}
-              <TouchableOpacity
+              {/* <View style={styles.filterContainer}>
+            <TouchableOpacity
                 style={[
                   styles.datePickerButton,
                   {
@@ -831,33 +1075,127 @@ const TransactionScreen = ({ theme }) => {
                   },
                 ]}
                 onPress={showDatePicker}
-              >
-                <Text style={[styles.datePickerText, { color: theme.buttonText }]}>
+            >
+              <Text style={[styles.datePickerText, { color: theme.buttonText }]}>
                   {selectedDate ? `Selected Date: ${selectedDate}` : "Select Date"}
-                </Text>
-              </TouchableOpacity>
-              <DateTimePickerModal
-                isVisible={isDatePickerVisible}
-                mode="date"
+              </Text>
+            </TouchableOpacity>
+            <DateTimePickerModal
+              isVisible={isDatePickerVisible}
+              mode="date"
                 onConfirm={handleConfirm}
                 onCancel={hideDatePicker}
               />
+            </View> */}
+
+              {/* <View style={styles.filterContainer}> */}
             </View>
 
             {/* Transactions Table Header */}
-            <View  style={[ styles.tableHeader,  { backgroundColor: theme.tableHeaderBackground }, ]}
-            >
-              {/* <Text style={[styles.headerText, { color: theme.tableHeaderText },]}> Date </Text> */}
+            {/* <View  style={[ styles.tableHeader,  { backgroundColor: theme.tableHeaderBackground }, ]} >
+              <Text style={[styles.headerText, { color: theme.tableHeaderText },]}> Date </Text>
               <Text style={[styles.headerText, { color: theme.tableHeaderText }]}> Category </Text>
               <Text style={[styles.headerCell, { color: theme.tableHeaderText }]}> Description </Text>
               <Text style={[styles.headerText, { color: theme.tableHeaderText }]}> Type{" "} </Text>
               <Text style={[ styles.lastHeaderText,{ color: theme.tableHeaderText },]}> Amount{" "}{" "}{" "}</Text>
            
-            </View>
-           
-            <View style={{ flex: 1, height: "100%" }}>
+            </View> */}
+
+            <View style={{ flex: 1}}>
+              <FlatList
+                data={filterTransactions()} 
+                keyExtractor={(item, index) =>
+                  `${item.date}-${item.category}-${item.amount}-${index}`
+                }
+                refreshing={isRefreshing}
+                onRefresh={filterTransactions}
+                contentContainerStyle={{ flexGrow: 1 }}
+               
+                renderItem={({ item }) => (
+                  <View
+                    style={[
+                      styles.transactionCard,
+                      { backgroundColor: theme.transactionDropdownBackground },
+                    ]}
+                  >
+                    {/* Top Row: Category and Total Amount */}
+                    <View style={styles.topRow}>
+                      <Text style={[styles.category, { color: theme.text }]}>
+                        {item.category}
+                      </Text>
+                      <Text style={[styles.amount, { color: theme.text }]}>
+                        ${item.totalAmount}
+                      </Text>
+                    </View>
+
+                    {/* Middle Row: Date and Type with Icons */}
+                    <View style={styles.middleRow}>
+                      <Text style={[styles.date, { color: theme.text }]}>
+                        {format(new Date(item.date), "yyyy-MM-dd")}
+                      </Text>
+                      <View style={styles.typeContainer}>
+                        <MaterialIcons
+                          name={
+                            item.type === "Income"
+                              ? "trending-up"
+                              : "trending-down"
+                          }
+                          size={20}
+                          color={item.type === "Income" ? "green" : "red"}
+                        />
+                        <Text style={[styles.typeText, { color: theme.text }]}>
+                          {item.type === "Income" ? "Income" : "Expense"}
+                        </Text>
+                      </View>
+                    </View>
+
+                    {/* Bottom Row: History Button */}
+                    <View style={styles.bottomRow}>
+                      <TouchableOpacity
+                        refreshTransactions={() =>
+                          refreshTransactions(auth.currentUser?.uid)
+                        }
+                        onPress={() => {
+                          const transactionsForCategory =
+                            transactionsData.filter(
+                              (transaction) =>
+                                transaction.category === item.category
+                            );
+
+                          navigation.navigate("TransactionHistory", {
+                            item: {
+                              category: item.category,
+                              transactions: transactionsForCategory,
+                              deleteTransaction: deleteTransaction,
+                              editTransaction: editTransaction,
+                              handleEditTransaction: handleEditTransaction,
+                              // refreshTransactions
+                            },
+                          });
+                        }}
+                        style={styles.historyButton}
+                      >
+                        <MaterialIcons
+                          name="history"
+                          size={20}
+                          color={theme.text}
+                        />
+                        <Text style={[styles.menuText, { color: theme.text }]}>
+                          History
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                )}
+                ListEmptyComponent={
+                  <Text style={[styles.emptyText, { color: theme.text }]}>
+                    No transactions found
+                  </Text>
+                }
+              />
+              {/* <View style={{ flex: 1, height: "100%" }}> */}
               {/* Transactions List */}
-              {transactionsFound ? (
+              {/* {transactionsFound ? (
                 <FlatList
                 data={filterTransactions()}
                 keyExtractor={(item, index) => `${item.date}-${item.category}-${item.amount}-${index}`}                renderItem={renderTransactionItem}
@@ -874,7 +1212,7 @@ const TransactionScreen = ({ theme }) => {
                     {noTransactionsMessage}
                   </Text>
                 </View>
-              )}
+              )} */}
             </View>
 
             {/* History Modal */}
@@ -884,8 +1222,8 @@ const TransactionScreen = ({ theme }) => {
               transactions={transactionsData}
               onClose={closeHistoryModal}
               theme={theme}
-              deleteTransaction={deleteTransaction}   
-              editTransaction={editTransaction} 
+              refreshing={isRefreshing}
+              onRefresh={filterTransactions}
             />
             {/* Edit Transaction Modal */}
             {selectedTransaction && (
@@ -907,6 +1245,121 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 10,
+    marginTop: 0,
+  },
+  searchInput: {
+    height: 50,
+    color:"#fff",
+    borderColor: "#ccc",
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    marginBottom: 10,
+    backgroundColor: "#fff",
+  },
+  filterExportContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    // marginBottom: 10,
+    // marginTop:10,
+    width:220,
+    // height:50
+    border:1,
+    borderWidth:0.9,
+    boederRadius:1
+  },
+  filterButton: {
+    padding: 10,
+    borderRadius: 8,
+    justifyContent:'flex-end',
+    alignItems:'flex-end'
+    // justifyContent: "flex-end",
+    // alignItems: "flex-end",
+  },
+  
+  // Modal container
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    // backgroundColor: 'rgba(0, 0, 0, 0.5)', // Transparent background to darken the screen
+  },
+  modalContent: {
+    // backgroundColor: '#fff',
+    width: '80%',
+    borderWidth: 0.2,
+    borderColor: '#ccc',
+    borderRadius: 10,
+    padding: 20,
+    alignItems: 'center',
+    borderWidth: 0.2,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    // marginBottom: 20,
+  },
+
+  transactionCard: {
+    padding: 10,
+    borderRadius: 10,
+    marginVertical: 8,
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 4,
+  },
+  topRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  category: {
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  amount: {
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  middleRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 5,
+  },
+  date: {
+    fontSize: 14,
+  },
+  typeContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  typeText: {
+    marginLeft: 5,
+    fontSize: 14,
+  },
+  bottomRow: {
+    marginTop: 10,
+    margingRight:10,
+    flexDirection: "row",
+    justifyContent: "flex-end",
+  },
+  historyButton: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  historyText: {
+    marginLeft: 5,
+    fontSize: 14,
+  },
+  // listContainer: {
+  //   paddingHorizontal: 10,
+  // },
+  emptyText: {
+    textAlign: "center",
+    fontSize: 16,
+    marginTop: 20,
   },
   headerContainer: {
     flexDirection: "row",
@@ -940,44 +1393,67 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   filterContainer: {
+    width:150,
+    height:45,
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
+    alignItems: "flex-end",
     marginBottom: 10,
     marginHorizontal: 1,
     zIndex: 1,
   },
   pickerContainer: {
-    flex: 1,
-    marginHorizontal: 3,
-    borderWidth: 1,
-    borderColor: "#ccc",
+    width: '100%',
+    // marginBottom: 10,
+    borderColor: '#ccc',
+    borderRadius: 5,
+    // borderWidth: 0.2,
   },
   picker: {
-    height: 20,
-    backgroundColor: "#333",
+    height: 50,
     borderWidth: 1,
-    height: 40,
+    borderRadius: 5,
+    borderColor: '#ccc',
+    justifyContent: 'center',
+    paddingHorizontal: 10,
   },
-
   datePickerButton: {
-    flex: 1,
-    height: 53.5,
-    marginHorizontal: 3,
-    backgroundColor: "#333",
-    justifyContent: "center",
-    alignItems: "start",
-    borderWidth: 1,
-    borderColor: "#ccc",
+    height: 50,
+    borderWidth: 0.2,
+    borderColor: '#ccc',
+    borderRadius: 2,
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    // marginLeft:18,
+    paddingLeft:18,
+    marginBottom: 10,
   },
   datePickerText: {
-    color: "#fff",
-    marginLeft: 15,
     fontSize: 16,
   },
+  modalActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  applyButton: {
+    backgroundColor: '#01579b',
+    padding: 10,
+    borderRadius: 5,
+    width: '48%',
+    alignItems: 'center',
+  },
+  cancelButton: {
+    backgroundColor: '#dc3545',
+    padding: 10,
+    borderRadius: 5,
+    width: '48%',
+    alignItems: 'center',
+  },
   transactionsContainer: {
-    flex: 5.5,
-    paddingTop: 16,
+    flex: 1,
+    paddingTop: 10,
+    marginTop:0
   },
   noTransactionsContainer: {
     flex: 1,
@@ -1039,7 +1515,6 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "bold",
     flex: 1,
-    textAlign: "center",
     minWidth: 50,
     paddingRight: 10,
   },
@@ -1107,15 +1582,17 @@ const styles = StyleSheet.create({
     paddingLeft: 10,
   },
   listContainer: {
-    flexGrow: 1,
+    // flexGrow: 1,
     paddingBottom: 20,
     zIndex: 1,
+    padding: 0, 
+    margin: 0,
   },
   refreshButton: {
     backgroundColor: "#007BFF",
     padding: 15,
     borderRadius: 5,
-    marginTop: 20,
+    // marginTop: 20,
     borderWidth: 1,
   },
   refreshButtonText: {
@@ -1129,7 +1606,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#333",
     padding: 10,
     borderRadius: 5,
-    marginBottom: 10,
+    // marginBottom: 10,
     marginLeft: 5,
     width: 50,
     borderWidth: 1,
