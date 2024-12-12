@@ -8,7 +8,7 @@ const EditTransactionModal = ({ visible, transaction, onClose, onSave }) => {
   const [description, setDescription] = useState(transaction.description);
   const [icon, setIcon] = useState(transaction.icon || '');
   const { theme } = useTheme();
-
+   
   const handleSave = () => {
     const updatedTransaction = {
       ...transaction,
@@ -17,10 +17,10 @@ const EditTransactionModal = ({ visible, transaction, onClose, onSave }) => {
       description,
       icon,
     };
-    onSave(updatedTransaction);
-    onClose();
+      onSave(updatedTransaction);
+      onClose();
   };
-
+ 
   return (
     <Modal
       animationType="slide"
@@ -64,7 +64,7 @@ const EditTransactionModal = ({ visible, transaction, onClose, onSave }) => {
               <Text style={[styles.buttonText,{color: theme.inputText}]}>Save</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={onClose}
+               onPress={handleClose}
               style={[styles.button, { backgroundColor: theme.currentTheme === 'dark' ? '#d9534f' : '#d9534f', color: theme.inputText }]}
             >
               <Text style={[styles.buttonText,{color: theme.inputText}]}>Cancel</Text>
