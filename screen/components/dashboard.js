@@ -5,8 +5,7 @@ import {
     StyleSheet,
     ScrollView,
     TouchableOpacity,
-    Modal,
-    TextInput,
+   
     RefreshControl,
 
     Dimensions, Image,
@@ -18,7 +17,6 @@ import { ProgressBar } from "react-native-paper"; // For a Progress bar
 import { useFocusEffect } from '@react-navigation/native';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../ui/card';
 
-import { Separator } from "../ui/separator";
 import { useRoute } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
@@ -26,69 +24,43 @@ import DropDownPicker from "react-native-dropdown-picker";
 import { getUserById } from '../services/firebaseSettings';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Avatar, Menu, Divider, Provider } from 'react-native-paper';
-import DateTimePickerModal from 'react-native-modal-datetime-picker';
-import { format } from 'date-fns'; // Use date-fns for formatting dates
+
 import { useNavigation } from '@react-navigation/native'; // Import useNavigation hook
 import { doc, setDoc, getDoc, collection, onSnapshot } from "firebase/firestore";
 import { BarChart } from 'react-native-gifted-charts';
 const DashboardScreen = ({ theme }) => {
 
 
-    const [menuVisible, setMenuVisible] = useState(false);
-    const [isIncomeModalVisible, setIncomeModalVisible] = useState(false);
-    const [isExpenseModalVisible, setExpenseModalVisible] = useState(false);
+    
     
   
     
-    const [isDatePickerVisible, setDatePickerVisible] = useState(false);
-    const [isEndDatePickerVisible, setEndDatePickerVisible] = useState(false);
+   
     const [activeButton, setActiveButton] = useState('income');
-    const [isCategoryModalVisible, setCategoryModalVisible] = useState(false);
-    const [isCreateCategoryModalVisible, setCreateCategoryModalVisible] = useState(false);
-    const [isEmojiPickerVisible, setEmojiPickerVisible] = useState(false);
+   
     const [selectedIcon, setSelectedIcon] = useState(null);
     const [newCategory, setNewCategory] = useState('');
-    const [selectedCategory, setSelectedCategory] = useState(null);
+   
     const [selectedGraph, setSelectedGraph] = useState(null); // Default to null for showing all data
 
     const navigation = useNavigation();
-    const [firebaseBalance, setFirebaseBalance] = useState(0);
-    const [firebaseTotalIncome, setFirebaseTotalIncome] = useState(0);
-    const [firebaseTotalExpense, setFirebaseTotalExpense] = useState(0);
-    const [firebaseLastUpdated, setFirebaseLastUpdated] = useState("");
-    const [isModalVisible, setModalVisible] = useState(false);
+    
 
     const [IncomeCategory, setIncomeCategory] = useState([]); // State to store the income data
     const [currency, setCurrency] = useState({ value: 'USD', label: '$ Dollar', locale: 'en-US' });
 
-    const [open, setOpen] = useState(false);
-    const [value, setValue] = useState(null);
-    const [items, setItems] = useState([
-        { label: "January", value: "January" },
-        { label: "February", value: "February" },
-        { label: "March", value: "March" },
-        { label: "April", value: "April" },
-        { label: "May", value: "May" },
-        { label: "June", value: "June" },
-        { label: "July", value: "July" },
-        { label: "August", value: "August" },
-        { label: "September", value: "September" },
-        { label: "October", value: "October" },
-        { label: "November", value: "November" },
-        { label: "December", value: "December" },
-    ]);
-
+    
     const [totalIncome, setTotalIncome] = useState(0);
     const [totalExpense, setTotalExpense] = useState(0);
     const [balance, setBalance] = useState(0);
     const [lastUpdated, setLastUpdated] = useState("");
-    const [isExpenseEmojiPickerVisible, setExpenseEmojiPickerVisible] = useState(false);
+   
     const [isRefreshing, setIsRefreshing] = useState(false);
  // Default to current month
     const screenWidth = Dimensions.get('window').width;
-    const [tooltip, setTooltip] = useState(null); // State to manage tooltip
+   // State to manage tooltip
     const maxValue = Math.max(totalIncome, totalExpense, balance);
-    const yAxisStep = Math.ceil(maxValue / 5);
+    
 
     const toggleGraph = (graphType) => {
         setSelectedGraph(graphType); // Update selected graph
@@ -97,19 +69,7 @@ const DashboardScreen = ({ theme }) => {
 
     const route = useRoute();
     const [expenses, setExpenses] = useState([]);
-    const data = {
-        labels: ['Income', 'Expense', 'Balance'],
-        datasets: [
-            {
-                data: [totalIncome, totalExpense, balance],
-                colors: [
-                    () => `rgba(34, 197, 94, 0.9)`, // Green
-                    () => `rgba(220, 38, 38, 0.9)`, // Red
-                    () => `rgba(75, 85, 99, 0.9)`, // Gray
-                ],
-            },
-        ],
-    };
+ 
     useFocusEffect(
         React.useCallback(() => {
             const fetchCurrency = async () => {
@@ -154,9 +114,7 @@ const DashboardScreen = ({ theme }) => {
 
 
     // Function to handle theme switching
-    const handleThemeSwitch = (mode) => {
-        setTheme(mode);
-    };
+  
     useEffect(() => {
         const fetchUserInfo = async () => {
             try {
