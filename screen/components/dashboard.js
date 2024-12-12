@@ -36,6 +36,10 @@ const DashboardScreen = ({ theme }) => {
     const [isIncomeModalVisible, setIncomeModalVisible] = useState(false);
     const [isExpenseModalVisible, setExpenseModalVisible] = useState(false);
     
+  
+    
+    const [isDatePickerVisible, setDatePickerVisible] = useState(false);
+    const [isEndDatePickerVisible, setEndDatePickerVisible] = useState(false);
     const [activeButton, setActiveButton] = useState('income');
     const [isCategoryModalVisible, setCategoryModalVisible] = useState(false);
     const [isCreateCategoryModalVisible, setCreateCategoryModalVisible] = useState(false);

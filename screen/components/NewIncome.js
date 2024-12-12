@@ -186,7 +186,7 @@ const NewIncomeScreen = ({ route, isVisible, onClose }) => {
                 category: selectedCategory,
                 icon: selectedIcon,
                 date: transactionDate.toISOString(),
-                Id:id
+                Id: id,
             };
 
             console.log("icon", newIncome)
