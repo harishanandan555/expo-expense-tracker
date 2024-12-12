@@ -24,7 +24,6 @@ import DropDownPicker from "react-native-dropdown-picker";
 import { getUserById } from '../services/firebaseSettings';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Avatar, Menu, Divider, Provider } from 'react-native-paper';
-
 import { useNavigation } from '@react-navigation/native'; // Import useNavigation hook
 import { doc, setDoc, getDoc, collection, onSnapshot } from "firebase/firestore";
 import { BarChart } from 'react-native-gifted-charts';
@@ -264,7 +263,7 @@ const DashboardScreen = ({ theme }) => {
                                 const incomeData = userInfo.income.map((item) => ({
                                     category: item.category,
                                     amount: item.amount,
-                                    date: item.date,
+                                    // date: item.date,
                                     description: item.description,
                                     icon: item.icon || "💰", // Default icon if none is provided
                                 }));
@@ -320,7 +319,7 @@ const DashboardScreen = ({ theme }) => {
                                 const expenseData = userInfo.expenses.map((item) => ({
                                     category: item.category,
                                     amount: item.amount,
-                                    date: item.date,
+                                    // date: item.date,
                                     description: item.description,
                                     icon: item.icon || "💸", // Default icon if none is provided
                                 }));
