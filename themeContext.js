@@ -85,7 +85,7 @@ export const ThemeProvider = ({ children }) => {
       footerBackground: '#ffffff',
       transactionDropdownBackground: '#ffffff',
       footerIconText: '#FF6A00',
-      buttonBackground: '#FF8C00',   //#FF6A00
+      buttonBackground: '#04539a',   //#FF6A00
       buttonBorder: '#333',
       buttonText: '#000000',
       tableHeaderBackground: '#ffffff',
@@ -112,7 +112,7 @@ export const ThemeProvider = ({ children }) => {
     dark: {
       background: '#000000',
       text: '#ffffff',
-      buttonBackground: '#FF8C00',    //#FF6A00
+      buttonBackground: '#04539a',    //#FF6A00
       footerBackground: '#333',
       transactionDropdownBackground: '#333',
       footerIconText: '#FF6A00',

@@ -255,12 +255,12 @@ const NewExpenseScreen = ({ navigation, route, isVisible, onClose }) => {
                         ]}
                     >
                         <View style={[styles.container, { backgroundColor: theme.background }]}>
-                            <Text style={[styles.screenTitle, { color: theme.text }]}>New Expense</Text>
+                            {/* <Text style={[styles.screenTitle, { color: theme.text }]}>New Expense</Text> */}
                             {/* Header with Dark/Light Mode Toggle */}
 
 
                             <Text style={[styles.modalTitle, { color: theme.text }]}>
-                                Add New <Text style={{ color: 'green' }}>Expense</Text> Transaction
+                                Add New <Text style={{ color: 'red' }}>Expense</Text> Transaction
                             </Text>
 
                             {/* Transaction Description Input */}
@@ -325,7 +325,7 @@ const NewExpenseScreen = ({ navigation, route, isVisible, onClose }) => {
                             />
 
                             {/* Save and Cancel Buttons */}
-                            <TouchableOpacity style={[styles.saveButton, { backgroundColor: buttonBackgroundColor }]} onPress={handleSaveExpense}>
+                            <TouchableOpacity style={[styles.saveButton, { backgroundColor:theme.buttonBackground }]} onPress={handleSaveExpense}>
                                 <Text style={styles.saveButtonText}>Save</Text>
                             </TouchableOpacity>
                             <TouchableOpacity onPress={() => {
@@ -359,7 +359,8 @@ const NewExpenseScreen = ({ navigation, route, isVisible, onClose }) => {
                                                 <TouchableOpacity
                                                     style={[styles.categoryItem, { backgroundColor: theme.background }]}
                                                     onPress={() => {
-                                                        setSelectedCategory(item.name); // Set selected category
+                                                        setSelectedCategory(item.name);
+                                                        setSelectedIcon(item.icon); // Set selected category
                                                         setCategoryModalVisible(false); // Close modal
                                                     }}
                                                 >
@@ -403,7 +404,7 @@ const NewExpenseScreen = ({ navigation, route, isVisible, onClose }) => {
                                         <Text style={[styles.subText, { color: placeholderTextColor }]}>This Icon will appear in the category.</Text>
 
                                         {/* Save and Cancel Buttons */}
-                                        <TouchableOpacity style={[styles.saveButton, { backgroundColor: buttonBackgroundColor }]} onPress={handleSaveCategory}>
+                                        <TouchableOpacity style={[styles.saveButton, { backgroundColor: theme.buttonBackground }]} onPress={handleSaveCategory}>
                                             <Text style={[styles.saveButtonText, { color: buttonTextColor }]}>Save</Text>
                                         </TouchableOpacity>
                                         <TouchableOpacity style={[styles.cancelButton, { backgroundColor: cancelButtonColor }]} onPress={() => setCreateCategoryModalVisible(false)}>
@@ -454,6 +455,7 @@ const styles = StyleSheet.create({
         flex: 1,
         padding: 20,
         justifyContent: 'center',
+        marginTop:-5
     },
     scrollContent: {
         flexGrow: 1, // Ensures the content can grow and scroll
