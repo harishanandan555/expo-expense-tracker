@@ -386,24 +386,42 @@ const TransactionHistoryModal = ({ route }) => {
       return;
     }
   
-    if (transaction) {
-      console.log("Saving updated transaction:", transaction);
-      
-      // Send only updated transaction data
-      await editTransaction(transaction);
-  
-      // Additional handling for successful edit
-      if (handleEditTransaction) {
-        handleEditTransaction(transaction); // Send updated transaction to parent component
-      } else {
-        console.error("handleEditTransaction is not defined");
-      }
-  
-      setModalVisible(false);
+    // Convert Firestore timestamp to JavaScript Date if needed
+    let date;
+    if (transaction.date && transaction.date.seconds && transaction.date.nanoseconds) {
+      // Firestore Timestamp Format: { seconds, nanoseconds }
+      date = new Date(transaction.date.seconds * 1000); // Convert seconds to milliseconds
     } else {
-      console.error("Transaction is null or undefined");
+      // If it's already a valid date string, use it
+      date = new Date(transaction.date);
     }
+  
+    // Check if the date is valid
+    if (isNaN(date.getTime())) {
+      Alert.alert("Error", "Invalid date.");
+      return;
+    }
+  
+    const formattedDate = date.toISOString(); // Convert to ISO string
+    
+    // Update transaction object with formatted date
+    const updatedTransaction = { ...transaction, date: formattedDate };
+  
+    console.log("Saving updated transaction:", updatedTransaction);
+  
+    // Send only updated transaction data
+    await editTransaction(updatedTransaction);
+  
+    // Additional handling for successful edit
+    if (handleEditTransaction) {
+      handleEditTransaction(updatedTransaction); // Send updated transaction to parent component
+    } else {
+      console.error("handleEditTransaction is not defined");
+    }
+  
+    setModalVisible(false);
   };
+  
   
   const handleClose = () => {
     setModalVisible(false);
@@ -454,7 +472,7 @@ const TransactionHistoryModal = ({ route }) => {
 
             <View style={styles.actionIcons}>
               <TouchableOpacity onPress={() => handleEdit(item)}>
-                <MaterialIcons name="edit" size={24} color="#007bff" />
+                <MaterialIcons name="edit" size={30} color="#007bff" />
               </TouchableOpacity>
               <TouchableOpacity onPress={() => handleDelete(item)}>
                 <MaterialIcons name="delete" size={30} color="#dc3545" />
@@ -568,6 +586,8 @@ const styles = StyleSheet.create({
   actionIcons: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
+    marginRight:10,
+    paddingRight:10
   },
   modalContainer: {
     flex: 1,

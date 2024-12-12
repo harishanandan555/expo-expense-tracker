@@ -44,12 +44,6 @@ const TransactionScreen = ({ theme}) => {
   const [tempSelectedDate, setTempSelectedDate] = useState(null);
   const [filteredTransactions, setFilteredTransactions] = useState(null);
 
-  // const handleApplyFilters = () => {
-  //   setSelectedCategory(tempSelectedCategory);
-  //   setSelectedType(tempSelectedType);
-  //   setSelectedDate(tempSelectedDate);
-  //   setFilterModalVisible(false);
-  // };
   const handleApplyFilters = () => {
     let filteredTransactions = transactionsData;
 
@@ -132,15 +126,15 @@ const TransactionScreen = ({ theme}) => {
         ];
   
         const validTransactions = allTransactions.filter(
-          (transaction) => transaction.date !== null
+          (transaction) => transaction.date && !isNaN(new Date(transaction.date).getTime())
         );
-  
+
         if (validTransactions.length > 0) {
           setTransactionsData(validTransactions);
-          // console.log(
-          //   'Valid transactions in transaction screen:',
-          //   validTransactions
-          // );
+          console.log(
+            'Valid transactions in transaction screen:',
+            validTransactions
+          );
         } else {
           setNoTransactionsMessage('No transactions found.');
           setTransactionsFound(false);
@@ -393,12 +387,12 @@ const TransactionScreen = ({ theme}) => {
         Alert.alert("Error", "User not authenticated.");
         return;
     }
-    
+
     const userDocRef = doc(db, "users", user.uid);
 
     Alert.alert(
         "Confirm Edit",
-        `Are you sure you want to edit this ${transaction.type}?`,
+        `Are you sure you want to edit this ${transaction.description}?`,
         [
             {
                 text: "Cancel",
@@ -418,29 +412,26 @@ const TransactionScreen = ({ theme}) => {
                             const targetArray =
                                 transaction.type.toLowerCase() === "expense" ? expenses : income;
 
-                            // Validate and convert transaction.date
+                            // Directly compare date strings
                             console.log("Transaction date:", transaction.date);
-                            const transactionDate = new Date(transaction.date); // Convert to Date object
-                            
-                            console.log("Parsed transaction date:", transactionDate);
-                            if (isNaN(transactionDate.getTime())) {
+                            const transactionDateString = transaction.date; // Since it's already in ISO format
+
+                            console.log("Parsed transaction date:", transactionDateString);
+                            if (!transactionDateString) {
                                 Alert.alert("Error", "Invalid transaction date.");
                                 return;
                             }
 
-                            // Find the transaction to edit based on a combination of fields
+                            // Find the transaction to edit based on date, description, and category
                             const transactionIndex = targetArray.findIndex(item => {
-                              const itemDate = new Date(item.date);
+                                const itemDateString = item.date; // Firestore date stored as ISO string
 
-                              console.log("Item date:", item.date);
-                              console.log("Parsed item date:", itemDate);
-                              if (isNaN(itemDate.getTime())) {
-                                  return false; // Skip invalid dates
-                              }
-                                // Date comparison
-                                return itemDate.toISOString() === transactionDate.toISOString() &&
-                                item.description.trim() === transaction.description.trim() &&
-                                item.category.trim() === transaction.category.trim();
+                                console.log("Item date:", itemDateString);
+                                
+                                // Compare the date strings and other fields
+                                return itemDateString === transactionDateString &&
+                                       item.description.trim() === transaction.description.trim() &&
+                                       item.category.trim() === transaction.category.trim();
                             });
 
                             if (transactionIndex !== -1) {
@@ -459,19 +450,15 @@ const TransactionScreen = ({ theme}) => {
 
                                 // Update local state if needed
                                 setTransactionsData(prevTransactions =>
-                                  prevTransactions.map(item => {
-                                      const itemDate = new Date(item.date); // Assuming date is stored as ISO string
-
-                                      if (isNaN(itemDate.getTime())) {
-                                          return item; // Skip invalid dates
-                                      }
-                                      return itemDate.toISOString() === transactionDate.toISOString() &&
-                                             item.description.trim() === transaction.description.trim() &&
-                                             item.category.trim() === transaction.category.trim()
-                                          ? { ...item, ...transaction }
-                                          : item;
-                                  })
-                              );
+                                    prevTransactions.map(item => {
+                                        // Compare by date string and other fields
+                                        return item.date === transactionDateString &&
+                                               item.description.trim() === transaction.description.trim() &&
+                                               item.category.trim() === transaction.category.trim()
+                                            ? { ...item, ...transaction }
+                                            : item;
+                                    })
+                                );
                             } else {
                                 console.log("Transaction not found for editing.");
                                 Alert.alert("Error", "Transaction not found.");
@@ -489,7 +476,6 @@ const TransactionScreen = ({ theme}) => {
         ]
     );
 };
-
 
 const handleEditTransaction =  (updatedData) => {
   console.log("Updated transaction received:", updatedData);// Log selected transaction
