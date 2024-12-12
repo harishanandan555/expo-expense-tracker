@@ -27,6 +27,8 @@ import { Avatar, Menu, Divider, Provider } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native'; // Import useNavigation hook
 import { doc, setDoc, getDoc, collection, onSnapshot } from "firebase/firestore";
 import { BarChart } from 'react-native-gifted-charts';
+
+
 const DashboardScreen = ({ theme }) => {
 
 
@@ -55,7 +57,7 @@ const DashboardScreen = ({ theme }) => {
     const [lastUpdated, setLastUpdated] = useState("");
    
     const [isRefreshing, setIsRefreshing] = useState(false);
- // Default to current month
+    // Default to current month
     const screenWidth = Dimensions.get('window').width;
    // State to manage tooltip
     const maxValue = Math.max(totalIncome, totalExpense, balance);
@@ -448,7 +450,7 @@ const DashboardScreen = ({ theme }) => {
 
     const onRefresh = () => {
         setIsRefreshing(true);
-    
+
         // Add your refresh logic here (e.g., fetch new data or reset the form)
         fetchIncomeData(); // Example of refreshing category data
         fetchExpenseData();
@@ -476,9 +478,11 @@ const DashboardScreen = ({ theme }) => {
                     style={[
                         styles.newIncomeButton,
                         {
-                            backgroundColor:
-                                activeButton === 'income' ? (isDarkMode ? '#04539a' : '#04539a') : backgroundColor,
-                            borderColor: '#FF6A00',
+                            backgroundColor: theme.buttonBackground,
+                            // borderColor: '#FF6A00',
+                            // backgroundColor:
+                            //     activeButton === 'income' ? (isDarkMode ? '#04539a' : '#04539a') : backgroundColor,
+                            // borderColor: '#FF6A00',
                         },
                     ]}
                     onPress={toggleIncomeModals}
@@ -499,7 +503,8 @@ const DashboardScreen = ({ theme }) => {
                         {
                             // backgroundColor: activeButton === 'expense' ? (isDarkMode ? '#FF6A00' : '#FF8C00') : backgroundColor,
                             backgroundColor: theme.cardBackground,
-                            borderColor: '#04539a',
+                            borderColor: theme.buttonBackground,
+                            // borderColor: '#04539a',
                         },
                     ]}
                     onPress={toggleExpenseModals}
@@ -519,15 +524,15 @@ const DashboardScreen = ({ theme }) => {
             {/* <Separator theme={theme} /> */}
 
             <ScrollView contentContainerStyle={[styles.scrollContent, { backgroundColor: theme.background }]}
-            
-            refreshControl={
-                <RefreshControl
-                    refreshing={isRefreshing} // Add the state variable
-                    onRefresh={onRefresh} // Add the handler function
-                    colors={['#008F11']} // Optional: customize colors for Android
-                    tintColor="#008F11" // Optional: customize color for iOS
-                />
-            }>
+
+                refreshControl={
+                    <RefreshControl
+                        refreshing={isRefreshing} // Add the state variable
+                        onRefresh={onRefresh} // Add the handler function
+                        colors={['#008F11']} // Optional: customize colors for Android
+                        tintColor="#008F11" // Optional: customize color for iOS
+                    />
+                }>
 
                 {/* Top Upgrade Bar */}
                 {/* <View style={[styles.upgradeBar, { backgroundColor: '#FF8C00' }]}>
@@ -581,7 +586,7 @@ const DashboardScreen = ({ theme }) => {
 
 
                 {/* Overview Section */}
-                
+
                 {/* <TouchableOpacity onPress={() => setDatePickerVisible(true)} style={styles.datePickerWrapper}>
                         <Text style={[styles.dateText, { color: textColor }]}>
                             {`${formatDate(startDate)} - ${formatDate(endDate)}`}
@@ -630,128 +635,128 @@ const DashboardScreen = ({ theme }) => {
 
                 {/* <Separator theme={theme} /> */}
                 <Card theme={theme}>
-  <Text style={[styles.sectionTitle, { color: theme.text }]}>Income</Text>
-  <View>
-    {IncomeCategory.length === 0 ? (
-      <>
-        <Text style={[styles.noDataText, { color: theme.text }]}>No income data available.</Text>
-        <Text style={styles.noDataSubtext}>Add new income to see details.</Text>
-      </>
-    ) : (
-      (() => {
-        const totalIncome = IncomeCategory.reduce((sum, income) => sum + income.amount, 0);
-        const normalizedIncomeData = Object.values(
-          IncomeCategory.sort((a, b) => new Date(b.date) - new Date(a.date)) // Sort by most recent date
-            .slice(0, 3)
-            .reduce((acc, curr) => {
-              if (!acc[curr.category]) {
-                acc[curr.category] = { ...curr, amount: 0 }; // Initialize with category data
-              }
-              acc[curr.category].amount += curr.amount; // Aggregate the amounts
-              return acc;
-            }, {})
-        ).sort((a, b) => b.amount - a.amount);
+                    <Text style={[styles.sectionTitle, { color: theme.text }]}>Income</Text>
+                    <View>
+                        {IncomeCategory.length === 0 ? (
+                            <>
+                                <Text style={[styles.noDataText, { color: theme.text }]}>No income data available.</Text>
+                                <Text style={styles.noDataSubtext}>Add new income to see details.</Text>
+                            </>
+                        ) : (
+                            (() => {
+                                const totalIncome = IncomeCategory.reduce((sum, income) => sum + income.amount, 0);
+                                const normalizedIncomeData = Object.values(
+                                    IncomeCategory.sort((a, b) => new Date(b.date) - new Date(a.date)) // Sort by most recent date
+                                        .slice(0, 3)
+                                        .reduce((acc, curr) => {
+                                            if (!acc[curr.category]) {
+                                                acc[curr.category] = { ...curr, amount: 0 }; // Initialize with category data
+                                            }
+                                            acc[curr.category].amount += curr.amount; // Aggregate the amounts
+                                            return acc;
+                                        }, {})
+                                ).sort((a, b) => b.amount - a.amount);
 
-        const totalIncomeForNormalization = normalizedIncomeData.reduce((sum, item) => sum + item.amount, 0);
+                                const totalIncomeForNormalization = normalizedIncomeData.reduce((sum, item) => sum + item.amount, 0);
 
-        return (
-          <View style={styles.sectionContainer}>
-            {normalizedIncomeData.map((item, index) => {
-              const amount = item.amount || 0;
-              const percentage = totalIncomeForNormalization
-                ? (amount / totalIncomeForNormalization) * 100
-                : 0;
+                                return (
+                                    <View style={styles.sectionContainer}>
+                                        {normalizedIncomeData.map((item, index) => {
+                                            const amount = item.amount || 0;
+                                            const percentage = totalIncomeForNormalization
+                                                ? (amount / totalIncomeForNormalization) * 100
+                                                : 0;
 
-              return (
-                <View key={index} style={[styles.listItem]}>
-                  <View style={styles.itemHeader}>
-                    <Text style={[styles.emoji, { color: theme.text }]}>{item.icon}</Text>
-                    <Text style={[styles.itemCategory, { color: theme.text,  }]}>
-                      {item.category}
-                    </Text>
-                    <Text style={[styles.percentageText, { color: theme.text,  }]}>
-                      ({percentage.toFixed(0)}%){" "}
-                    </Text>
-                    <Text style={[styles.amountText, { color: theme.text }]}>
-                      {currency.label.split(" ")[0]}{amount.toFixed(2)}
-                    </Text>
-                  </View>
-                  <ProgressBar
-                    progress={percentage / 100}
-                    color="#10B981"
-                    style={styles.fullWidthProgressBar}
-                  />
-                </View>
-              );
-            })}
-          </View>
-        );
-      })()
-    )}
-  </View>
-</Card>
+                                            return (
+                                                <View key={index} style={[styles.listItem]}>
+                                                    <View style={styles.itemHeader}>
+                                                        <Text style={[styles.emoji, { color: theme.text }]}>{item.icon}</Text>
+                                                        <Text style={[styles.itemCategory, { color: theme.text, }]}>
+                                                            {item.category}
+                                                        </Text>
+                                                        <Text style={[styles.percentageText, { color: theme.text, }]}>
+                                                            ({percentage.toFixed(0)}%){" "}
+                                                        </Text>
+                                                        <Text style={[styles.amountText, { color: theme.text }]}>
+                                                            {currency.label.split(" ")[0]}{amount.toFixed(2)}
+                                                        </Text>
+                                                    </View>
+                                                    <ProgressBar
+                                                        progress={percentage / 100}
+                                                        color="#10B981"
+                                                        style={styles.fullWidthProgressBar}
+                                                    />
+                                                </View>
+                                            );
+                                        })}
+                                    </View>
+                                );
+                            })()
+                        )}
+                    </View>
+                </Card>
 
-<Card theme={theme}>
-  <Text style={[styles.sectionTitle, { color: theme.text }]}>Expense</Text>
-  <View>
-    {expenses.length === 0 ? (
-      <>
-        <Text style={[styles.noDataText, { color: theme.text }]}>No data for the selected period.</Text>
-        <Text style={styles.noDataSubtext}>Try to select a different period or add expenses.</Text>
-      </>
-    ) : (
-      (() => {
-        const totalExpense = expenses.reduce((sum, expense) => sum + expense.amount, 0);
-        const normalizedExpenseData = Object.values(
-          expenses.sort((a, b) => new Date(b.date) - new Date(a.date)) // Sort by most recent date
-            .slice(0, 3)
-            .reduce((acc, curr) => {
-              if (!acc[curr.category]) {
-                acc[curr.category] = { ...curr, amount: 0 }; // Initialize with category data
-              }
-              acc[curr.category].amount += curr.amount; // Aggregate the amounts
-              return acc;
-            }, {})
-        ).sort((a, b) => b.amount - a.amount);
+                <Card theme={theme}>
+                    <Text style={[styles.sectionTitle, { color: theme.text }]}>Expense</Text>
+                    <View>
+                        {expenses.length === 0 ? (
+                            <>
+                                <Text style={[styles.noDataText, { color: theme.text }]}>No data for the selected period.</Text>
+                                <Text style={styles.noDataSubtext}>Try to select a different period or add expenses.</Text>
+                            </>
+                        ) : (
+                            (() => {
+                                const totalExpense = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+                                const normalizedExpenseData = Object.values(
+                                    expenses.sort((a, b) => new Date(b.date) - new Date(a.date)) // Sort by most recent date
+                                        .slice(0, 3)
+                                        .reduce((acc, curr) => {
+                                            if (!acc[curr.category]) {
+                                                acc[curr.category] = { ...curr, amount: 0 }; // Initialize with category data
+                                            }
+                                            acc[curr.category].amount += curr.amount; // Aggregate the amounts
+                                            return acc;
+                                        }, {})
+                                ).sort((a, b) => b.amount - a.amount);
 
-        const totalExpenseForNormalization = normalizedExpenseData.reduce((sum, item) => sum + item.amount, 0);
+                                const totalExpenseForNormalization = normalizedExpenseData.reduce((sum, item) => sum + item.amount, 0);
 
-        return (
-          <View style={styles.sectionContainer}>
-            {normalizedExpenseData.map((item, index) => {
-              const amount = item.amount || 0;
-              const percentage = totalExpenseForNormalization
-                ? (amount / totalExpenseForNormalization) * 100
-                : 0;
+                                return (
+                                    <View style={styles.sectionContainer}>
+                                        {normalizedExpenseData.map((item, index) => {
+                                            const amount = item.amount || 0;
+                                            const percentage = totalExpenseForNormalization
+                                                ? (amount / totalExpenseForNormalization) * 100
+                                                : 0;
 
-              return (
-                <View key={index} style={[styles.listItem]}>
-                  <View style={styles.itemHeader}>
-                    <Text style={[styles.emoji, { color: theme.text }]}>{item.icon}</Text>
-                    <Text style={[styles.itemCategory, { color: theme.text, }]}>
-                      {item.category}
-                    </Text>
-                    <Text style={[styles.percentageText, { color: theme.text,  }]}>
-                      ({percentage.toFixed(0)}%){" "}
-                    </Text>
-                    <Text style={[styles.amountText, { color: theme.text }]}>
-                      {currency.label.split(" ")[0]}{amount.toFixed(2)}
-                    </Text>
-                  </View>
-                  <ProgressBar
-                    progress={percentage / 100}
-                    color="#FF0000"
-                    style={styles.fullWidthProgressBar}
-                  />
-                </View>
-              );
-            })}
-          </View>
-        );
-      })()
-    )}
-  </View>
-</Card>
+                                            return (
+                                                <View key={index} style={[styles.listItem]}>
+                                                    <View style={styles.itemHeader}>
+                                                        <Text style={[styles.emoji, { color: theme.text }]}>{item.icon}</Text>
+                                                        <Text style={[styles.itemCategory, { color: theme.text, }]}>
+                                                            {item.category}
+                                                        </Text>
+                                                        <Text style={[styles.percentageText, { color: theme.text, }]}>
+                                                            ({percentage.toFixed(0)}%){" "}
+                                                        </Text>
+                                                        <Text style={[styles.amountText, { color: theme.text }]}>
+                                                            {currency.label.split(" ")[0]}{amount.toFixed(2)}
+                                                        </Text>
+                                                    </View>
+                                                    <ProgressBar
+                                                        progress={percentage / 100}
+                                                        color="#FF0000"
+                                                        style={styles.fullWidthProgressBar}
+                                                    />
+                                                </View>
+                                            );
+                                        })}
+                                    </View>
+                                );
+                            })()
+                        )}
+                    </View>
+                </Card>
 
 
 
