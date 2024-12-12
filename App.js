@@ -10,6 +10,8 @@ import NewExpenseScreen from './screen/components/NewExpense';
 import PhoneAuth from './screen/auth/phoneAuth';
 import EmailAuth from './screen/auth/emailAuth';
 import { auth, db } from './config/firebaseConfig';
+import TransactionHistoryModal from './screen/components/TransactionHistory';
+import EditTransactionModal from './screen/components/EditTransaction';
 
 const Stack = createStackNavigator();
 
@@ -29,6 +31,8 @@ export default function App() {
 					<Stack.Screen name="NewExpense" options={{ headerShown: false }} component={NewExpenseScreen} />
 					<Stack.Screen name="PhoneAuthentication" options={{ headerShown: false }} component={PhoneAuth} />
 					<Stack.Screen name="EmailAuthentication" options={{ headerShown: false }} component={EmailAuth} />
+					<Stack.Screen name="TransactionHistory" options={{ headerShown: false }} component={TransactionHistoryModal}/>
+					<Stack.Screen name="EditTransaction" options={{ headerShown: false }} component={EditTransactionModal}/>
 				</Stack.Navigator>
 			</NavigationContainer>
 		</ThemeProvider>

@@ -29,7 +29,6 @@ import Toast from 'react-native-toast-message';
 import cuid from "cuid";
 
 
-
 const NewExpenseScreen = ({ navigation, route, isVisible, onClose }) => {
 
     const { theme } = useTheme();

@@ -102,6 +102,9 @@ export const ThemeProvider = ({ children }) => {
       inputBorderColor: '#ccc',
       cardBackground: '#FFFFFF',
       borderColor: '#000000',
+      transactionCard:'#ffffff',
+      searchInput:'#ffffff',
+      searchInputText: '#ffffff',
       //=====================================
       shadowColor: '#000',
       borderRadius: 10,
@@ -132,6 +135,9 @@ export const ThemeProvider = ({ children }) => {
       inputBorderColor: '#FF6A00',
       cardBackground: '#333333',
       borderColor: '#ffffff',
+      transactionCard:'#222222',
+      searchInput:'#222222',
+      searchInputText: '#222222',
       //=========================
       shadowColor: '#000',
       borderRadius: 10,
