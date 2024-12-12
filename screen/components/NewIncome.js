@@ -53,7 +53,7 @@ const NewIncomeScreen = ({ route, isVisible, onClose }) => {
     const textColor = isDarkMode ? '#fff' : '#000';
     const inputBorderColor = isDarkMode ? '#FF6A00' : '#ccc';
     const placeholderTextColor = isDarkMode ? '#999' : '#aaa';
-    const buttonBackgroundColor = isDarkMode ? '#FF6A00' : '#FF6A00';
+    const buttonBackgroundColor = isDarkMode ? '#04539a' : '#FF6A00';
     const buttonTextColor = '#fff';
     const cancelButtonColor = isDarkMode ? '#444' : '#ddd';
     const navigation = useNavigation();
@@ -97,7 +97,7 @@ const NewIncomeScreen = ({ route, isVisible, onClose }) => {
                 ...userCategories.map((category) => ({ ...category, isDefault: false })),
             ];
 
-            // console.log("combinedCategories: ", combinedCategories)
+            console.log("combinedCategories: ", combinedCategories)
 
             setCategories(combinedCategories);
             setFilteredCategories(combinedCategories);
@@ -186,6 +186,7 @@ const NewIncomeScreen = ({ route, isVisible, onClose }) => {
                 date: transactionDate.toISOString(),
             };
 
+            console.log("icon", newIncome)
             // Fetch existing user data
             const userDoc = await getDoc(userRef);
             if (userDoc.exists()) {
@@ -293,8 +294,7 @@ const NewIncomeScreen = ({ route, isVisible, onClose }) => {
                         <View style={[styles.container, { backgroundColor: theme.background }]}
                             keyboardShouldPersistTaps="handled">
                             {/* Header with Dark/Light Mode Toggle */}
-                            <Text style={[styles.screenTitle, { color: theme.text }]}>New Income</Text>
-
+                         
 
                             <Text style={[styles.modalTitle, { color: theme.text }]}>
                                 Add New <Text style={{ color: 'green' }}>Income</Text> Transaction
@@ -362,7 +362,7 @@ const NewIncomeScreen = ({ route, isVisible, onClose }) => {
                             />
 
                             {/* Save and Cancel Buttons */}
-                            <TouchableOpacity style={[styles.saveButton, { backgroundColor: buttonBackgroundColor }]} onPress={handleSaveIncome}>
+                            <TouchableOpacity style={[styles.saveButton, { backgroundColor: theme.buttonBackground }]} onPress={handleSaveIncome}>
                                 <Text style={styles.saveButtonText}>Save</Text>
                             </TouchableOpacity>
                             <TouchableOpacity onPress={() => {
@@ -403,7 +403,8 @@ const NewIncomeScreen = ({ route, isVisible, onClose }) => {
                                                 <TouchableOpacity
                                                     style={[styles.categoryItem, { backgroundColor: theme.background }]}
                                                     onPress={() => {
-                                                        setSelectedCategory(item.name); // Set selected category
+                                                        setSelectedCategory(item.name);
+                                                        setSelectedIcon(item.icon); // Set selected category
                                                         setCategoryModalVisible(false); // Close modal
                                                     }}
                                                 >
@@ -453,7 +454,7 @@ const NewIncomeScreen = ({ route, isVisible, onClose }) => {
                                         <Text style={[styles.subText, { color: placeholderTextColor }]}>This Icon will appear in the category.</Text>
 
                                         {/* Save and Cancel Buttons */}
-                                        <TouchableOpacity style={[styles.saveButton, { backgroundColor: buttonBackgroundColor }]} onPress={handleSaveCategory}>
+                                        <TouchableOpacity style={[styles.saveButton, { backgroundColor: theme.buttonBackground }]} onPress={handleSaveCategory}>
                                             <Text style={[styles.saveButtonText, { color: theme.text }]}>Save</Text>
                                         </TouchableOpacity>
                                         <TouchableOpacity style={[styles.cancelButton, { backgroundColor: cancelButtonColor }]}
@@ -497,6 +498,7 @@ const styles = StyleSheet.create({
         flex: 1,
         padding: 20,
         justifyContent: 'center',
+        marginTop:-5
     },
     scrollContent: {
         flexGrow: 1, // Ensures the content can grow and scroll
@@ -566,7 +568,7 @@ const styles = StyleSheet.create({
         marginBottom: 5,
     },
     datePickerText: {
-        fontSize: 13,
+        fontSize: 12,
     },
     saveButton: {
         marginTop: 20,

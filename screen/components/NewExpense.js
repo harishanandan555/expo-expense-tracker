@@ -29,13 +29,16 @@ import Toast from 'react-native-toast-message';
 
 
 const NewExpenseScreen = ({ navigation, route, isVisible, onClose }) => {
+
     const { theme } = useTheme();
     const [transactionDate, setTransactionDate] = useState(new Date());
     const [isDatePickerVisible, setDatePickerVisible] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [categories, setCategories] = useState(null);
+
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
+
     const [newCategory, setNewCategory] = useState('');
     const [transactionAmount, setTransactionAmount] = useState('');
     const [transactionDescription, setTransactionDescription] = useState('');
@@ -48,12 +51,14 @@ const NewExpenseScreen = ({ navigation, route, isVisible, onClose }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [filteredCategories, setFilteredCategories] = useState(categories || []);
     const inputBackgroundColor = isDarkMode ? '#333' : '#f4f4f4';
+
     const [dbLoaded, setDbLoaded] = useState(false);
     const [expenses, setExpenses] = useState([]);
     const cardBackgroundColor = isDarkMode ? '#121212' : '#f4f4f4';
     const backgroundColor = isDarkMode ? '#1C1C1E' : '#fff';
     const textColor = isDarkMode ? '#fff' : '#000';
     const inputBorderColor = isDarkMode ? '#FF6A00' : '#ccc';
+
     const placeholderTextColor = isDarkMode ? '#999' : '#aaa';
     const buttonBackgroundColor = isDarkMode ? '#FF6A00' : '#FF6A00';
     const buttonTextColor = '#fff';
@@ -107,14 +112,14 @@ const NewExpenseScreen = ({ navigation, route, isVisible, onClose }) => {
 
 
 
-   
+
 
     const handleSaveExpense = async () => {
         if (!transactionAmount || !selectedCategory || !transactionDate) {
             Alert.alert('Error', 'Please fill out all required fields: amount, category, and date.');
             return;
         }
-    
+
         try {
             // Retrieve userId from AsyncStorage
             const userId = await AsyncStorage.getItem('userId');
@@ -122,11 +127,11 @@ const NewExpenseScreen = ({ navigation, route, isVisible, onClose }) => {
                 Alert.alert('Error', 'User ID not found. Please sign in again.');
                 return;
             }
-    
+
             // Get a reference to the "users" collection in Firebase
             const usersCollection = collection(db, 'users');
             const userRef = doc(usersCollection, userId);
-    
+
             // Prepare new expense transaction
             const newExpense = {
                 description: transactionDescription,
@@ -135,7 +140,7 @@ const NewExpenseScreen = ({ navigation, route, isVisible, onClose }) => {
                 icon: selectedIcon,
                 date: transactionDate.toISOString(),
             };
-    
+
             // Fetch existing user data
             const userDoc = await getDoc(userRef);
             if (userDoc.exists()) {
@@ -156,7 +161,7 @@ const NewExpenseScreen = ({ navigation, route, isVisible, onClose }) => {
                     { merge: true }
                 );
             }
-    
+
             // Display success message
             Toast.show({
                 type: 'success',
@@ -164,13 +169,13 @@ const NewExpenseScreen = ({ navigation, route, isVisible, onClose }) => {
                 text2: 'Expense transaction saved successfully!',
                 
             });
-    
+
             // Reset input fields
             setTransactionDescription('');
             setTransactionAmount('');
             setSelectedCategory(null);
             setSelectedIcon(null);
-    
+
             // Navigate back to the main screen with a refresh flag
             navigation.navigate('Main', { refresh: true });
         } catch (error) {
@@ -178,7 +183,7 @@ const NewExpenseScreen = ({ navigation, route, isVisible, onClose }) => {
             Alert.alert('Error', `Could not save expense transaction: ${error.message}`);
         }
     };
-    
+
 
 
     const [userId, setUserId] = useState(null);
@@ -249,24 +254,13 @@ const NewExpenseScreen = ({ navigation, route, isVisible, onClose }) => {
                             { backgroundColor: theme.background },
                         ]}
                     >
-
-                              <Toast
-                                    style={{
-                                    position: "absolute",
-                                    top: 50,
-                                    bottom:30,
-                                    left: 0,
-                                    right: 0,
-          
-                                        }}
-                              />
                         <View style={[styles.container, { backgroundColor: theme.background }]}>
-                            <Text style={[styles.screenTitle, { color: theme.text }]}>New Expense</Text>
+                            {/* <Text style={[styles.screenTitle, { color: theme.text }]}>New Expense</Text> */}
                             {/* Header with Dark/Light Mode Toggle */}
 
 
                             <Text style={[styles.modalTitle, { color: theme.text }]}>
-                                Add New <Text style={{ color: 'green' }}>Expense</Text> Transaction
+                                Add New <Text style={{ color: 'red' }}>Expense</Text> Transaction
                             </Text>
 
                             {/* Transaction Description Input */}
@@ -331,7 +325,7 @@ const NewExpenseScreen = ({ navigation, route, isVisible, onClose }) => {
                             />
 
                             {/* Save and Cancel Buttons */}
-                            <TouchableOpacity style={[styles.saveButton, { backgroundColor: buttonBackgroundColor }]} onPress={handleSaveExpense}>
+                            <TouchableOpacity style={[styles.saveButton, { backgroundColor:theme.buttonBackground }]} onPress={handleSaveExpense}>
                                 <Text style={styles.saveButtonText}>Save</Text>
                             </TouchableOpacity>
                             <TouchableOpacity onPress={() => {
@@ -365,7 +359,8 @@ const NewExpenseScreen = ({ navigation, route, isVisible, onClose }) => {
                                                 <TouchableOpacity
                                                     style={[styles.categoryItem, { backgroundColor: theme.background }]}
                                                     onPress={() => {
-                                                        setSelectedCategory(item.name); // Set selected category
+                                                        setSelectedCategory(item.name);
+                                                        setSelectedIcon(item.icon); // Set selected category
                                                         setCategoryModalVisible(false); // Close modal
                                                     }}
                                                 >
@@ -409,7 +404,7 @@ const NewExpenseScreen = ({ navigation, route, isVisible, onClose }) => {
                                         <Text style={[styles.subText, { color: placeholderTextColor }]}>This Icon will appear in the category.</Text>
 
                                         {/* Save and Cancel Buttons */}
-                                        <TouchableOpacity style={[styles.saveButton, { backgroundColor: buttonBackgroundColor }]} onPress={handleSaveCategory}>
+                                        <TouchableOpacity style={[styles.saveButton, { backgroundColor: theme.buttonBackground }]} onPress={handleSaveCategory}>
                                             <Text style={[styles.saveButtonText, { color: buttonTextColor }]}>Save</Text>
                                         </TouchableOpacity>
                                         <TouchableOpacity style={[styles.cancelButton, { backgroundColor: cancelButtonColor }]} onPress={() => setCreateCategoryModalVisible(false)}>
@@ -435,7 +430,15 @@ const NewExpenseScreen = ({ navigation, route, isVisible, onClose }) => {
                                     </TouchableOpacity>
                                 </View>
                             </Modal>
-                            
+                            <Toast
+        style={{
+          position: "absolute",
+          top: 50,
+          left: 0,
+          right: 0,
+          
+        }}
+      />
 
 
                         </View>
@@ -452,6 +455,7 @@ const styles = StyleSheet.create({
         flex: 1,
         padding: 20,
         justifyContent: 'center',
+        marginTop:-5
     },
     scrollContent: {
         flexGrow: 1, // Ensures the content can grow and scroll
