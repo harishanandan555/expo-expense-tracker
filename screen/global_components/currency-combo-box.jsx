@@ -328,7 +328,8 @@ export function CurrencyComboBox({ theme }) {
       <Button
         title={selectedOption ? selectedOption.label : "Set Currency"}
         onPress={() => setOpen(!open)}
-        color={theme?.buttonBackground || "blue"}
+        // color={theme?.buttonBackground || "blue"}
+        color = {theme.buttonBackground}
       />
 
       {open && <OptionList setOpen={setOpen} setSelectedOption={onSelectOption} />}

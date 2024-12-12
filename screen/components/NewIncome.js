@@ -283,7 +283,7 @@ const NewIncomeScreen = ({ route, isVisible, onClose }) => {
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             >
                 <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-                    
+
                     <ScrollView
                         contentContainerStyle={[
                             styles.scrollContent,
@@ -362,7 +362,7 @@ const NewIncomeScreen = ({ route, isVisible, onClose }) => {
                             />
 
                             {/* Save and Cancel Buttons */}
-                            <TouchableOpacity style={[styles.saveButton, { backgroundColor: buttonBackgroundColor }]} onPress={handleSaveIncome}>
+                            <TouchableOpacity style={[styles.saveButton, { backgroundColor: theme.buttonBackgroundl }]} onPress={handleSaveIncome}>
                                 <Text style={styles.saveButtonText}>Save</Text>
                             </TouchableOpacity>
                             <TouchableOpacity onPress={() => {

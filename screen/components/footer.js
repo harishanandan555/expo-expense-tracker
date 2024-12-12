@@ -91,21 +91,24 @@ export default function Footer({ theme, setCurrentScreen }) {
         style={styles.button}
         accessibilityLabel="Go to Dashboard"
       >
-        <Icon name="home-outline" size={24} color={theme.footerIconText} />
+        {/* <Icon name="home-outline" size={24} color={theme.footerIconText} /> */}
+        <Icon name="home-outline" size={24} color={theme.buttonBackground} />
       </TouchableOpacity>
       <TouchableOpacity
         onPress={() => setCurrentScreen('Transactions')}
         style={styles.button}
         accessibilityLabel="Go to Transactions"
       >
-        <Icon name="wallet-outline" size={24} color={theme.footerIconText} />
+        {/* <Icon name="wallet-outline" size={24} color={theme.footerIconText} /> */}
+        <Icon name="wallet-outline" size={24} color={theme.buttonBackground} />
       </TouchableOpacity>
       <TouchableOpacity
         onPress={() => setCurrentScreen('Settings')}
         style={styles.button}
         accessibilityLabel="Go to Settings"
       >
-        <Icon name="settings-outline" size={24} color={theme.footerIconText} />
+        {/* <Icon name="settings-outline" size={24} color={theme.footerIconText} /> */}
+        <Icon name="settings-outline" size={24} color={theme.buttonBackground} />
       </TouchableOpacity>
     </View>
   );

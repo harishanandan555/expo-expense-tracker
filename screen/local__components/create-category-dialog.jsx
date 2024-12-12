@@ -508,7 +508,7 @@ export const CreateCategoryDialogButton = ({ theme, type, onSuccessCallback }) =
         <Button
           title="Create New"
           onPress={() => setOpen(true)}
-          color='#FF8C00'
+          color= {theme.buttonBackground}
         />
 
         {/* Dialog Content */}

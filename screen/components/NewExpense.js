@@ -167,7 +167,7 @@ const NewExpenseScreen = ({ navigation, route, isVisible, onClose }) => {
                 type: 'success',
                 text1: 'Success',
                 text2: 'Expense transaction saved successfully!',
-                
+
             });
 
             // Reset input fields
@@ -325,7 +325,7 @@ const NewExpenseScreen = ({ navigation, route, isVisible, onClose }) => {
                             />
 
                             {/* Save and Cancel Buttons */}
-                            <TouchableOpacity style={[styles.saveButton, { backgroundColor: buttonBackgroundColor }]} onPress={handleSaveExpense}>
+                            <TouchableOpacity style={[styles.saveButton, { backgroundColor: theme.buttonBackground }]} onPress={handleSaveExpense}>
                                 <Text style={styles.saveButtonText}>Save</Text>
                             </TouchableOpacity>
                             <TouchableOpacity onPress={() => {
@@ -430,14 +430,14 @@ const NewExpenseScreen = ({ navigation, route, isVisible, onClose }) => {
                                 </View>
                             </Modal>
                             <Toast
-        style={{
-          position: "absolute",
-          top: 50,
-          left: 0,
-          right: 0,
-          
-        }}
-      />
+                                style={{
+                                    position: "absolute",
+                                    top: 50,
+                                    left: 0,
+                                    right: 0,
+
+                                }}
+                            />
 
 
                         </View>

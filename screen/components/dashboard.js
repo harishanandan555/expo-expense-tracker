@@ -29,6 +29,8 @@ import { format } from 'date-fns'; // Use date-fns for formatting dates
 import { useNavigation } from '@react-navigation/native'; // Import useNavigation hook
 import { doc, setDoc, getDoc, collection, onSnapshot } from "firebase/firestore";
 import { BarChart } from 'react-native-gifted-charts';
+
+
 const DashboardScreen = ({ theme }) => {
 
 
@@ -505,9 +507,8 @@ const DashboardScreen = ({ theme }) => {
                     style={[
                         styles.newIncomeButton,
                         {
-                            backgroundColor:
-                                activeButton === 'income' ? (isDarkMode ? '#FF6A00' : '#FF8C00') : backgroundColor,
-                            borderColor: '#FF6A00',
+                            backgroundColor: theme.buttonBackground,
+                            // borderColor: '#FF6A00',
                         },
                     ]}
                     onPress={toggleIncomeModals}
@@ -528,7 +529,7 @@ const DashboardScreen = ({ theme }) => {
                         {
                             // backgroundColor: activeButton === 'expense' ? (isDarkMode ? '#FF6A00' : '#FF8C00') : backgroundColor,
                             backgroundColor: theme.cardBackground,
-                            borderColor: '#FF6A00',
+                            borderColor: theme.buttonBackground,
                         },
                     ]}
                     onPress={toggleExpenseModals}
