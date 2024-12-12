@@ -26,6 +26,8 @@ import { db } from '../../config/firebaseConfig';
 import { useNavigation } from '@react-navigation/native';
 import { CreateCategoryDialogButton } from '../local__components/create-category-dialog';
 import { useTheme } from '../../themeContext';
+import cuid from "cuid";
+
 const NewIncomeScreen = ({ route, isVisible, onClose }) => {
     const { theme } = useTheme();
     const [transactionDate, setTransactionDate] = useState(new Date());
@@ -59,7 +61,7 @@ const NewIncomeScreen = ({ route, isVisible, onClose }) => {
     const navigation = useNavigation();
 
     const { type } = route.params || {}; // Extract the 'type' parameter
-
+    const id = cuid();
 
     const handleDateConfirm = (date) => {
         setTransactionDate(date);
@@ -184,6 +186,7 @@ const NewIncomeScreen = ({ route, isVisible, onClose }) => {
                 category: selectedCategory,
                 icon: selectedIcon,
                 date: transactionDate.toISOString(),
+                Id: id,
             };
 
             console.log("icon", newIncome)

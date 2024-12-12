@@ -26,6 +26,8 @@ import { getDefaultCategoriesByType, getUserCategoriesByType } from '../services
 import { CreateCategoryDialogButton } from '../local__components/create-category-dialog';
 import { useTheme } from '../../themeContext';
 import Toast from 'react-native-toast-message';
+import cuid from "cuid";
+
 
 
 const NewExpenseScreen = ({ navigation, route, isVisible, onClose }) => {
@@ -64,7 +66,7 @@ const NewExpenseScreen = ({ navigation, route, isVisible, onClose }) => {
     const buttonTextColor = '#fff';
     const cancelButtonColor = isDarkMode ? '#444' : '#ddd';
 
-
+    const id = cuid();
 
 
     const { type } = route.params || {}; // Extract the 'type' parameter
@@ -139,6 +141,7 @@ const NewExpenseScreen = ({ navigation, route, isVisible, onClose }) => {
                 category: selectedCategory,
                 icon: selectedIcon,
                 date: transactionDate.toISOString(),
+                Id: id,
             };
 
             // Fetch existing user data
