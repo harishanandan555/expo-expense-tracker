@@ -406,58 +406,40 @@ const TransactionScreen = ({ theme}) => {
 
                         const userDocSnapshot = await getDoc(userDocRef);
                         if (userDocSnapshot.exists()) {
-                            const expenses = userDocSnapshot.data().expenses || [];
-                            const income = userDocSnapshot.data().income || [];
-
+                            const data = userDocSnapshot.data();
                             const targetArray =
-                                transaction.type.toLowerCase() === "expense" ? expenses : income;
+                                transaction.type.toLowerCase() === "expense"
+                                    ? data.expenses || []
+                                    : data.income || [];
 
-                            // Directly compare date strings
-                            console.log("Transaction date:", transaction.date);
-                            const transactionDateString = transaction.date; // Since it's already in ISO format
-
-                            console.log("Parsed transaction date:", transactionDateString);
-                            if (!transactionDateString) {
-                                Alert.alert("Error", "Invalid transaction date.");
-                                return;
-                            }
-
-                            // Find the transaction to edit based on date, description, and category
-                            const transactionIndex = targetArray.findIndex(item => {
-                                const itemDateString = item.date; // Firestore date stored as ISO string
-
-                                console.log("Item date:", itemDateString);
-                                
-                                // Compare the date strings and other fields
-                                return itemDateString === transactionDateString &&
-                                       item.description.trim() === transaction.description.trim() &&
-                                       item.category.trim() === transaction.category.trim();
-                            });
-
+                            // Find the transaction by its unique identifier (Id)
+                            const transactionIndex = targetArray.findIndex((item) => {
+                              console.log("Comparing Item:", item, "with Transaction:", transaction);
+                              return item.Id === transaction.Id;
+                          });
                             if (transactionIndex !== -1) {
                                 // Update the transaction directly
-                                targetArray[transactionIndex] = { ...targetArray[transactionIndex], ...transaction };
+                                targetArray[transactionIndex] = {
+                                    ...targetArray[transactionIndex],
+                                    ...transaction,
+                                };
 
                                 // Update Firestore
-                                if (transaction.type.toLowerCase() === "expense") {
-                                    await updateDoc(userDocRef, { expenses: targetArray });
-                                } else {
-                                    await updateDoc(userDocRef, { income: targetArray });
-                                }
+                                const updateField =
+                                transaction.type.toLowerCase() === "expense"
+                                    ? { expenses: targetArray }
+                                    : { income: targetArray };
+                            
+                            console.log("Updating Firestore with:", updateField);
+                            await updateDoc(userDocRef, updateField);
 
-                                console.log("Transaction edited successfully.");
-                                Alert.alert("Success", "Transaction updated successfully.");
-
-                                // Update local state if needed
-                                setTransactionsData(prevTransactions =>
-                                    prevTransactions.map(item => {
-                                        // Compare by date string and other fields
-                                        return item.date === transactionDateString &&
-                                               item.description.trim() === transaction.description.trim() &&
-                                               item.category.trim() === transaction.category.trim()
+                                // Update local state
+                                setTransactionsData((prevTransactions) =>
+                                    prevTransactions.map((item) =>
+                                        item.Id === transaction.Id
                                             ? { ...item, ...transaction }
-                                            : item;
-                                    })
+                                            : item
+                                    )
                                 );
                             } else {
                                 console.log("Transaction not found for editing.");
@@ -476,6 +458,7 @@ const TransactionScreen = ({ theme}) => {
         ]
     );
 };
+
 
 const handleEditTransaction =  (updatedData) => {
   console.log("Updated transaction received:", updatedData);// Log selected transaction
