@@ -1,5 +1,5 @@
-import React, { useState, useEffect  } from 'react';
-import { View, Text,TextInput, StyleSheet, FlatList, TouchableOpacity, Alert, Modal, TouchableWithoutFeedback, KeyboardAvoidingView,Platform,Keyboard,ScrollView  } from "react-native";
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, StyleSheet, FlatList, TouchableOpacity, Alert, Modal, TouchableWithoutFeedback, KeyboardAvoidingView, Platform, Keyboard, ScrollView } from "react-native";
 import { Provider } from 'react-native-paper';
 import { Picker } from "@react-native-picker/picker";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
@@ -16,9 +16,9 @@ import { updateDoc, doc, getDoc } from 'firebase/firestore';
 import { useNavigation } from '@react-navigation/native';
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { BackHandler, ToastAndroid} from 'react-native';
+import { BackHandler, ToastAndroid } from 'react-native';
 
-const TransactionScreen = ({theme}) => {
+const TransactionScreen = ({ theme }) => {
   const [selectedCategory, setSelectedCategory] = useState("Category");
   const [selectedType, setSelectedType] = useState("Type");
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
@@ -37,7 +37,7 @@ const TransactionScreen = ({theme}) => {
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterModalVisible, setFilterModalVisible] = useState(false);
-  
+
   const navigation = useNavigation();
 
   const [tempSelectedCategory, setTempSelectedCategory] = useState("placeholder");
@@ -48,7 +48,7 @@ const TransactionScreen = ({theme}) => {
   const [transactionsPerPage] = useState(3);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalTransactions, setTotalTransactions] = useState(0)
- 
+
   // Handle back button behavior
   const [backPressCount, setBackPressCount] = useState(0);
   useFocusEffect(
@@ -81,20 +81,20 @@ const TransactionScreen = ({theme}) => {
   const [currency, setCurrency] = useState({ value: 'USD', label: '$ Dollar', locale: 'en-US' });
   useFocusEffect(
     React.useCallback(() => {
-        const fetchCurrency = async () => {
-            try {
-                const storedCurrency = await AsyncStorage.getItem('selectedCurrency');
+      const fetchCurrency = async () => {
+        try {
+          const storedCurrency = await AsyncStorage.getItem('selectedCurrency');
 
-                if (storedCurrency) {
-                    setCurrency(JSON.parse(storedCurrency));
-                }
+          if (storedCurrency) {
+            setCurrency(JSON.parse(storedCurrency));
+          }
 
-            } catch (error) {
-                console.error('Error fetching currency:', error);
-            }
-        };
+        } catch (error) {
+          console.error('Error fetching currency:', error);
+        }
+      };
 
-        fetchCurrency();
+      fetchCurrency();
     }, [])
   );
 
@@ -287,7 +287,7 @@ const TransactionScreen = ({theme}) => {
 
     hideDatePicker();
   };
-  
+
 
   const filterTransactions = () => {
     const filtered = transactionsData.filter((transaction) => {
@@ -324,28 +324,28 @@ const TransactionScreen = ({theme}) => {
 
     return Object.values(groupedTransactions);
   };
-  
+
   const getCurrentPageTransactions = () => {
     const startIndex = (currentPage - 1) * transactionsPerPage;
     const endIndex = startIndex + transactionsPerPage;
-  
+
     return filterTransactions().slice(startIndex, endIndex);
   };
-  
+
   const totalPages = Math.ceil(totalTransactions / transactionsPerPage);
 
   const handleNextPage = () => {
-  if (currentPage < totalPages) {
-    setCurrentPage(currentPage + 1);
-  }
-};
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
 
-const handlePreviousPage = () => {
-  if (currentPage > 1) {
-    setCurrentPage(currentPage - 1);
-  }
-};
-  
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
   const deleteTransaction = async (transaction) => {
     const user = auth.currentUser;
     if (!user) {
@@ -527,8 +527,8 @@ const handlePreviousPage = () => {
     );
   };
 
-  const handleEditTransaction =  (updatedData) => {
-  console.log("Updated transaction received:", updatedData);// Log selected transaction
+  const handleEditTransaction = (updatedData) => {
+    console.log("Updated transaction received:", updatedData);// Log selected transaction
     setModalVisible(false);
     setSelectedTransaction(null); // Reset selected transaction
   };
@@ -541,9 +541,9 @@ const handlePreviousPage = () => {
     setTransactionsFound(true);
     setIsFilterApplied(false);
     setIsRefreshing(true);
-    setCurrentPage(1); 
+    setCurrentPage(1);
     fetchTransactions(auth.currentUser.uid);
-    setIsRefreshing(false); 
+    setIsRefreshing(false);
   };
 
   const exportToCSV = async () => {
@@ -836,7 +836,7 @@ const handlePreviousPage = () => {
   //   </View>
   // </View>
   // );
-  
+
   return (
     <Provider>
       <TouchableWithoutFeedback
@@ -1059,7 +1059,7 @@ const handlePreviousPage = () => {
             </View>
 
             <View style={{ flex: 1 }}>
-              {console.log("Flatlist data", filterTransactions())}
+              {/* {console.log("Flatlist data", filterTransactions())} */}
               <FlatList
                 data={getCurrentPageTransactions()}
                 keyExtractor={(item) => item.Id.toString()}
@@ -1164,7 +1164,7 @@ const handlePreviousPage = () => {
                   <Icon name="chevron-left" size={30} color={theme.text} />
                 </TouchableOpacity>
                 <Text style={[styles.pageText, { color: theme.text }]}>
-                  {currentPage} 
+                  {currentPage}
                   {/* {Math.ceil(totalTransactions / transactionsPerPage)} */}
                 </Text>
                 <TouchableOpacity
@@ -1208,9 +1208,9 @@ const styles = StyleSheet.create({
     // marginTop:10,
     width: 220,
     // height:50
-   
-    borderWidth:0.5,
-    boederRadius:10
+
+    borderWidth: 0.5,
+    boederRadius: 10
   },
   filterButton: {
     padding: 10,
@@ -1219,7 +1219,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end'
     // justifyContent: "flex-end",
     // alignItems: "flex-end",
-  }, 
+  },
   // Modal container
   modalContainer: {
     flex: 1,
@@ -1414,7 +1414,7 @@ const styles = StyleSheet.create({
   //   // flexGrow: 1,
   //   paddingBottom: 20,
   //   zIndex: 1,
-  //   padding: 0, 
+  //   padding: 0,
   //   margin: 0,
   // },
   exportButton: {
