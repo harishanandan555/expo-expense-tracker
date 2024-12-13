@@ -38,7 +38,7 @@ export default function App() {
 				<Toast
 					position="top"
 					topOffset={20}
-					visibilityTime={2000}
+					visibilityTime={4000}
 					style={{
 						zIndex: 9999,
 						elevation: 10,
