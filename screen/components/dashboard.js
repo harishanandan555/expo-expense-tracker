@@ -26,7 +26,7 @@ import DropDownPicker from "react-native-dropdown-picker";
 import { getUserById } from '../services/firebaseSettings';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Avatar, Menu, Divider, Provider } from 'react-native-paper';
-import { useNavigation } from '@react-navigation/native'; // Import useNavigation hook
+import { useNavigation } from '@react-navigation/native';
 import { doc, setDoc, getDoc, collection, onSnapshot } from "firebase/firestore";
 import { BarChart } from 'react-native-gifted-charts';
 
@@ -37,9 +37,9 @@ const DashboardScreen = ({ theme }) => {
     const [menuVisible, setMenuVisible] = useState(false);
     const [isIncomeModalVisible, setIncomeModalVisible] = useState(false);
     const [isExpenseModalVisible, setExpenseModalVisible] = useState(false);
-    
-  
-    
+
+
+
     const [isDatePickerVisible, setDatePickerVisible] = useState(false);
     const [isEndDatePickerVisible, setEndDatePickerVisible] = useState(false);
     const [activeButton, setActiveButton] = useState('income');
@@ -154,25 +154,32 @@ const DashboardScreen = ({ theme }) => {
 
 
     // Function to handle theme switching
-    const handleThemeSwitch = (mode) => {
-        setTheme(mode);
-    };
+    // const handleThemeSwitch = (mode) => {
+    //     setTheme(mode);
+    // };
+
     useEffect(() => {
+
         const fetchUserInfo = async () => {
             try {
+
                 const storedUserInfo = await AsyncStorage.getItem("userInfo");
+
                 if (storedUserInfo) {
                     setUserInfos(storedUserInfo ? JSON.parse(storedUserInfo) : {});
                 } else {
                     console.log("No User Info found.");
                 }
+
             } catch (error) {
                 console.error("Error retrieving user info:", error);
             }
         };
 
         fetchUserInfo();
+
     }, []);
+
     const calculateAndSaveFinancialData = () => {
         const userId = auth.currentUser?.uid;
 
@@ -189,6 +196,7 @@ const DashboardScreen = ({ theme }) => {
             userDocRef,
             (docSnapshot) => {
                 if (docSnapshot.exists()) {
+
                     const userInfo = docSnapshot.data();
 
                     const financialData = userInfo.financialData || {};
@@ -245,7 +253,7 @@ const DashboardScreen = ({ theme }) => {
                         },
                         { merge: true }
                     ).then(() => {
-                        console.log("Financial data updated successfully in Firestore.");
+                        // console.log("Financial data updated successfully in Firestore.");
                     }).catch((error) => {
                         console.error("Error updating financial data in Firestore:", error);
                     });
@@ -256,12 +264,12 @@ const DashboardScreen = ({ theme }) => {
                     setBalance(calculatedBalance);
                     setLastUpdated(formattedLastUpdatedDate);
 
-                    console.log("Updated financial data:", {
-                        totalIncome: calculatedTotalIncome,
-                        totalExpense: calculatedTotalExpense,
-                        balance: calculatedBalance,
-                        lastUpdated: formattedLastUpdatedDate,
-                    });
+                    // console.log("Updated financial data:", {
+                    //     totalIncome: calculatedTotalIncome,
+                    //     totalExpense: calculatedTotalExpense,
+                    //     balance: calculatedBalance,
+                    //     lastUpdated: formattedLastUpdatedDate,
+                    // });
                 } else {
                     console.error("User document does not exist.");
                 }
@@ -457,15 +465,16 @@ const DashboardScreen = ({ theme }) => {
 
 
 
-    const userInfo = route.params?.userInfo;
+    // const userInfo = route.params.userInfo;
 
-    useEffect(() => {
-        if (userInfo) {
-            console.log("User Info in Dashboard:", userInfo); // Log to confirm data
-        } else {
-            console.log("No User Info received");
-        }
-    }, [userInfo]);
+    // useEffect(() => {
+    //     if (userInfo) {
+    //         let value = true
+    //         // console.log("User Info in Dashboard:", userInfo); // Log to confirm data
+    //     } else {
+    //         console.log("No User Info received");
+    //     }
+    // }, [userInfo]);
 
     // Fetch income and expense data
 
@@ -636,7 +645,7 @@ const DashboardScreen = ({ theme }) => {
                     </TouchableOpacity> */}
 
 
-               
+
                 {/* Income, Expense, Balance Cards */}
 
                 <View style={[styles.overviewCard, { backgroundColor: theme.cardBackground }]}>
@@ -1072,7 +1081,7 @@ const DashboardScreen = ({ theme }) => {
 
                     </View>
                     {/* Modal for New Income */}
-                   
+
 
 
 

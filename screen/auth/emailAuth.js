@@ -2,10 +2,10 @@ import React, { useEffect, useState } from 'react';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { Alert, Image, Pressable, StyleSheet, TextInput, Text, View } from 'react-native';
 import { getAuth, createUserWithEmailAndPassword, updateProfile, sendEmailVerification  } from "firebase/auth";
-import { getFirestore, doc, setDoc, getDoc, Timestamp } from "firebase/firestore"; 
+import { getFirestore, doc, setDoc, getDoc, Timestamp } from "firebase/firestore";
 
   const auth = getAuth();
-  const db = getFirestore();  
+  const db = getFirestore();
 
   export default function EmailAuth({ navigation, route }) {
     const [value, setValue] = useState({
@@ -19,7 +19,7 @@ import { getFirestore, doc, setDoc, getDoc, Timestamp } from "firebase/firestore
 
     const [isEmailVerified, setIsEmailVerified] = useState(false);
     const [isVerificationSent, setIsVerificationSent] = useState(false);
-    
+
     // Password validation regex
     const passwordRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
     const validatePassword = (password) => {
@@ -32,7 +32,7 @@ import { getFirestore, doc, setDoc, getDoc, Timestamp } from "firebase/firestore
       setValue({ ...value, error: 'All fields are mandatory.' });
       return;
     }
-  
+
     if (!validatePassword(value.password)) {
       setValue({
         ...value,
@@ -40,29 +40,29 @@ import { getFirestore, doc, setDoc, getDoc, Timestamp } from "firebase/firestore
       });
       return;
     }
-  
+
     if (value.password !== value.confirmPassword) {
       setValue({ ...value, error: 'Passwords do not match.' });
       return;
     }
-  
+
     try {
       console.log("Attempting to create user...");
       const userCredential = await createUserWithEmailAndPassword(auth, value.email, value.password);
-      console.log("User created: ", userCredential.user);
-  
+      // console.log("User created: ", userCredential.user);
+
       const user = userCredential.user;
-      console.log("User UID:", user.uid);
-  
+      // console.log("User UID:", user.uid);
+
       // Set the display name for the user in Firebase Auth
       await updateProfile(user, { displayName: value.displayName });
-  
+
       // Send email verification
       await sendEmailVerification(user);
       console.log("Verification email sent.");
       setIsVerificationSent(true);
       Alert.alert("Check Your Email", "A verification email has been sent to your email address.");
-  
+
       console.log("Attempting to store user data in Firestore...");
       await setDoc(doc(db, "users", user.uid), {
         displayName: value.displayName,
@@ -85,7 +85,7 @@ import { getFirestore, doc, setDoc, getDoc, Timestamp } from "firebase/firestore
     await user.reload();
     if (user.emailVerified) {
       setIsEmailVerified(true);
-      
+
       // Fetch the latest sign-in metadata
       const metadata = {
         emailVerified: true,
@@ -157,7 +157,7 @@ useEffect(() => {
   //         displayName: value.displayName,
   //         email: value.email,
   //         // phoneNumber: value.phoneNumber,
-  //         emailVerified: true  
+  //         emailVerified: true
   //       });
   //       console.log("User details saved successfully");
 
@@ -193,7 +193,7 @@ useEffect(() => {
   //       Alert.alert("Email Verified", "Your email has been successfully verified.");
   //     } else {
   //       setIsEmailVerified(false);
-  //     } 
+  //     }
   //   }
   // };
 
@@ -266,7 +266,7 @@ useEffect(() => {
   //   try {
   //     const userCredential = await auth.currentUser.linkWithCredential(credential);
   //     Alert.alert("Phone Verified", "Your phone number has been verified successfully.");
-      
+
   //     // Store phone number
   //     await updateProfile(userCredential.user, { phoneNumber });
   //     console.log("User's phone number linked:", userCredential.user.phoneNumber);
@@ -294,7 +294,7 @@ useEffect(() => {
   //   }, 3000);
   //   return () => clearInterval(intervalId);
   // }, []);
- 
+
   return (
     <View style={styles.container}>
       <View style={styles.innerContainer}>
@@ -504,7 +504,7 @@ const styles = StyleSheet.create({
     marginVertical: 10,
     textAlign: 'center',
   },
-  errorText: {  
+  errorText: {
     color: 'red',
   },
 });

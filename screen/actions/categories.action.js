@@ -18,13 +18,13 @@ const DeleteCategorySchema = Yup.object().shape({
 // Create a category
 export async function createCategory(value) {
 
-  console.log("111 - Incoming value:", value); // Log the value before validation
+  // console.log("111 - Incoming value:", value); // Log the value before validation
 
   try {
     // Validate the value
     const parsedBody = await CreateCategorySchema.validate(value, { abortEarly: false });
-    
-    console.log("Validated value:", parsedBody);
+
+    // console.log("Validated value:", parsedBody);
 
     if (!parsedBody.success) {
       throw new Error(parsedBody.error.message);
@@ -32,7 +32,7 @@ export async function createCategory(value) {
 
     const { name, icon, type } = parsedBody;
 
-    console.log("Parsed and validated values:", { name, icon, type });
+    // console.log("Parsed and validated values:", { name, icon, type });
 
 
     // const user = await getCurrentUser();
@@ -91,5 +91,5 @@ export async function deleteCategory(form) {
 
   const deleteResponse = await deleteCategoryByUserId(userId, categoryData);
 
-  return deleteResponse.success ? 'Category deleted.' : deleteResponse.message ;
+  return deleteResponse.success ? 'Category deleted.' : deleteResponse.message;
 }

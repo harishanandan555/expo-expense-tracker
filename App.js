@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
+import Toast from 'react-native-toast-message';
 
 import { ThemeProvider } from './themeContext';
 import SignInPage from './screen/auth/signin';
@@ -27,13 +28,22 @@ export default function App() {
 					{/* <Stack.Navigator initialRouteName="Main"> */}
 					<Stack.Screen name="SignIn" component={SignInPage} options={{ headerShown: false }} />
 					<Stack.Screen name="Main" component={MainScreen} options={{ headerShown: false }} />
-					<Stack.Screen name="NewIncome" options={{ headerShown: false }} component={NewIncomeScreen} initialParams={{ email: '' }} />
+					<Stack.Screen name="NewIncome" options={{ headerShown: false }} component={NewIncomeScreen} />
 					<Stack.Screen name="NewExpense" options={{ headerShown: false }} component={NewExpenseScreen} />
 					<Stack.Screen name="PhoneAuthentication" options={{ headerShown: false }} component={PhoneAuth} />
 					<Stack.Screen name="EmailAuthentication" options={{ headerShown: false }} component={EmailAuth} />
-					<Stack.Screen name="TransactionHistory" options={{ headerShown: false }} component={TransactionHistoryModal}/>
-					<Stack.Screen name="EditTransaction" options={{ headerShown: false }} component={EditTransactionModal}/>
+					<Stack.Screen name="TransactionHistory" options={{ headerShown: false }} component={TransactionHistoryModal} />
+					<Stack.Screen name="EditTransaction" options={{ headerShown: false }} component={EditTransactionModal} />
 				</Stack.Navigator>
+				<Toast
+					position="top"
+					topOffset={20}
+					visibilityTime={2000}
+					style={{
+						zIndex: 9999,
+						elevation: 10,
+					}}
+				/>
 			</NavigationContainer>
 		</ThemeProvider>
 

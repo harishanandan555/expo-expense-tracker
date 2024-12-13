@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text,TextInput, StyleSheet, FlatList, TouchableOpacity, Alert, Modal, TouchableWithoutFeedback } from "react-native";
+import { View, Text, TextInput, StyleSheet, FlatList, TouchableOpacity, Alert, Modal, TouchableWithoutFeedback } from "react-native";
 import { Provider } from 'react-native-paper';
 import { Picker } from "@react-native-picker/picker";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
@@ -17,7 +17,7 @@ import EditTransactionModal from './EditTransaction';
 import TransactionHistoryModal from './TransactionHistory';
 import { useNavigation } from '@react-navigation/native';
 
-const TransactionScreen = ({ theme}) => {
+const TransactionScreen = ({ theme }) => {
   const [selectedCategory, setSelectedCategory] = useState("Category");
   const [selectedType, setSelectedType] = useState("Type");
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
@@ -38,7 +38,7 @@ const TransactionScreen = ({ theme}) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const navigation = useNavigation();
-  
+
   const [tempSelectedCategory, setTempSelectedCategory] = useState("placeholder");
   const [tempSelectedType, setTempSelectedType] = useState("placeholder");
   const [tempSelectedDate, setTempSelectedDate] = useState(null);
@@ -96,22 +96,22 @@ const TransactionScreen = ({ theme}) => {
     });
     return unsubscribe;
   }, []);
-  
+
   const fetchTransactions = async (uid) => {
     try {
       const userDocRef = doc(db, 'users', uid);
       const userDoc = await getDoc(userDocRef);
-  
+
       if (userDoc.exists()) {
         const data = userDoc.data();
         const incomeData = data.income || [];
         const expenseData = data.expenses || [];
-  
+
         const validateDate = (dateString) => {
           const dateObj = new Date(dateString);
           return !isNaN(dateObj.getTime()) ? dateObj : null;
-      };
-  
+        };
+
         const allTransactions = [
           ...incomeData.map((item) => ({
             ...item,
@@ -124,30 +124,30 @@ const TransactionScreen = ({ theme}) => {
             date: validateDate(item.date),
           })),
         ];
-  
+
         const validTransactions = allTransactions.filter(
           (transaction) => transaction.date && !isNaN(new Date(transaction.date).getTime())
         );
 
         if (validTransactions.length > 0) {
           setTransactionsData(validTransactions);
-          console.log(
-            'Valid transactions in transaction screen:',
-            validTransactions
-          );
+          // console.log(
+          //   'Valid transactions in transaction screen:',
+          //   validTransactions
+          // );
         } else {
           setNoTransactionsMessage('No transactions found.');
           setTransactionsFound(false);
         }
-  
+
         const uniqueCategories = [
           ...new Set(validTransactions.map((item) => item.category)),
         ];
         const uniqueTransactionTypes = ['Income', 'Expense'];
-  
+
         setCategories(uniqueCategories);
         setTransactionTypes(uniqueTransactionTypes);
-  
+
         if (validTransactions.length === 0) {
           setNoTransactionsMessage('No transactions found.');
           setTransactionsFound(false);
@@ -165,11 +165,11 @@ const TransactionScreen = ({ theme}) => {
       setTransactionsFound(false);
     }
   };
-  
+
   const refreshTransactions = (uid) => {
     fetchTransactions(uid); // Pass `uid` to re-fetch transactions
   };
-  
+
   // const copyDataToHistory = async (uid) => {                         dont remove
   //   try {
   //     const userDocRef = doc(db, 'users', uid);
@@ -221,74 +221,74 @@ const TransactionScreen = ({ theme}) => {
 
   const handleConfirm = (date) => {
     const formattedDate = format(date, "yyyy-MM-dd");
-    
+
     // Validate the date before using it
     if (!isNaN(date.getTime())) {
-        setSelectedDate(formattedDate);
+      setSelectedDate(formattedDate);
 
-        const filteredTransactions = transactionsData.filter(
-            (transaction) => format(new Date(transaction.date), "yyyy-MM-dd") === formattedDate
-        );
+      const filteredTransactions = transactionsData.filter(
+        (transaction) => format(new Date(transaction.date), "yyyy-MM-dd") === formattedDate
+      );
 
-        if (filteredTransactions.length === 0) {
-            setNoTransactionsMessage("No transactions found.");
-            setTransactionsFound(false);
-        } else {
-            setNoTransactionsMessage("");
-            setTransactionsFound(true);
-        }
+      if (filteredTransactions.length === 0) {
+        setNoTransactionsMessage("No transactions found.");
+        setTransactionsFound(false);
+      } else {
+        setNoTransactionsMessage("");
+        setTransactionsFound(true);
+      }
     } else {
-        Alert.alert("Error", "Selected date is invalid.");
+      Alert.alert("Error", "Selected date is invalid.");
     }
 
     hideDatePicker();
-};
+  };
 
   const filterTransactions = () => {
     const filtered = transactionsData.filter((transaction) => {
       const transactionDate = new Date(transaction.date);
       const formattedDate = format(transactionDate, "yyyy-MM-dd");
-  
+
       const matchesSearchTerm =
-      searchTerm.trim() === "" ||
-      transaction.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      transaction.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      transaction.type.toLowerCase().includes(searchTerm.toLowerCase());
-  
+        searchTerm.trim() === "" ||
+        transaction.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        transaction.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        transaction.type.toLowerCase().includes(searchTerm.toLowerCase());
+
       return (
         (selectedCategory === "Category" || transaction.category === selectedCategory) &&
         (selectedType === "Type" || transaction.type === selectedType) &&
         (selectedDate ? formattedDate === selectedDate : true) &&
         matchesSearchTerm
-    );
+      );
     });
-  
+
     // Sort transactions by date in descending order
     const sortedTransactions = filtered.sort(
       (a, b) => new Date(b.date) - new Date(a.date)
-  );
+    );
 
-  const groupedTransactions = sortedTransactions.reduce((acc, transaction) => {
+    const groupedTransactions = sortedTransactions.reduce((acc, transaction) => {
       if (!acc[transaction.category]) {
-          acc[transaction.category] = { ...transaction, totalAmount: transaction.amount };
+        acc[transaction.category] = { ...transaction, totalAmount: transaction.amount };
       } else {
-          acc[transaction.category].totalAmount += transaction.amount;
+        acc[transaction.category].totalAmount += transaction.amount;
       }
       return acc;
-  }, {});
-  
+    }, {});
+
     return Object.values(groupedTransactions);
   };
-  
+
   const deleteTransaction = async (transaction) => {
     const user = auth.currentUser;
     if (!user) {
       Alert.alert("Error", "User not authenticated.");
       return;
     }
-  
+
     const userDocRef = doc(db, "users", user.uid);
-  
+
     Alert.alert(
       "Confirm Deletion",
       `Are you sure you want to delete this ${transaction.type}?`,
@@ -301,51 +301,51 @@ const TransactionScreen = ({ theme}) => {
           text: "Delete",
           onPress: async () => {
             try {
-              console.log("Deleting transaction:", transaction);
-  
+              // console.log("Deleting transaction:", transaction);
+
               const userDocSnapshot = await getDoc(userDocRef);
               if (userDocSnapshot.exists()) {
                 const expenses = userDocSnapshot.data().expenses || [];
                 const income = userDocSnapshot.data().income || [];
-  
+
                 const transactionIndex =
                   transaction.type.toLowerCase() === "expense"
                     ? expenses.findIndex((item) => {
-                        const isMatch =
-                          item.amount === transaction.amount &&
-                          item.category.trim() === transaction.category.trim() && // Trim whitespace
-                          item.description.trim() === transaction.description.trim() && // Trim whitespace
-                          item.icon === transaction.icon &&
-                          new Date(item.date).getTime() === new Date(transaction.date).getTime(); // Compare dates
-  
-                        console.log("Comparing:", {
-                          item,
-                          transaction,
-                          isMatch,
-                        });
-  
-                        return isMatch;
-                      })
+                      const isMatch =
+                        item.amount === transaction.amount &&
+                        item.category.trim() === transaction.category.trim() && // Trim whitespace
+                        item.description.trim() === transaction.description.trim() && // Trim whitespace
+                        item.icon === transaction.icon &&
+                        new Date(item.date).getTime() === new Date(transaction.date).getTime(); // Compare dates
+
+                      // console.log("Comparing:", {
+                      //   item,
+                      //   transaction,
+                      //   isMatch,
+                      // });
+
+                      return isMatch;
+                    })
                     : income.findIndex((item) => {
-                        const isMatch =
-                          item.amount === transaction.amount &&
-                          item.category.trim() === transaction.category.trim() && // Trim whitespace
-                          item.description.trim() === transaction.description.trim() && // Trim whitespace
-                          item.icon === transaction.icon &&
-                          new Date(item.date).getTime() === new Date(transaction.date).getTime(); // Compare dates
-  
-                        console.log("Comparing:", {
-                          item,
-                          transaction,
-                          isMatch,
-                        });
-  
-                        return isMatch;
-                      });
-  
-                console.log("Transaction index found:", transactionIndex);
-                console.log("Expenses:", JSON.stringify(expenses, null, 2));
-  
+                      const isMatch =
+                        item.amount === transaction.amount &&
+                        item.category.trim() === transaction.category.trim() && // Trim whitespace
+                        item.description.trim() === transaction.description.trim() && // Trim whitespace
+                        item.icon === transaction.icon &&
+                        new Date(item.date).getTime() === new Date(transaction.date).getTime(); // Compare dates
+
+                      // console.log("Comparing:", {
+                      //   item,
+                      //   transaction,
+                      //   isMatch,
+                      // });
+
+                      return isMatch;
+                    });
+
+                // console.log("Transaction index found:", transactionIndex);
+                // console.log("Expenses:", JSON.stringify(expenses, null, 2));
+
                 if (transactionIndex !== -1) {
                   if (transaction.type.toLowerCase() === "expense") {
                     expenses.splice(transactionIndex, 1);
@@ -354,8 +354,9 @@ const TransactionScreen = ({ theme}) => {
                     income.splice(transactionIndex, 1);
                     await updateDoc(userDocRef, { income });
                   }
-  
-                  console.log("Transaction deleted successfully.");
+
+                  // console.log("Transaction deleted successfully.");
+
                   setTransactionsData((prevTransactions) =>
                     prevTransactions.filter(
                       (item) =>
@@ -384,87 +385,88 @@ const TransactionScreen = ({ theme}) => {
   const editTransaction = async (transaction) => {
     const user = auth.currentUser;
     if (!user) {
-        Alert.alert("Error", "User not authenticated.");
-        return;
+      Alert.alert("Error", "User not authenticated.");
+      return;
     }
 
     const userDocRef = doc(db, "users", user.uid);
 
     Alert.alert(
-        "Confirm Edit",
-        `Are you sure you want to edit this ${transaction.description}?`,
-        [
-            {
-                text: "Cancel",
-                style: "cancel",
-            },
-            {
-                text: "Save",
-                onPress: async () => {
-                    try {
-                        console.log("Editing transaction:", transaction);
+      "Confirm Edit",
+      `Are you sure you want to edit this ${transaction.description}?`,
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Save",
+          onPress: async () => {
+            try {
+              // console.log("Editing transaction:", transaction);
 
-                        const userDocSnapshot = await getDoc(userDocRef);
-                        if (userDocSnapshot.exists()) {
-                            const data = userDocSnapshot.data();
-                            const targetArray =
-                                transaction.type.toLowerCase() === "expense"
-                                    ? data.expenses || []
-                                    : data.income || [];
+              const userDocSnapshot = await getDoc(userDocRef);
+              if (userDocSnapshot.exists()) {
+                const data = userDocSnapshot.data();
+                const targetArray =
+                  transaction.type.toLowerCase() === "expense"
+                    ? data.expenses || []
+                    : data.income || [];
 
-                            // Find the transaction by its unique identifier (Id)
-                            const transactionIndex = targetArray.findIndex((item) => {
-                              console.log("Comparing Item:", item, "with Transaction:", transaction);
-                              return item.Id === transaction.Id;
-                          });
-                            if (transactionIndex !== -1) {
-                                // Update the transaction directly
-                                targetArray[transactionIndex] = {
-                                    ...targetArray[transactionIndex],
-                                    ...transaction,
-                                };
+                // Find the transaction by its unique identifier (Id)
+                const transactionIndex = targetArray.findIndex((item) => {
+                  // console.log("Comparing Item:", item, "with Transaction:", transaction);
+                  return item.Id === transaction.Id;
+                });
+                if (transactionIndex !== -1) {
+                  // Update the transaction directly
+                  targetArray[transactionIndex] = {
+                    ...targetArray[transactionIndex],
+                    ...transaction,
+                  };
 
-                                // Update Firestore
-                                const updateField =
-                                transaction.type.toLowerCase() === "expense"
-                                    ? { expenses: targetArray }
-                                    : { income: targetArray };
-                            
-                            console.log("Updating Firestore with:", updateField);
-                            await updateDoc(userDocRef, updateField);
+                  // Update Firestore
+                  const updateField =
+                    transaction.type.toLowerCase() === "expense"
+                      ? { expenses: targetArray }
+                      : { income: targetArray };
 
-                                // Update local state
-                                setTransactionsData((prevTransactions) =>
-                                    prevTransactions.map((item) =>
-                                        item.Id === transaction.Id
-                                            ? { ...item, ...transaction }
-                                            : item
-                                    )
-                                );
-                            } else {
-                                console.log("Transaction not found for editing.");
-                                Alert.alert("Error", "Transaction not found.");
-                            }
-                        } else {
-                            console.log("User document does not exist.");
-                            Alert.alert("Error", "User document does not exist.");
-                        }
-                    } catch (error) {
-                        console.error("Error editing transaction:", error);
-                        Alert.alert("Error", "An error occurred while editing the transaction.");
-                    }
-                },
-            },
-        ]
+                  // console.log("Updating Firestore with:", updateField);
+
+                  await updateDoc(userDocRef, updateField);
+
+                  // Update local state
+                  setTransactionsData((prevTransactions) =>
+                    prevTransactions.map((item) =>
+                      item.Id === transaction.Id
+                        ? { ...item, ...transaction }
+                        : item
+                    )
+                  );
+                } else {
+                  // console.log("Transaction not found for editing.");
+                  Alert.alert("Error", "Transaction not found.");
+                }
+              } else {
+                // console.log("User document does not exist.");
+                Alert.alert("Error", "User document does not exist.");
+              }
+            } catch (error) {
+              console.error("Error editing transaction:", error);
+              Alert.alert("Error", "An error occurred while editing the transaction.");
+            }
+          },
+        },
+      ]
     );
-};
+  };
 
 
-const handleEditTransaction =  (updatedData) => {
-  console.log("Updated transaction received:", updatedData);// Log selected transaction
+  const handleEditTransaction = (updatedData) => {
+    // console.log("Updated transaction received:", updatedData);// Log selected transaction
     setModalVisible(false);
     setSelectedTransaction(null); // Reset selected transaction
-};
+  };
 
   const formatDate = (date) => {
     return format(new Date(date), 'yyyy-MM-dd');
@@ -474,7 +476,7 @@ const handleEditTransaction =  (updatedData) => {
     setSelectedCategory(category);
     setHistoryModalVisible(true);
   };
-  
+
   const closeHistoryModal = () => {
     setHistoryModalVisible(false);
   };
@@ -484,7 +486,7 @@ const handleEditTransaction =  (updatedData) => {
     const isMenuVisible = menuVisible === uniqueId; // Compare with menuVisible state
 
     return (
-      <View style={[ styles.transactionRow, { backgroundColor: theme.transactionBackground },]} >
+      <View style={[styles.transactionRow, { backgroundColor: theme.transactionBackground },]} >
         <Text
           style={[styles.transactionCell, { color: theme.transactionText }]}
         >
@@ -500,8 +502,8 @@ const handleEditTransaction =  (updatedData) => {
           {item.type}
         </Text>
         <Text style={[styles.transactionCell, { color: theme.transactionText }]}>
-        {item.totalAmount} {/* Display total amount */}
-      </Text>
+          {item.totalAmount} {/* Display total amount */}
+        </Text>
 
         {/* More Icon */}
         <TouchableOpacity
@@ -521,7 +523,7 @@ const handleEditTransaction =  (updatedData) => {
               <Icon name="delete" size={21} color="#FF0000" />
               <Text style={[styles.menuText, { color: theme.transactionText }]}> Delete  </Text>
             </TouchableOpacity>
-          
+
             <TouchableOpacity
               onPress={() => showTransactionHistory(item.category)}
               style={styles.menuItem}
@@ -558,7 +560,7 @@ const handleEditTransaction =  (updatedData) => {
     }
 
     const filteredTransactions = filterTransactions();
-    console.log("Filtered transactions for CSV:", filteredTransactions);
+    // console.log("Filtered transactions for CSV:", filteredTransactions);
 
     if (filteredTransactions.length === 0) {
       Alert.alert(
@@ -595,7 +597,7 @@ const handleEditTransaction =  (updatedData) => {
     // .join("\n");
 
     // Log the generated CSV data
-    console.log("Generated CSV Data:\n", csvData);
+    // console.log("Generated CSV Data:\n", csvData);
 
     // Save the file to the app's document directory
     const currentDate = format(new Date(), 'yyyy-MM-dd');
@@ -607,7 +609,7 @@ const handleEditTransaction =  (updatedData) => {
         encoding: FileSystem.EncodingType.UTF8,
       });
 
-      console.log("File saved at:", fileUri);
+      // console.log("File saved at:", fileUri);
 
       // Share the file using expo-sharing
       await shareAsync(fileUri, {
@@ -633,21 +635,16 @@ const handleEditTransaction =  (updatedData) => {
       .map(
         (transaction) => `
     <tr>
-      <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${
-        format(new Date(transaction.date), "yyyy-MM-dd") || "N/A"
-      }</td>
-      <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${
-        transaction.type || "N/A"
-      }</td>
-      <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${
-        transaction.description || "N/A"
-      }</td>
-      <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${
-        transaction.amount || "N/A"
-      }</td>
-      <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${
-        transaction.category || "N/A"
-      }</td>
+      <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${format(new Date(transaction.date), "yyyy-MM-dd") || "N/A"
+          }</td>
+      <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${transaction.type || "N/A"
+          }</td>
+      <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${transaction.description || "N/A"
+          }</td>
+      <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${transaction.amount || "N/A"
+          }</td>
+      <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${transaction.category || "N/A"
+          }</td>
     </tr>
   `
       )
@@ -735,7 +732,7 @@ const handleEditTransaction =  (updatedData) => {
         return;
       }
       const { uri } = await Print.printToFileAsync({ html });
-      console.log("File has been saved to:", uri);
+      // console.log("File has been saved to:", uri);
       await shareAsync(uri, { UTI: ".pdf", mimeType: "application/pdf" });
     } catch (error) {
       console.error("Error while creating PDF:", error);
@@ -757,7 +754,7 @@ const handleEditTransaction =  (updatedData) => {
     if (option === "placeholder") {
       return; // Do nothing if "Export" is selected
     }
-    console.log("Selected export option:", option); // Debugging line
+    // console.log("Selected export option:", option); // Debugging line
     setSelectedExportOption(option);
     if (option === "CSV") {
       exportToCSV();
@@ -769,10 +766,10 @@ const handleEditTransaction =  (updatedData) => {
 
   return (
     <Provider>
-      <TouchableWithoutFeedback  onPress={() => setMenuVisible(null)} accessible={false}  >
+      <TouchableWithoutFeedback onPress={() => setMenuVisible(null)} accessible={false}  >
         <View style={[styles.container, { backgroundColor: theme.background }]}>
           <View style={styles.transactionsContainer}>
-            
+
             <View style={styles.headerContainer}>
               <TouchableOpacity style={styles.headerTitleContainer}>
                 <Text style={[styles.headerTitle, { color: theme.text }]}>
@@ -807,7 +804,7 @@ const handleEditTransaction =  (updatedData) => {
                       borderColor: theme.buttonBorder,
                       color: theme.text,
                       zIndex: 10,
-                      paddingRight:1
+                      paddingRight: 1
                     },
                   ]}
                   dropdownIconColor={theme.text}
@@ -824,7 +821,7 @@ const handleEditTransaction =  (updatedData) => {
 
               {/* Filter Button */}
               <TouchableOpacity onPress={() => setFilterModalVisible(true)} style={styles.filterButton} >
-               <Icon name="filter-list" size={30} color={theme.text} />
+                <Icon name="filter-list" size={30} color={theme.text} />
               </TouchableOpacity>
 
               {/* Refresh Button */}
@@ -833,7 +830,7 @@ const handleEditTransaction =  (updatedData) => {
               </TouchableOpacity>
             </View>
 
-             {/* Filter Modal */}
+            {/* Filter Modal */}
             <View>
               <Modal
                 transparent={true}
@@ -1067,19 +1064,19 @@ const handleEditTransaction =  (updatedData) => {
               <Text style={[styles.headerCell, { color: theme.tableHeaderText }]}> Description </Text>
               <Text style={[styles.headerText, { color: theme.tableHeaderText }]}> Type{" "} </Text>
               <Text style={[ styles.lastHeaderText,{ color: theme.tableHeaderText },]}> Amount{" "}{" "}{" "}</Text>
-           
+
             </View> */}
 
-            <View style={{ flex: 1}}>
+            <View style={{ flex: 1 }}>
               <FlatList
-                data={filterTransactions()} 
+                data={filterTransactions()}
                 keyExtractor={(item, index) =>
                   `${item.date}-${item.category}-${item.amount}-${index}`
                 }
                 refreshing={isRefreshing}
                 onRefresh={filterTransactions}
                 contentContainerStyle={{ flexGrow: 1 }}
-               
+
                 renderItem={({ item }) => (
                   <View
                     style={[
@@ -1218,7 +1215,7 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     height: 50,
-    color:"#fff",
+    color: "#fff",
     borderColor: "#ccc",
     borderWidth: 1,
     borderRadius: 8,
@@ -1232,21 +1229,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
     // marginBottom: 10,
     // marginTop:10,
-    width:220,
+    width: 220,
     // height:50
-    border:1,
-    borderWidth:0.9,
-    boederRadius:1
+    border: 1,
+    borderWidth: 0.9,
+    boederRadius: 1
   },
   filterButton: {
     padding: 10,
     borderRadius: 8,
-    justifyContent:'flex-end',
-    alignItems:'flex-end'
+    justifyContent: 'flex-end',
+    alignItems: 'flex-end'
     // justifyContent: "flex-end",
     // alignItems: "flex-end",
   },
-  
+
   // Modal container
   modalContainer: {
     flex: 1,
@@ -1310,7 +1307,7 @@ const styles = StyleSheet.create({
   },
   bottomRow: {
     marginTop: 10,
-    margingRight:10,
+    margingRight: 10,
     flexDirection: "row",
     justifyContent: "flex-end",
   },
@@ -1362,8 +1359,8 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   filterContainer: {
-    width:150,
-    height:45,
+    width: 150,
+    height: 45,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-end",
@@ -1394,7 +1391,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'flex-start',
     // marginLeft:18,
-    paddingLeft:18,
+    paddingLeft: 18,
     marginBottom: 10,
   },
   datePickerText: {
@@ -1422,7 +1419,7 @@ const styles = StyleSheet.create({
   transactionsContainer: {
     flex: 1,
     paddingTop: 10,
-    marginTop:0
+    marginTop: 0
   },
   noTransactionsContainer: {
     flex: 1,
@@ -1554,7 +1551,7 @@ const styles = StyleSheet.create({
     // flexGrow: 1,
     paddingBottom: 20,
     zIndex: 1,
-    padding: 0, 
+    padding: 0,
     margin: 0,
   },
   refreshButton: {
@@ -1586,7 +1583,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   dropdownMenu: {
-   position: "relative",
+    position: "relative",
     top: 0,
     right: 10,
     // height: '90%',

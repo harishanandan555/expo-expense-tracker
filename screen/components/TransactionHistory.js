@@ -9,7 +9,7 @@
 //     // const [selectedTransaction, setSelectedTransaction] = useState(null);
 //     // const [modalVisible, setModalVisible] = useState(false);
 //     const [filteredTransactions, setFilteredTransactions] = useState([]);
-  
+
 //     // const filteredTransactions = Array.isArray(transactions)
 //     // ? transactions.filter((transaction) => transaction.category === category)
 //     // : [];
@@ -24,7 +24,7 @@
 //         .onSnapshot((snapshot) => {
 //           const transactions = snapshot.docs.map((doc) => doc.data());
 //           setFilteredTransactions(transactions);
-          
+
 //           // Calculate total amount
 //           const total = transactions.reduce((sum, transaction) => {
 //             if (transaction.type === "Income") {
@@ -41,7 +41,7 @@
 //       return () => unsubscribe();
 //     }
 //   }, [visible, category]);
-  
+
 // // Calculate total amount
 //   const totalAmount = filteredTransactions.reduce(
 //     (sum, transaction) => {
@@ -58,19 +58,19 @@
 //   // Format date and time using date-fns
 //   const formatDateTime = (dateString) => {
 //     const dateObj = new Date(dateString);
-  
+
 //     if (isNaN(dateObj.getTime())) {
 //       console.error("Invalid date object:", dateObj);
 //       return { formattedDate: "Invalid date", formattedTime: "Invalid time" };
 //     }
-  
+
 //     const options = { year: "numeric", month: "2-digit", day: "2-digit" };
 //     const formattedDate = dateObj.toLocaleDateString("en-CA", options); // yyyy-mm-dd
 //     const formattedTime = dateObj.toLocaleTimeString("en-US", {
 //       hour: "2-digit",
 //       minute: "2-digit",
 //     });
-  
+
 //     return { formattedDate, formattedTime };
 //   };
 
@@ -80,9 +80,9 @@
 // //       Alert.alert("Error", "User not authenticated.");
 // //       return;
 // //     }
-  
+
 // //     const userDocRef = doc(db, 'users', user.uid);
-  
+
 // //     Alert.alert(
 // //       "Confirm Edit",
 // //       `Are you sure you want to edit this ${transaction.type}?`,
@@ -97,7 +97,7 @@
 // //             try {
 // //               console.log("Editing transaction:", transaction);
 // //               console.log("Updated transaction:", updatedTransaction);
-  
+
 // //               const userDocSnapshot = await getDoc(userDocRef);
 // //               if (userDocSnapshot.exists()) {
 // //                 const expenses = userDocSnapshot.data().expenses || [];
@@ -173,7 +173,7 @@
 // //     ]
 // //   );
 // // };
-  
+
 // //   const handleEditTransaction = async (updatedTransaction) => {
 // //     await editTransaction(selectedTransaction, updatedTransaction);
 // //     setModalVisible(false);
@@ -336,7 +336,8 @@ const TransactionHistoryModal = ({ route }) => {
   const [transactionHistory, setTransactionHistory] = useState([]);
   const { theme } = useTheme();
 
-  const { item } = route?.params || {}; 
+  const { item } = route?.params || {};
+
   if (!item) {
     return (
       <View >
@@ -344,8 +345,8 @@ const TransactionHistoryModal = ({ route }) => {
       </View>
     );
   }
-  
-  const { category, transactions, deleteTransaction, editTransaction ,handleEditTransaction} = item;
+
+  const { category, transactions, deleteTransaction, editTransaction, handleEditTransaction } = item;
 
   useEffect(() => {
     setTransactionHistory(transactions || []);
@@ -385,7 +386,7 @@ const TransactionHistoryModal = ({ route }) => {
       Alert.alert("Error", "Please provide valid transaction details.");
       return;
     }
-  
+
     // Convert Firestore timestamp to JavaScript Date if needed
     let date;
     if (transaction.date && transaction.date.seconds && transaction.date.nanoseconds) {
@@ -395,54 +396,54 @@ const TransactionHistoryModal = ({ route }) => {
       // If it's already a valid date string, use it
       date = new Date(transaction.date);
     }
-  
+
     // Check if the date is valid
     if (isNaN(date.getTime())) {
       Alert.alert("Error", "Invalid date.");
       return;
     }
-  
+
     const formattedDate = date.toISOString(); // Convert to ISO string
-    
+
     // Update transaction object with formatted date
     const updatedTransaction = { ...transaction, date: formattedDate };
-  
-    console.log("Saving updated transaction:", updatedTransaction);
-  
+
+    // console.log("Saving updated transaction:", updatedTransaction);
+
     // Send only updated transaction data
     await editTransaction(updatedTransaction);
-  
+
     // Additional handling for successful edit
     if (handleEditTransaction) {
       handleEditTransaction(updatedTransaction); // Send updated transaction to parent component
     } else {
       console.error("handleEditTransaction is not defined");
     }
-  
+
     setModalVisible(false);
   };
-  
-  
+
+
   const handleClose = () => {
     setModalVisible(false);
-    setTransaction(null); 
+    setTransaction(null);
   };
 
   return (
-    <View style={[styles.container,{ backgroundColor: theme.background}]}>
-      <Text style={[styles.header,{color:theme.text}]}>History Of {category}</Text>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <Text style={[styles.header, { color: theme.text }]}>History Of {category}</Text>
 
       {/* Display all the transactions for that category */}
       <FlatList
         data={transactionHistory}
         keyExtractor={(transaction, index) => `${transaction.date}-${index}`}
         renderItem={({ item }) => (
-          <View  style={[
-            styles.transactionCard,{ backgroundColor: theme.transactionCard,color: theme.text,}
+          <View style={[
+            styles.transactionCard, { backgroundColor: theme.transactionCard, color: theme.text, }
           ]}>
-            <View style={[styles.cardHeader,{backgroundColor:theme.transactionCard}]}>
-              <Text style={[styles.category,{color:theme.text}]}>{category}</Text>
-              <View style={[styles.iconContainer, {backgroundColor:theme.transactionCard,}]}>
+            <View style={[styles.cardHeader, { backgroundColor: theme.transactionCard }]}>
+              <Text style={[styles.category, { color: theme.text }]}>{category}</Text>
+              <View style={[styles.iconContainer, { backgroundColor: theme.transactionCard, }]}>
                 {item.type === "Income" ? (
                   <MaterialIcons name="trending-up" size={38} color="green" />
                 ) : (
@@ -450,7 +451,7 @@ const TransactionHistoryModal = ({ route }) => {
                 )}
                 <Text
                   style={[
-                    styles.transactionType,{color:theme.text},
+                    styles.transactionType, { color: theme.text },
                     item.type === "Income" ? styles.income : styles.expense,
                   ]}
                 >
@@ -459,14 +460,14 @@ const TransactionHistoryModal = ({ route }) => {
               </View>
             </View>
 
-            <View style={[styles.decriptionAmount,{ backgroundColor: theme.transactionCard,color: theme.text,}]}>
-              <Text style={[styles.description,{color:theme.text} ]}>{item.description}</Text>
-              <Text style={[styles.amount,{color:theme.text}]}>
+            <View style={[styles.decriptionAmount, { backgroundColor: theme.transactionCard, color: theme.text, }]}>
+              <Text style={[styles.description, { color: theme.text }]}>{item.description}</Text>
+              <Text style={[styles.amount, { color: theme.text }]}>
                 {item.amount || "Amount not available"}
               </Text>
             </View>
 
-            <Text style={[styles.date,{color:theme.text}]}>
+            <Text style={[styles.date, { color: theme.text }]}>
               {formatDate(item.date)}
             </Text>
 
@@ -490,10 +491,10 @@ const TransactionHistoryModal = ({ route }) => {
           transparent={true}
         >
           <View style={[styles.modalContainer,]}>
-            <View style={[styles.modalContent,{ backgroundColor: theme.transactionCard,color: theme.text,}]}>
-              <Text style={[styles.modalHeader,{ color: theme.text,}]}>Edit Transaction</Text>
+            <View style={[styles.modalContent, { backgroundColor: theme.transactionCard, color: theme.text, }]}>
+              <Text style={[styles.modalHeader, { color: theme.text, }]}>Edit Transaction</Text>
               <TextInput
-                style={[styles.input,{ color: theme.text,}]}
+                style={[styles.input, { color: theme.text, }]}
                 placeholder="Description"
                 value={transaction.description}
                 onChangeText={(text) =>
@@ -501,7 +502,7 @@ const TransactionHistoryModal = ({ route }) => {
                 }
               />
               <TextInput
-               style={[styles.input,{ color: theme.text,}]}
+                style={[styles.input, { color: theme.text, }]}
                 placeholder="Amount"
                 keyboardType="numeric"
                 value={
@@ -514,7 +515,7 @@ const TransactionHistoryModal = ({ route }) => {
                 }}
               />
               <TextInput
-                style={[styles.input,{ color: theme.text,}]}
+                style={[styles.input, { color: theme.text, }]}
                 placeholder="Category"
                 value={transaction.category}
                 onChangeText={(text) =>
@@ -539,11 +540,11 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   header: {
-    justifyContent:'center',
-    marginLeft:80,
+    justifyContent: 'center',
+    marginLeft: 80,
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 20, 
+    marginBottom: 20,
     marginTop: 20,
   },
   transactionCard: {
@@ -586,8 +587,8 @@ const styles = StyleSheet.create({
   actionIcons: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    marginRight:10,
-    paddingRight:10
+    marginRight: 10,
+    paddingRight: 10
   },
   modalContainer: {
     flex: 1,

@@ -67,10 +67,7 @@ const NewExpenseScreen = ({ navigation, route, isVisible, onClose }) => {
 
     const id = cuid();
 
-
     const { type } = route.params || {}; // Extract the 'type' parameter
-
-
 
     const handleDateConfirm = (date) => {
         setTransactionDate(date);
@@ -169,7 +166,6 @@ const NewExpenseScreen = ({ navigation, route, isVisible, onClose }) => {
                 type: 'success',
                 text1: 'Success',
                 text2: 'Expense transaction saved successfully!',
-
             });
 
             // Reset input fields
@@ -327,7 +323,7 @@ const NewExpenseScreen = ({ navigation, route, isVisible, onClose }) => {
                             />
 
                             {/* Save and Cancel Buttons */}
-                            <TouchableOpacity style={[styles.saveButton, { backgroundColor:theme.buttonBackground }]} onPress={handleSaveExpense}>
+                            <TouchableOpacity style={[styles.saveButton, { backgroundColor: theme.buttonBackground }]} onPress={handleSaveExpense}>
                                 <Text style={styles.saveButtonText}>Save</Text>
                             </TouchableOpacity>
                             <TouchableOpacity onPress={() => {
@@ -432,7 +428,8 @@ const NewExpenseScreen = ({ navigation, route, isVisible, onClose }) => {
                                     </TouchableOpacity>
                                 </View>
                             </Modal>
-                            <Toast
+
+                            {/* <Toast
                                 style={{
                                     position: "absolute",
                                     top: 50,
@@ -440,8 +437,7 @@ const NewExpenseScreen = ({ navigation, route, isVisible, onClose }) => {
                                     right: 0,
 
                                 }}
-                            />
-
+                            /> */}
 
                         </View>
                     </ScrollView>
@@ -457,7 +453,7 @@ const styles = StyleSheet.create({
         flex: 1,
         padding: 20,
         justifyContent: 'center',
-        marginTop:-5
+        marginTop: -5
     },
     scrollContent: {
         flexGrow: 1, // Ensures the content can grow and scroll

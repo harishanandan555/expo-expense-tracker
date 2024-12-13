@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, StatusBar } from 'react-native';
+
 import { useTheme } from '../../themeContext';
 import Header from './header';
 import Footer from './footer';

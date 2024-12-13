@@ -331,7 +331,7 @@ export const DeleteCategoryDialog = ({ children, category, onSuccessCallback }) 
   const [isModalVisible, setModalVisible] = useState(false);
 
   const deleteCategory = async (id, name, type, userId) => {
-    console.log("categoryId: ", id);
+    // console.log("categoryId: ", id);
     try {
       // Validate data before proceeding with the deletion
       const validatedData = await DeleteCategorySchema.validate({ name, type }, { abortEarly: false });
