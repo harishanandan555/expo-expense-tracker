@@ -18,7 +18,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BackHandler, ToastAndroid} from 'react-native';
 
-const TransactionScreen = ({ theme}) => {
+const TransactionScreen = ({theme}) => {
   const [selectedCategory, setSelectedCategory] = useState("Category");
   const [selectedType, setSelectedType] = useState("Type");
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
@@ -39,7 +39,7 @@ const TransactionScreen = ({ theme}) => {
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   
   const navigation = useNavigation();
-  
+
   const [tempSelectedCategory, setTempSelectedCategory] = useState("placeholder");
   const [tempSelectedType, setTempSelectedType] = useState("placeholder");
   const [tempSelectedDate, setTempSelectedDate] = useState(null);
@@ -143,12 +143,12 @@ const TransactionScreen = ({ theme}) => {
     });
     return unsubscribe;
   }, []);
-  
+
   const fetchTransactions = async (uid) => {
     try {
       const userDocRef = doc(db, 'users', uid);
       const userDoc = await getDoc(userDocRef);
-  
+
       if (userDoc.exists()) {
         const data = userDoc.data();
         const incomeData = data.income || [];
@@ -167,6 +167,7 @@ const TransactionScreen = ({ theme}) => {
           })),
         ];
 
+
         const validTransactions = allTransactions.filter(
           (transaction) => transaction.date && !isNaN(new Date(transaction.date).getTime())
         );
@@ -175,23 +176,23 @@ const TransactionScreen = ({ theme}) => {
         setTransactionsData(validTransactions);
         if (validTransactions.length > 0) {
           setTransactionsData(validTransactions);
-          console.log(
-            'Valid transactions in transaction screen:',
-            validTransactions
-          );
+          // console.log(
+          //   'Valid transactions in transaction screen:',
+          //   validTransactions
+          // );
         } else {
           setNoTransactionsMessage('No transactions found.');
           setTransactionsFound(false);
         }
-  
+
         const uniqueCategories = [
           ...new Set(validTransactions.map((item) => item.category)),
         ];
         const uniqueTransactionTypes = ['Income', 'Expense'];
-  
+
         setCategories(uniqueCategories);
         setTransactionTypes(uniqueTransactionTypes);
-  
+
         if (validTransactions.length === 0) {
           setNoTransactionsMessage('No transactions found.');
           setTransactionsFound(false);
@@ -208,11 +209,11 @@ const TransactionScreen = ({ theme}) => {
       setNoTransactionsMessage('Error fetching transactions.');
     }
   };
-  
+
   const refreshTransactions = (uid) => {
     fetchTransactions(uid); // Pass `uid` to re-fetch transactions
   };
-  
+
   // const copyDataToHistory = async (uid) => {                         dont remove
   //   try {
   //     const userDocRef = doc(db, 'users', uid);
@@ -264,62 +265,63 @@ const TransactionScreen = ({ theme}) => {
 
   const handleConfirm = (date) => {
     const formattedDate = format(date, "yyyy-MM-dd");
-    
+
     // Validate the date before using it
     if (!isNaN(date.getTime())) {
-        setSelectedDate(formattedDate);
+      setSelectedDate(formattedDate);
 
-        const filteredTransactions = transactionsData.filter(
-            (transaction) => format(new Date(transaction.date), "yyyy-MM-dd") === formattedDate
-        );
+      const filteredTransactions = transactionsData.filter(
+        (transaction) => format(new Date(transaction.date), "yyyy-MM-dd") === formattedDate
+      );
 
-        if (filteredTransactions.length === 0) {
-            setNoTransactionsMessage("No transactions found.");
-            setTransactionsFound(false);
-        } else {
-            setNoTransactionsMessage("");
-            setTransactionsFound(true);
-        }
+      if (filteredTransactions.length === 0) {
+        setNoTransactionsMessage("No transactions found.");
+        setTransactionsFound(false);
+      } else {
+        setNoTransactionsMessage("");
+        setTransactionsFound(true);
+      }
     } else {
-        Alert.alert("Error", "Selected date is invalid.");
+      Alert.alert("Error", "Selected date is invalid.");
     }
 
     hideDatePicker();
   };
+  
 
   const filterTransactions = () => {
     const filtered = transactionsData.filter((transaction) => {
       const transactionDate = new Date(transaction.date);
       const formattedDate = format(transactionDate, "yyyy-MM-dd");
-  
+
       const matchesSearchTerm =
-      searchTerm.trim() === "" ||
-      transaction.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      transaction.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      transaction.type.toLowerCase().includes(searchTerm.toLowerCase());
-  
+        searchTerm.trim() === "" ||
+        transaction.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        transaction.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        transaction.type.toLowerCase().includes(searchTerm.toLowerCase());
+
       return (
         (selectedCategory === "Category" || transaction.category === selectedCategory) &&
         (selectedType === "Type" || transaction.type === selectedType) &&
         (selectedDate ? formattedDate === selectedDate : true) &&
         matchesSearchTerm
-    );
+      );
     });
-  
+
     // Sort transactions by date in descending order
     const sortedTransactions = filtered.sort(
       (a, b) => new Date(b.date) - new Date(a.date)
-  );
+    );
 
-  const groupedTransactions = sortedTransactions.reduce((acc, transaction) => {
+    const groupedTransactions = sortedTransactions.reduce((acc, transaction) => {
       if (!acc[transaction.category]) {
-          acc[transaction.category] = { ...transaction, totalAmount: transaction.amount };
+        acc[transaction.category] = { ...transaction, totalAmount: transaction.amount };
       } else {
-          acc[transaction.category].totalAmount += transaction.amount;
+        acc[transaction.category].totalAmount += transaction.amount;
       }
       return acc;
-  }, {});
-  
+    }, {});
+
     return Object.values(groupedTransactions);
   };
   
@@ -350,9 +352,9 @@ const handlePreviousPage = () => {
       Alert.alert("Error", "User not authenticated.");
       return;
     }
-  
+
     const userDocRef = doc(db, "users", user.uid);
-  
+
     Alert.alert(
       "Confirm Deletion",
       `Are you sure you want to delete this ${transaction.type}?`,
@@ -365,51 +367,51 @@ const handlePreviousPage = () => {
           text: "Delete",
           onPress: async () => {
             try {
-              console.log("Deleting transaction:", transaction);
-  
+              // console.log("Deleting transaction:", transaction);
+
               const userDocSnapshot = await getDoc(userDocRef);
               if (userDocSnapshot.exists()) {
                 const expenses = userDocSnapshot.data().expenses || [];
                 const income = userDocSnapshot.data().income || [];
-  
+
                 const transactionIndex =
                   transaction.type.toLowerCase() === "expense"
                     ? expenses.findIndex((item) => {
-                        const isMatch =
-                          item.amount === transaction.amount &&
-                          item.category.trim() === transaction.category.trim() && // Trim whitespace
-                          item.description.trim() === transaction.description.trim() && // Trim whitespace
-                          item.icon === transaction.icon &&
-                          new Date(item.date).getTime() === new Date(transaction.date).getTime(); // Compare dates
-  
-                        console.log("Comparing:", {
-                          item,
-                          transaction,
-                          isMatch,
-                        });
-  
-                        return isMatch;
-                      })
+                      const isMatch =
+                        item.amount === transaction.amount &&
+                        item.category.trim() === transaction.category.trim() && // Trim whitespace
+                        item.description.trim() === transaction.description.trim() && // Trim whitespace
+                        item.icon === transaction.icon &&
+                        new Date(item.date).getTime() === new Date(transaction.date).getTime(); // Compare dates
+
+                      // console.log("Comparing:", {
+                      //   item,
+                      //   transaction,
+                      //   isMatch,
+                      // });
+
+                      return isMatch;
+                    })
                     : income.findIndex((item) => {
-                        const isMatch =
-                          item.amount === transaction.amount &&
-                          item.category.trim() === transaction.category.trim() && // Trim whitespace
-                          item.description.trim() === transaction.description.trim() && // Trim whitespace
-                          item.icon === transaction.icon &&
-                          new Date(item.date).getTime() === new Date(transaction.date).getTime(); // Compare dates
-  
-                        console.log("Comparing:", {
-                          item,
-                          transaction,
-                          isMatch,
-                        });
-  
-                        return isMatch;
-                      });
-  
-                console.log("Transaction index found:", transactionIndex);
-                console.log("Expenses:", JSON.stringify(expenses, null, 2));
-  
+                      const isMatch =
+                        item.amount === transaction.amount &&
+                        item.category.trim() === transaction.category.trim() && // Trim whitespace
+                        item.description.trim() === transaction.description.trim() && // Trim whitespace
+                        item.icon === transaction.icon &&
+                        new Date(item.date).getTime() === new Date(transaction.date).getTime(); // Compare dates
+
+                      // console.log("Comparing:", {
+                      //   item,
+                      //   transaction,
+                      //   isMatch,
+                      // });
+
+                      return isMatch;
+                    });
+
+                // console.log("Transaction index found:", transactionIndex);
+                // console.log("Expenses:", JSON.stringify(expenses, null, 2));
+
                 if (transactionIndex !== -1) {
                   if (transaction.type.toLowerCase() === "expense") {
                     expenses.splice(transactionIndex, 1);
@@ -418,8 +420,9 @@ const handlePreviousPage = () => {
                     income.splice(transactionIndex, 1);
                     await updateDoc(userDocRef, { income });
                   }
-  
-                  console.log("Transaction deleted successfully.");
+
+                  // console.log("Transaction deleted successfully.");
+
                   setTransactionsData((prevTransactions) =>
                     prevTransactions.filter(
                       (item) =>
@@ -448,78 +451,79 @@ const handlePreviousPage = () => {
   const editTransaction = async (transaction) => {
     const user = auth.currentUser;
     if (!user) {
-        Alert.alert("Error", "User not authenticated.");
-        return;
+      Alert.alert("Error", "User not authenticated.");
+      return;
     }
 
     const userDocRef = doc(db, "users", user.uid);
 
     Alert.alert(
-        "Confirm Edit",
-        `Are you sure you want to edit this ${transaction.description}?`,
-        [
-            {
-                text: "Cancel",
-                style: "cancel",
-            },
-            {
-                text: "Save",
-                onPress: async () => {
-                    try {
-                        console.log("Editing transaction:", transaction);
+      "Confirm Edit",
+      `Are you sure you want to edit this ${transaction.description}?`,
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Save",
+          onPress: async () => {
+            try {
+              // console.log("Editing transaction:", transaction);
 
-                        const userDocSnapshot = await getDoc(userDocRef);
-                        if (userDocSnapshot.exists()) {
-                            const data = userDocSnapshot.data();
-                            const targetArray =
-                                transaction.type.toLowerCase() === "expense"
-                                    ? data.expenses || []
-                                    : data.income || [];
+              const userDocSnapshot = await getDoc(userDocRef);
+              if (userDocSnapshot.exists()) {
+                const data = userDocSnapshot.data();
+                const targetArray =
+                  transaction.type.toLowerCase() === "expense"
+                    ? data.expenses || []
+                    : data.income || [];
 
-                            // Find the transaction by its unique identifier (Id)
-                            const transactionIndex = targetArray.findIndex((item) => {
-                              console.log("Comparing Item:", item, "with Transaction:", transaction);
-                              return item.Id === transaction.Id;
-                          });
-                            if (transactionIndex !== -1) {
-                                // Update the transaction directly
-                                targetArray[transactionIndex] = {
-                                    ...targetArray[transactionIndex],
-                                    ...transaction,
-                                };
+                // Find the transaction by its unique identifier (Id)
+                const transactionIndex = targetArray.findIndex((item) => {
+                  // console.log("Comparing Item:", item, "with Transaction:", transaction);
+                  return item.Id === transaction.Id;
+                });
+                if (transactionIndex !== -1) {
+                  // Update the transaction directly
+                  targetArray[transactionIndex] = {
+                    ...targetArray[transactionIndex],
+                    ...transaction,
+                  };
 
-                                // Update Firestore
-                                const updateField =
-                                transaction.type.toLowerCase() === "expense"
-                                    ? { expenses: targetArray }
-                                    : { income: targetArray };
-                            
-                            console.log("Updating Firestore with:", updateField);
-                            await updateDoc(userDocRef, updateField);
+                  // Update Firestore
+                  const updateField =
+                    transaction.type.toLowerCase() === "expense"
+                      ? { expenses: targetArray }
+                      : { income: targetArray };
 
-                                // Update local state
-                                setTransactionsData((prevTransactions) =>
-                                    prevTransactions.map((item) =>
-                                        item.Id === transaction.Id
-                                            ? { ...item, ...transaction }
-                                            : item
-                                    )
-                                );
-                            } else {
-                                console.log("Transaction not found for editing.");
-                                Alert.alert("Error", "Transaction not found.");
-                            }
-                        } else {
-                            console.log("User document does not exist.");
-                            Alert.alert("Error", "User document does not exist.");
-                        }
-                    } catch (error) {
-                        console.error("Error editing transaction:", error);
-                        Alert.alert("Error", "An error occurred while editing the transaction.");
-                    }
-                },
-            },
-        ]
+                  // console.log("Updating Firestore with:", updateField);
+
+                  await updateDoc(userDocRef, updateField);
+
+                  // Update local state
+                  setTransactionsData((prevTransactions) =>
+                    prevTransactions.map((item) =>
+                      item.Id === transaction.Id
+                        ? { ...item, ...transaction }
+                        : item
+                    )
+                  );
+                } else {
+                  // console.log("Transaction not found for editing.");
+                  Alert.alert("Error", "Transaction not found.");
+                }
+              } else {
+                // console.log("User document does not exist.");
+                Alert.alert("Error", "User document does not exist.");
+              }
+            } catch (error) {
+              console.error("Error editing transaction:", error);
+              Alert.alert("Error", "An error occurred while editing the transaction.");
+            }
+          },
+        },
+      ]
     );
   };
 
@@ -554,7 +558,7 @@ const handlePreviousPage = () => {
     }
 
     const filteredTransactions = filterTransactions();
-    console.log("Filtered transactions for CSV:", filteredTransactions);
+    // console.log("Filtered transactions for CSV:", filteredTransactions);
 
     if (filteredTransactions.length === 0) {
       Alert.alert(
@@ -591,7 +595,7 @@ const handlePreviousPage = () => {
     // .join("\n");
 
     // Log the generated CSV data
-    console.log("Generated CSV Data:\n", csvData);
+    // console.log("Generated CSV Data:\n", csvData);
 
     // Save the file to the app's document directory
     const currentDate = format(new Date(), 'yyyy-MM-dd');
@@ -603,7 +607,7 @@ const handlePreviousPage = () => {
         encoding: FileSystem.EncodingType.UTF8,
       });
 
-      console.log("File saved at:", fileUri);
+      // console.log("File saved at:", fileUri);
 
       // Share the file using expo-sharing
       await shareAsync(fileUri, {
@@ -629,21 +633,16 @@ const handlePreviousPage = () => {
       .map(
         (transaction) => `
     <tr>
-      <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${
-        format(new Date(transaction.date), "yyyy-MM-dd") || "N/A"
-      }</td>
-      <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${
-        transaction.type || "N/A"
-      }</td>
-      <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${
-        transaction.description || "N/A"
-      }</td>
-      <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${
-        transaction.amount || "N/A"
-      }</td>
-      <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${
-        transaction.category || "N/A"
-      }</td>
+      <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${format(new Date(transaction.date), "yyyy-MM-dd") || "N/A"
+          }</td>
+      <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${transaction.type || "N/A"
+          }</td>
+      <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${transaction.description || "N/A"
+          }</td>
+      <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${transaction.amount || "N/A"
+          }</td>
+      <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${transaction.category || "N/A"
+          }</td>
     </tr>
   `
       )
@@ -731,7 +730,7 @@ const handlePreviousPage = () => {
         return;
       }
       const { uri } = await Print.printToFileAsync({ html });
-      console.log("File has been saved to:", uri);
+      // console.log("File has been saved to:", uri);
       await shareAsync(uri, { UTI: ".pdf", mimeType: "application/pdf" });
     } catch (error) {
       console.error("Error while creating PDF:", error);
@@ -753,7 +752,7 @@ const handlePreviousPage = () => {
     if (option === "placeholder") {
       return; // Do nothing if "Export" is selected
     }
-    console.log("Selected export option:", option); // Debugging line
+    // console.log("Selected export option:", option); // Debugging line
     setSelectedExportOption(option);
     if (option === "CSV") {
       exportToCSV();
@@ -912,6 +911,7 @@ const handlePreviousPage = () => {
               </TouchableOpacity>
             </View>
 
+            {/* Filter Modal */}
             {/* Filter Modal */}
             <View>
               <Modal
@@ -1192,7 +1192,7 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     height: 50,
-    color:"#fff",
+    color: "#fff",
     borderColor: "#ccc",
     borderWidth: 1,
     borderRadius: 8,
@@ -1206,7 +1206,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 10,
     // marginTop:10,
-    width:220,
+    width: 220,
     // height:50
    
     borderWidth:0.5,
@@ -1215,8 +1215,8 @@ const styles = StyleSheet.create({
   filterButton: {
     padding: 10,
     borderRadius: 8,
-    justifyContent:'flex-end',
-    alignItems:'flex-end'
+    justifyContent: 'flex-end',
+    alignItems: 'flex-end'
     // justifyContent: "flex-end",
     // alignItems: "flex-end",
   }, 
@@ -1283,7 +1283,7 @@ const styles = StyleSheet.create({
   },
   bottomRow: {
     marginTop: 10,
-    margingRight:10,
+    margingRight: 10,
     flexDirection: "row",
     justifyContent: "flex-end",
   },
@@ -1332,8 +1332,8 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   filterContainer: {
-    width:150,
-    height:45,
+    width: 150,
+    height: 45,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-end",
@@ -1364,7 +1364,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'flex-start',
     // marginLeft:18,
-    paddingLeft:18,
+    paddingLeft: 18,
     marginBottom: 10,
   },
   datePickerText: {
@@ -1392,7 +1392,7 @@ const styles = StyleSheet.create({
   transactionsContainer: {
     flex: 1,
     paddingTop: 10,
-    marginTop:0
+    marginTop: 0
   },
   modalContent: {
     width: "80%",
@@ -1433,7 +1433,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   dropdownMenu: {
-   position: "relative",
+    position: "relative",
     top: 0,
     right: 10,
     // height: '90%',

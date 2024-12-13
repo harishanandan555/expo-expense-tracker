@@ -435,7 +435,9 @@ export const CreateCategoryDialogButton = ({ theme, type, onSuccessCallback }) =
 
     //
     const onSubmit = useCallback(
+
       async (values) => {
+
         Toast.show({
           type: 'info',
           text1: 'Creating Category...',
@@ -644,8 +646,8 @@ export const CreateCategoryDialogButton = ({ theme, type, onSuccessCallback }) =
           </View>
         </Modal>
 
-        {/* Toast Notifications */}
-        <Toast />
+        {/* <Toast /> */}
+
         </View>
       // </>
     );

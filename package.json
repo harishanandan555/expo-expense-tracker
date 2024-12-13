@@ -6,7 +6,9 @@
     "start": "expo start --dev-client",
     "android": "expo run:android",
     "ios": "expo run:ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "previewBuild": "eas build -p android --profile preview --clear-cache",
+    "developmentBuild": "eas build -p android --profile development --clear-cache"
   },
   "dependencies": {
     "@expo/metro-runtime": "~3.2.3",

@@ -1,29 +1,29 @@
-    import React, { useState, useEffect } from "react";
-    import { StyleSheet } from "react-native";
-    import { View, TextInput, Text, Alert, Image, TouchableOpacity } from 'react-native';
-    import { useRoute } from '@react-navigation/native';
-    import { auth } from '../../config/firebaseConfig'; 
-    import { signInWithPhoneNumber } from "firebase/auth";
-  
-    // import { getAuth, signInWithPhoneNumber, signInWithCredential, PhoneAuthProvider } from 'firebase/auth';
-    // import 'firebase/auth';
-    // import { PhoneAuthProvider,signInWithCredential } from 'firebase/auth';
+import React, { useState, useEffect } from "react";
+import { StyleSheet } from "react-native";
+import { View, TextInput, Text, Alert, Image, TouchableOpacity } from 'react-native';
+import { useRoute } from '@react-navigation/native';
+import { auth } from '../../config/firebaseConfig';
+import { signInWithPhoneNumber } from "firebase/auth";
 
-    export default function PhoneAuth() {
+// import { getAuth, signInWithPhoneNumber, signInWithCredential, PhoneAuthProvider } from 'firebase/auth';
+// import 'firebase/auth';
+// import { PhoneAuthProvider,signInWithCredential } from 'firebase/auth';
+
+export default function PhoneAuth() {
     const [phoneNumber, setPhoneNumber] = useState('');
     const [confirmResult, setConfirmResult] = useState(null);
     const [verificationCode, setVerificationCode] = useState('');
     // const [verificationId, setVerificationId] = useState(null);
 
     const route = useRoute();
-    
-        useEffect(() => {
-            if (route.params?.phone) {
-                setPhoneNumber(route.params.phone);
-            }
-        }, [route.params?.phone]);  
 
-        const phoneRegex = /^\+\d{1,3}\d{7,14}$/; 
+    useEffect(() => {
+        if (route.params?.phone) {
+            setPhoneNumber(route.params.phone);
+        }
+    }, [route.params?.phone]);
+
+    const phoneRegex = /^\+\d{1,3}\d{7,14}$/;
 
     // Function to send OTP
     // const sendOTP = async () => {
@@ -45,25 +45,25 @@
     // };
 
     const sendOTP = async () => {
-         console.log("sendOTP started");
-    if (!phoneRegex.test(phoneNumber)) {
-        Alert.alert("Please enter a valid phone number in the format +<country_code><number>.");
-        console.log("Entered phone:", phoneNumber);
-        return;
-    }  
-    // const auth = getAuth();
-    try {
-        const confirmationResult = await signInWithPhoneNumber(auth, phoneNumber);
-        setConfirmResult(confirmationResult);
-        Alert.alert("OTP has been sent to your phone.");
-    } catch (error) {
-        console.error("Error sending OTP:", error);
-        Alert.alert("Error sending OTP:", error.message);
-    }
-};
+        //  console.log("sendOTP started");
+        if (!phoneRegex.test(phoneNumber)) {
+            Alert.alert("Please enter a valid phone number in the format +<country_code><number>.");
+            // console.log("Entered phone:", phoneNumber);
+            return;
+        }
+        // const auth = getAuth();
+        try {
+            const confirmationResult = await signInWithPhoneNumber(auth, phoneNumber);
+            setConfirmResult(confirmationResult);
+            Alert.alert("OTP has been sent to your phone.");
+        } catch (error) {
+            console.error("Error sending OTP:", error);
+            Alert.alert("Error sending OTP:", error.message);
+        }
+    };
 
     // Function to verify OTP
-    
+
     // const confirmCode = async () => {
     //     try {
     //         const credential = PhoneAuthProvider.credential(verificationId, verificationCode);
@@ -74,7 +74,7 @@
     //         Alert.alert("Invalid code. Please try again.");
     //     }
     // };
-    
+
     const confirmCode = async () => {
         if (!verificationCode) {
             Alert.alert("Please enter the verification code.");
@@ -91,39 +91,39 @@
 
     return (
         <View style={styles.container}>
-             <Image
+            <Image
                 source={require('../../assets/wallet_logo.png')}
                 style={styles.logo}
             />
             <Text style={styles.title}>Confirm Your Mobile Number</Text>
-        <TextInput
-            placeholder="Enter phone number"
-            value={phoneNumber}
-            onChangeText={setPhoneNumber}
-            keyboardType="phone-pad"
-            style={styles.input}
-        />
-    <TouchableOpacity onPress={sendOTP} style={styles.button}>
+            <TextInput
+                placeholder="Enter phone number"
+                value={phoneNumber}
+                onChangeText={setPhoneNumber}
+                keyboardType="phone-pad"
+                style={styles.input}
+            />
+            <TouchableOpacity onPress={sendOTP} style={styles.button}>
                 <Text style={styles.buttonText}>Send OTP</Text>
             </TouchableOpacity>
 
-        {confirmResult && (
-            <>
-            <TextInput
-                placeholder="Enter OTP"
-                value={verificationCode}
-                onChangeText={setVerificationCode}
-                keyboardType="number-pad"
-                style={styles.input}
-            />
-           <TouchableOpacity onPress={confirmCode} style={styles.button}>
+            {confirmResult && (
+                <>
+                    <TextInput
+                        placeholder="Enter OTP"
+                        value={verificationCode}
+                        onChangeText={setVerificationCode}
+                        keyboardType="number-pad"
+                        style={styles.input}
+                    />
+                    <TouchableOpacity onPress={confirmCode} style={styles.button}>
                         <Text style={styles.buttonText}>Confirm Code</Text>
                     </TouchableOpacity>
-            </>
-        )}
+                </>
+            )}
         </View>
     );
-    };
+};
 
 //     return (
 //         <View style={{ padding: 20 }}>
@@ -161,8 +161,8 @@ const styles = StyleSheet.create({
         padding: 20,
     },
     logo: {
-        width: 150, 
-        height: 150, 
+        width: 150,
+        height: 150,
         marginBottom: 20,
     },
     title: {
@@ -172,7 +172,7 @@ const styles = StyleSheet.create({
         marginBottom: 20,
         color: "#fff",
         fontFamily: "Poppins, Arial",
-      },
+    },
     input: {
         backgroundColor: "#000",
         borderColor: "#808080",

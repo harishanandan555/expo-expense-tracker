@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, StatusBar } from 'react-native';
+
 import { useTheme } from '../../themeContext';
 import Header from './header';
 import Footer from './footer';
@@ -15,7 +16,7 @@ export default function MainScreen() {
   const renderCurrentScreen = () => {
     switch (currentScreen) {
       case 'Dashboard':
-        return <DashboardScreen theme={theme} />;
+        return <DashboardScreen theme={theme} setCurrentScreen={setCurrentScreen}/>;
       case 'Transactions':
         return <TransactionScreen theme={theme} />;
       case 'Settings':

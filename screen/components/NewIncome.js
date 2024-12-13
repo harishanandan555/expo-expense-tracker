@@ -61,6 +61,7 @@ const NewIncomeScreen = ({ route, isVisible, onClose }) => {
     const navigation = useNavigation();
 
     const { type } = route.params || {}; // Extract the 'type' parameter
+
     const id = cuid();
 
     const handleDateConfirm = (date) => {
@@ -99,7 +100,7 @@ const NewIncomeScreen = ({ route, isVisible, onClose }) => {
                 ...userCategories.map((category) => ({ ...category, isDefault: false })),
             ];
 
-            console.log("combinedCategories: ", combinedCategories)
+            // console.log("combinedCategories: ", combinedCategories)
 
             setCategories(combinedCategories);
             setFilteredCategories(combinedCategories);
@@ -168,16 +169,16 @@ const NewIncomeScreen = ({ route, isVisible, onClose }) => {
                 return;
             }
 
-            console.log('Retrieved userId:', userId);
+            // console.log('Retrieved userId:', userId);
 
             // Get a reference to the "users" collection
             const usersCollection = collection(db, 'users');
-            console.log('Users Collection Reference:', usersCollection);
+            // console.log('Users Collection Reference:', usersCollection);
 
             // Get a reference to the specific user document
             const userRef = doc(usersCollection, userId);
-            console.log('User Document Reference:', userRef);
-            console.log('Firestore Instance:', db);
+            // console.log('User Document Reference:', userRef);
+            // console.log('Firestore Instance:', db);
 
             // Prepare new income transaction
             const newIncome = {
@@ -189,15 +190,15 @@ const NewIncomeScreen = ({ route, isVisible, onClose }) => {
                 Id: id,
             };
 
-            console.log("icon", newIncome)
+            // console.log("icon", newIncome)
             // Fetch existing user data
             const userDoc = await getDoc(userRef);
             if (userDoc.exists()) {
                 const existingIncome = userDoc.data()?.income || [];
-                console.log('Existing Income:', existingIncome);
+                // console.log('Existing Income:', existingIncome);
 
                 const updatedIncome = [...existingIncome, newIncome];
-                console.log('Updated Income to Save:', updatedIncome);
+                // console.log('Updated Income to Save:', updatedIncome);
 
                 await setDoc(
                     userRef,
@@ -224,7 +225,9 @@ const NewIncomeScreen = ({ route, isVisible, onClose }) => {
             setSelectedIcon(null);
 
             // Navigate back with refresh flag
+
             navigation.navigate('Main', { refresh: true });
+
         } catch (error) {
             console.error('Error saving income transaction:', error);
             Alert.alert('Error', `Could not save income transaction: ${error.message}`);
@@ -348,7 +351,7 @@ const NewIncomeScreen = ({ route, isVisible, onClose }) => {
                                         onPress={() => setDatePickerVisible(true)}
                                     >
                                         <Text style={[styles.datePickerText, { color: theme.text }]}>
-                                            {format(transactionDate, 'MMMM do, yyyy')}
+                                        {format(transactionDate, 'MM/dd/yyyy')} 
                                         </Text>
                                         <MaterialIcons name="calendar-today" size={23} color={theme.text} />
                                     </TouchableOpacity>
@@ -366,129 +369,129 @@ const NewIncomeScreen = ({ route, isVisible, onClose }) => {
 
                             {/* Save and Cancel Buttons */}
                             <TouchableOpacity style={[styles.saveButton, { backgroundColor: theme.buttonBackground }]} onPress={handleSaveIncome}>
-            <Text style={styles.saveButtonText}>Save</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => {
-            navigation.navigate('Main')
-            setCreateCategoryModalVisible(false); // Close the modal
-            // Navigate back to the main screen
-        }} style={[styles.cancelButton, { backgroundColor: theme.cardbackground }]}>
-            <Text style={styles.cancelButtonText}>Cancel</Text>
-        </TouchableOpacity>
-
-        {/* Modal for Category Selection */}
-        <Modal visible={isCategoryModalVisible} animationType="slide" transparent={true}>
-            <View style={styles.modalContainer}>
-                <View style={[styles.modalContent, { backgroundColor: theme.background }]}>
-                    <TextInput
-                        style={[styles.searchInput, { borderColor: theme.inputBorderColor, color: theme.text, backgroundColor: theme.background }]}
-                        placeholder="Search category..."
-                        placeholderTextColor={placeholderTextColor}
-                        value={searchQuery} // Bind the search query state
-                        onChangeText={(text) => setSearchQuery(text)}
-                    />
-
-                    {/* Create New Button */}
-                    <TouchableOpacity style={styles.createNewButton} onPress={openCreateCategoryModal}>
-
-
-                        <CreateCategoryDialogButton theme={theme} type={type} onSuccessCallback={fetchCategories} />
-
-                    </TouchableOpacity>
-
-                    {/* Categories List */}
-                    <FlatList
-                        data={filteredCategories} // Display categories here
-                        keyExtractor={(item) => item.id}
-                        numColumns={1}
-
-                        renderItem={({ item }) => (
-                            <TouchableOpacity
-                                style={[styles.categoryItem, { backgroundColor: theme.background }]}
-                                onPress={() => {
-                                    setSelectedCategory(item.name);
-                                    setSelectedIcon(item.icon); // Set selected category
-                                    setCategoryModalVisible(false); // Close modal
-                                }}
-                            >
-                                <Text style={styles.categoryIcon}>{item.icon}</Text>
-                                <Text style={[styles.categoryName, { color: theme.text }]}>{item.name}</Text>
+                                <Text style={styles.saveButtonText}>Save</Text>
                             </TouchableOpacity>
-                        )}
-                        contentContainerStyle={styles.categoryList}
-                    />
+                            <TouchableOpacity onPress={() => {
+                                navigation.navigate('Main')
+                                setCreateCategoryModalVisible(false); // Close the modal
+                                // Navigate back to the main screen
+                            }} style={[styles.cancelButton, { backgroundColor: theme.cardbackground }]}>
+                                <Text style={styles.cancelButtonText}>Cancel</Text>
+                            </TouchableOpacity>
 
-                    {/* Cancel Button */}
-                    <TouchableOpacity
-                        onPress={() => {
-                            setCategoryModalVisible(false); // Close the modal correctly
-                        }}
-                        style={[styles.smallCancelButton, { backgroundColor: cancelButtonColor }]}
-                    >
-                        <Text style={styles.smallCancelText}>Cancel</Text>
-                    </TouchableOpacity>
+                            {/* Modal for Category Selection */}
+                            <Modal visible={isCategoryModalVisible} animationType="slide" transparent={true}>
+                                <View style={styles.modalContainer}>
+                                    <View style={[styles.modalContent, { backgroundColor: theme.background }]}>
+                                        <TextInput
+                                            style={[styles.searchInput, { borderColor: theme.inputBorderColor, color: theme.text, backgroundColor: theme.background }]}
+                                            placeholder="Search category..."
+                                            placeholderTextColor={placeholderTextColor}
+                                            value={searchQuery} // Bind the search query state
+                                            onChangeText={(text) => setSearchQuery(text)}
+                                        />
 
-                </View>
-            </View>
-        </Modal>
+                                        {/* Create New Button */}
+                                        <TouchableOpacity style={styles.createNewButton} onPress={openCreateCategoryModal}>
 
 
-        {/* Modal for Creating New Category */}
-        <Modal visible={isCreateCategoryModalVisible} animationType="slide" transparent={true}>
-            <View style={styles.modalContainer}>
-                <View style={[styles.modalContent, { backgroundColor: modalBackgroundColor }]}>
-                    <Text style={[styles.modalTitle, { color: theme.text }]}>Create Expense category</Text>
-                    <Text style={[styles.subText, { color: placeholderTextColor }]}>Categories are used to group your transactions.</Text>
+                                            <CreateCategoryDialogButton theme={theme} type={type} onSuccessCallback={fetchCategories} />
 
-                    {/* Category Name Input */}
-                    <TextInput
-                        style={[styles.input, { borderColor: theme.inputBorderColor, color: theme.text, backgroundColor: inputBackgroundColor }]}
-                        placeholder="Category"
-                        value={newCategory}
-                        onChangeText={setNewCategory}
-                        placeholderTextColor={placeholderTextColor}
-                    />
-                    <Text style={[styles.subText, { color: placeholderTextColor }]}>This is how your category will appear</Text>
+                                        </TouchableOpacity>
 
-                    {/* Icon Selection */}
-                    <TouchableOpacity style={[styles.iconSelector, { borderColor: theme.inputBorderColor, backgroundColor: inputBackgroundColor }]} onPress={() => setEmojiPickerVisible(true)}>
-                        <Text style={[styles.iconText, { color: theme.text }]}>{selectedIcon ? selectedIcon : 'Click To Select Icon'}</Text>
-                    </TouchableOpacity>
-                    <Text style={[styles.subText, { color: placeholderTextColor }]}>This Icon will appear in the category.</Text>
+                                        {/* Categories List */}
+                                        <FlatList
+                                            data={filteredCategories} // Display categories here
+                                            keyExtractor={(item) => item.id}
+                                            numColumns={1}
 
-                    {/* Save and Cancel Buttons */}
-                    <TouchableOpacity style={[styles.saveButton, { backgroundColor: theme.buttonBackground }]} onPress={handleSaveCategory}>
-                        <Text style={[styles.saveButtonText, { color: theme.text }]}>Save</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={[styles.cancelButton, { backgroundColor: cancelButtonColor }]}
-                        onPress={() => {
+                                            renderItem={({ item }) => (
+                                                <TouchableOpacity
+                                                    style={[styles.categoryItem, { backgroundColor: theme.background }]}
+                                                    onPress={() => {
+                                                        setSelectedCategory(item.name);
+                                                        setSelectedIcon(item.icon); // Set selected category
+                                                        setCategoryModalVisible(false); // Close modal
+                                                    }}
+                                                >
+                                                    <Text style={styles.categoryIcon}>{item.icon}</Text>
+                                                    <Text style={[styles.categoryName, { color: theme.text }]}>{item.name}</Text>
+                                                </TouchableOpacity>
+                                            )}
+                                            contentContainerStyle={styles.categoryList}
+                                        />
 
-                            setCreateCategoryModalVisible(false); // Close the modal
-                            // Navigate back to the main screen
-                        }}>
-                        <Text style={styles.cancelButtonText}>Cancel</Text>
-                    </TouchableOpacity>
-                </View>
-            </View>
-        </Modal>
+                                        {/* Cancel Button */}
+                                        <TouchableOpacity
+                                            onPress={() => {
+                                                setCategoryModalVisible(false); // Close the modal correctly
+                                            }}
+                                            style={[styles.smallCancelButton, { backgroundColor: cancelButtonColor }]}
+                                        >
+                                            <Text style={styles.smallCancelText}>Cancel</Text>
+                                        </TouchableOpacity>
 
-        {/* Emoji Picker Modal */}
-        <Modal visible={isEmojiPickerVisible} animationType="slide" transparent={true}>
-            <View style={styles.emojiPickerContainer}>
-                <EmojiSelector
-                    onEmojiSelected={(emoji) => {
-                        setSelectedIcon(emoji);
-                        setEmojiPickerVisible(false);
-                    }}
-                    showSearchBar={true}
-                    columns={8}
-                />
-                <TouchableOpacity onPress={() => setEmojiPickerVisible(false)} style={[styles.closeEmojiPicker, { backgroundColor: buttonBackgroundColor }]}>
-                    <Text style={styles.buttonText}>Close</Text>
-                </TouchableOpacity>
-            </View>
-        </Modal>
-    </View>
+                                    </View>
+                                </View>
+                            </Modal>
+
+
+                            {/* Modal for Creating New Category */}
+                            <Modal visible={isCreateCategoryModalVisible} animationType="slide" transparent={true}>
+                                <View style={styles.modalContainer}>
+                                    <View style={[styles.modalContent, { backgroundColor: modalBackgroundColor }]}>
+                                        <Text style={[styles.modalTitle, { color: theme.text }]}>Create Expense category</Text>
+                                        <Text style={[styles.subText, { color: placeholderTextColor }]}>Categories are used to group your transactions.</Text>
+
+                                        {/* Category Name Input */}
+                                        <TextInput
+                                            style={[styles.input, { borderColor: theme.inputBorderColor, color: theme.text, backgroundColor: inputBackgroundColor }]}
+                                            placeholder="Category"
+                                            value={newCategory}
+                                            onChangeText={setNewCategory}
+                                            placeholderTextColor={placeholderTextColor}
+                                        />
+                                        <Text style={[styles.subText, { color: placeholderTextColor }]}>This is how your category will appear</Text>
+
+                                        {/* Icon Selection */}
+                                        <TouchableOpacity style={[styles.iconSelector, { borderColor: theme.inputBorderColor, backgroundColor: inputBackgroundColor }]} onPress={() => setEmojiPickerVisible(true)}>
+                                            <Text style={[styles.iconText, { color: theme.text }]}>{selectedIcon ? selectedIcon : 'Click To Select Icon'}</Text>
+                                        </TouchableOpacity>
+                                        <Text style={[styles.subText, { color: placeholderTextColor }]}>This Icon will appear in the category.</Text>
+
+                                        {/* Save and Cancel Buttons */}
+                                        <TouchableOpacity style={[styles.saveButton, { backgroundColor: theme.buttonBackground }]} onPress={handleSaveCategory}>
+                                            <Text style={[styles.saveButtonText, { color: theme.text }]}>Save</Text>
+                                        </TouchableOpacity>
+                                        <TouchableOpacity style={[styles.cancelButton, { backgroundColor: cancelButtonColor }]}
+                                            onPress={() => {
+
+                                                setCreateCategoryModalVisible(false); // Close the modal
+                                                // Navigate back to the main screen
+                                            }}>
+                                            <Text style={styles.cancelButtonText}>Cancel</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                </View>
+                            </Modal>
+
+                            {/* Emoji Picker Modal */}
+                            <Modal visible={isEmojiPickerVisible} animationType="slide" transparent={true}>
+                                <View style={styles.emojiPickerContainer}>
+                                    <EmojiSelector
+                                        onEmojiSelected={(emoji) => {
+                                            setSelectedIcon(emoji);
+                                            setEmojiPickerVisible(false);
+                                        }}
+                                        showSearchBar={true}
+                                        columns={8}
+                                    />
+                                    <TouchableOpacity onPress={() => setEmojiPickerVisible(false)} style={[styles.closeEmojiPicker, { backgroundColor: buttonBackgroundColor }]}>
+                                        <Text style={styles.buttonText}>Close</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </Modal>
+                        </View>
                     </ScrollView >
                 </TouchableWithoutFeedback >
             </KeyboardAvoidingView >
@@ -564,14 +567,14 @@ const styles = StyleSheet.create({
     datePickerButton: {
         borderWidth: 1,
         borderRadius: 10,
-        padding: 15,
+        padding: 13,
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         marginBottom: 5,
     },
     datePickerText: {
-        fontSize: 12,
+        fontSize: 14,
     },
     saveButton: {
         marginTop: 20,
