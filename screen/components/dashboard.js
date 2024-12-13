@@ -523,7 +523,7 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
                         styles.newIncomeButton,
                         {
                             backgroundColor:
-                                activeButton === 'income' ? (isDarkMode ? '#04539a' : '#04539a') : backgroundColor,
+                                activeButton === 'income' ? (isDarkMode ? '#009cde' : '#009cde') : backgroundColor,
                             borderColor: '#FF6A00',
                         },
                     ]}
@@ -532,7 +532,7 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
                     <Text
                         style={[
                             styles.buttonText,
-                            { color: activeButton === 'income' ? backgroundColor : isDarkMode ? '#04539a' : '#04539a' },
+                            { color: activeButton === 'income' ? backgroundColor : isDarkMode ? '#009cde' : '#009cde' },
                         ]}
                     >
                         New income
