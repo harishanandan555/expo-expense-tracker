@@ -50,7 +50,7 @@ try {
     };
 
     const app = initializeApp(firebaseConfig);
-    console.log("Firebase initialized successfully:", app);
+    // console.log("Firebase initialized successfully:", app);
 
     if (Platform.OS === 'web') {
         auth = getAuth(app);
@@ -62,8 +62,8 @@ try {
 
     db = getFirestore(app);
 
-    console.log("Firebase Auth:", auth);
-    console.log("Firestore DB:", db);
+    // console.log("Firebase Auth:", auth);
+    // console.log("Firestore DB:", db);
 
 } catch (error) {
     console.error("Error initializing Firebase/Firestore:", error);

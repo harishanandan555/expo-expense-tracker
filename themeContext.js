@@ -56,7 +56,7 @@ const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
 
-  console.log("system theme: ", Appearance.getColorScheme())
+  // console.log("system theme: ", Appearance.getColorScheme())
   // const [currentTheme, setCurrentTheme] = useState('dark');
   const [currentTheme, setCurrentTheme] = useState(Appearance.getColorScheme());
 
