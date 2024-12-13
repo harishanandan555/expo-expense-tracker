@@ -310,7 +310,7 @@ const NewExpenseScreen = ({ navigation, route, isVisible, onClose }) => {
                                         onPress={() => setDatePickerVisible(true)}
                                     >
                                         <Text style={[styles.datePickerText, { color: theme.text }]}>
-                                            {format(transactionDate, 'MMMM do, yyyy')}
+                                        {format(transactionDate, 'MM/dd/yyyy')} 
                                         </Text>
                                         <MaterialIcons name="calendar-today" size={24} color={theme.text} />
                                     </TouchableOpacity>
@@ -520,14 +520,14 @@ const styles = StyleSheet.create({
     datePickerButton: {
         borderWidth: 1,
         borderRadius: 10,
-        padding: 7,
+        padding: 13,
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         marginBottom: 5,
     },
     datePickerText: {
-        fontSize: 16,
+        fontSize: 14,
     },
     saveButton: {
         marginTop: 20,
