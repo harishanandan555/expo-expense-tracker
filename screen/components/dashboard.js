@@ -541,7 +541,7 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
                     <Text
                         style={[
                             styles.buttonText,
-                            { color: activeButton === 'income' ? backgroundColor : isDarkMode ? '#04539a' : '#04539a' },
+                            { color: activeButton === 'income' ? backgroundColor : isDarkMode ? '#009cde' : '#009cde' },
                         ]}
                     >
                         New income
@@ -775,7 +775,7 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
                             onPress={() => setCurrentScreen('Transactions')}
                             style={styles.seeMoreButtonSmall}
                         >
-                              <Text style={[styles.buttonText, {color:'#009cde'}]}>See More ...</Text>
+                              <Text style={[styles.buttonText, {color:'#009cde', fontStyle:'italic'}]}>See More ...</Text>
                         </TouchableOpacity>
 
                     </View>
@@ -848,7 +848,7 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
                             onPress={() => setCurrentScreen('Transactions')}
                             style={styles.seeMoreButtonSmall}
                         >
-                            <Text style={[styles.buttonText, {color:'#009cde'}]}>See More ...</Text>
+                            <Text style={[styles.buttonText, {color:'#009cde', fontStyle:'italic'}]}>See More ...</Text>
                         </TouchableOpacity>
 
                     </View>
