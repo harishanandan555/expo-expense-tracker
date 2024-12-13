@@ -15,7 +15,7 @@ export default function MainScreen() {
   const renderCurrentScreen = () => {
     switch (currentScreen) {
       case 'Dashboard':
-        return <DashboardScreen theme={theme} />;
+        return <DashboardScreen theme={theme} setCurrentScreen={setCurrentScreen}/>;
       case 'Transactions':
         return <TransactionScreen theme={theme} />;
       case 'Settings':
