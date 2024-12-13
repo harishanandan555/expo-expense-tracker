@@ -17,7 +17,7 @@ import EditTransactionModal from './EditTransaction';
 import TransactionHistoryModal from './TransactionHistory';
 import { useNavigation } from '@react-navigation/native';
 
-const TransactionScreen = ({ theme }) => {
+const TransactionScreen = ({theme}) => {
   const [selectedCategory, setSelectedCategory] = useState("Category");
   const [selectedType, setSelectedType] = useState("Type");
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);

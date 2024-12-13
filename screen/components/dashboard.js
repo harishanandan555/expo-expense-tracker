@@ -8,7 +8,7 @@ import {
     Modal,
     TextInput,
     RefreshControl,
-
+    Button,
     Dimensions, Image,
     FlatList,
 
@@ -26,20 +26,22 @@ import DropDownPicker from "react-native-dropdown-picker";
 import { getUserById } from '../services/firebaseSettings';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Avatar, Menu, Divider, Provider } from 'react-native-paper';
-import { useNavigation } from '@react-navigation/native';
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
+import { format } from 'date-fns'; // Use date-fns for formatting dates
+import { useNavigation } from '@react-navigation/native'; // Import useNavigation hook
 import { doc, setDoc, getDoc, collection, onSnapshot } from "firebase/firestore";
 import { BarChart } from 'react-native-gifted-charts';
+const DashboardScreen = ({ theme, setCurrentScreen }) => {
 
 
-const DashboardScreen = ({ theme }) => {
 
 
     const [menuVisible, setMenuVisible] = useState(false);
     const [isIncomeModalVisible, setIncomeModalVisible] = useState(false);
     const [isExpenseModalVisible, setExpenseModalVisible] = useState(false);
-
-
-
+    const [transactionDate, setTransactionDate] = useState(new Date());
+    const [startDate, setStartDate] = useState(new Date());
+    const [endDate, setEndDate] = useState(new Date());
     const [isDatePickerVisible, setDatePickerVisible] = useState(false);
     const [isEndDatePickerVisible, setEndDatePickerVisible] = useState(false);
     const [activeButton, setActiveButton] = useState('income');
@@ -83,6 +85,7 @@ const DashboardScreen = ({ theme }) => {
     const [balance, setBalance] = useState(0);
     const [lastUpdated, setLastUpdated] = useState("");
     const [isExpenseEmojiPickerVisible, setExpenseEmojiPickerVisible] = useState(false);
+    const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
     const [isRefreshing, setIsRefreshing] = useState(false);
     // Default to current month
     const screenWidth = Dimensions.get('window').width;
@@ -314,7 +317,7 @@ const DashboardScreen = ({ theme }) => {
                                 const incomeData = userInfo.income.map((item) => ({
                                     category: item.category,
                                     amount: item.amount,
-                                    // date: item.date,
+                                    date: item.date,
                                     description: item.description,
                                     icon: item.icon || "💰", // Default icon if none is provided
                                 }));
@@ -370,7 +373,7 @@ const DashboardScreen = ({ theme }) => {
                                 const expenseData = userInfo.expenses.map((item) => ({
                                     category: item.category,
                                     amount: item.amount,
-                                    // date: item.date,
+                                    date: item.date,
                                     description: item.description,
                                     icon: item.icon || "💸", // Default icon if none is provided
                                 }));
@@ -528,10 +531,8 @@ const DashboardScreen = ({ theme }) => {
                     style={[
                         styles.newIncomeButton,
                         {
+                            // backgroundColor: activeButton === 'income' ? (isDarkMode ? '#04539a' : '#04539a') : backgroundColor,
                             backgroundColor: theme.buttonBackground,
-                            // borderColor: '#FF6A00',
-                            // backgroundColor:
-                            //     activeButton === 'income' ? (isDarkMode ? '#04539a' : '#04539a') : backgroundColor,
                             // borderColor: '#FF6A00',
                         },
                     ]}
@@ -553,8 +554,8 @@ const DashboardScreen = ({ theme }) => {
                         {
                             // backgroundColor: activeButton === 'expense' ? (isDarkMode ? '#FF6A00' : '#FF8C00') : backgroundColor,
                             backgroundColor: theme.cardBackground,
-                            borderColor: theme.buttonBackground,
                             // borderColor: '#04539a',
+                            borderColor: theme.buttonBackground,
                         },
                     ]}
                     onPress={toggleExpenseModals}
@@ -645,7 +646,28 @@ const DashboardScreen = ({ theme }) => {
                     </TouchableOpacity> */}
 
 
+                {/* Date Picker Modal */}
 
+                {/* <DateTimePickerModal
+                    isVisible={isDatePickerVisible}
+                    mode="date"
+                    onConfirm={(date) => {
+                        setStartDate(date);
+                        setDatePickerVisible(false);
+                    }}
+                    onCancel={() => setDatePickerVisible(false)}
+                />
+
+
+                <DateTimePickerModal
+                    isVisible={isEndDatePickerVisible}
+                    mode="date"
+                    onConfirm={(date) => {
+                        setEndDate(date);
+                        setEndDatePickerVisible(false);
+                    }}
+                    onCancel={() => setEndDatePickerVisible(false)}
+                /> */}
                 {/* Income, Expense, Balance Cards */}
 
                 <View style={[styles.overviewCard, { backgroundColor: theme.cardBackground }]}>
@@ -721,10 +743,10 @@ const DashboardScreen = ({ theme }) => {
                                                 <View key={index} style={[styles.listItem]}>
                                                     <View style={styles.itemHeader}>
                                                         <Text style={[styles.emoji, { color: theme.text }]}>{item.icon}</Text>
-                                                        <Text style={[styles.itemCategory, { color: theme.text, }]}>
+                                                        <Text style={[styles.itemCategory, { color: theme.text }]}>
                                                             {item.category}
                                                         </Text>
-                                                        <Text style={[styles.percentageText, { color: theme.text, }]}>
+                                                        <Text style={[styles.percentageText, { color: theme.text }]}>
                                                             ({percentage.toFixed(0)}%){" "}
                                                         </Text>
                                                         <Text style={[styles.amountText, { color: theme.text }]}>
@@ -739,12 +761,26 @@ const DashboardScreen = ({ theme }) => {
                                                 </View>
                                             );
                                         })}
+
+
                                     </View>
+
                                 );
                             })()
                         )}
+
+                    </View>
+                    <View style={styles.buttonContainers}>
+                        <TouchableOpacity
+                            onPress={() => setCurrentScreen('Transactions')}
+                            style={styles.seeMoreButtonSmall}
+                        >
+                              <Text style={[styles.buttonText, {color:'#009cde'}]}>See More ...</Text>
+                        </TouchableOpacity>
+
                     </View>
                 </Card>
+
 
                 <Card theme={theme}>
                     <Text style={[styles.sectionTitle, { color: theme.text }]}>Expense</Text>
@@ -801,10 +837,20 @@ const DashboardScreen = ({ theme }) => {
                                                 </View>
                                             );
                                         })}
+
                                     </View>
                                 );
                             })()
                         )}
+                    </View>
+                    <View style={styles.buttonContainers}>
+                        <TouchableOpacity
+                            onPress={() => setCurrentScreen('Transactions')}
+                            style={styles.seeMoreButtonSmall}
+                        >
+                            <Text style={[styles.buttonText, {color:'#009cde'}]}>See More ...</Text>
+                        </TouchableOpacity>
+
                     </View>
                 </Card>
 
@@ -1081,7 +1127,195 @@ const DashboardScreen = ({ theme }) => {
 
                     </View>
                     {/* Modal for New Income */}
+                    <Modal visible={isIncomeModalVisible} animationType="slide" transparent={true}>
+                        <View style={styles.modalContainer}>
+                            <View style={[styles.modalContent, { backgroundColor: backgroundColor }]}>
+                                <Text style={[styles.modalTitle, { color: theme.text }]}>
+                                    Add New <Text style={{ color: 'green' }}>Income</Text> Transaction
+                                </Text>
 
+                                <TextInput style={styles.input} placeholder="Transaction Description" placeholderTextColor={textColor} />
+                                <Text style={[styles.optionalText, { color: theme.text }]}>Transaction Description (Optional)</Text>
+
+                                <TextInput style={styles.input} placeholder="Put the price" placeholderTextColor={textColor} />
+                                <Text style={[styles.requiredText, { color: theme.text }]}>Transaction Amount (Required)</Text>
+
+                                {/* Category Selection */}
+                                <View style={styles.pickerContainer}>
+                                    <Text style={[styles.pickerLabel, { color: theme.text }]}>Category</Text>
+                                    <TouchableOpacity
+                                        style={[
+                                            styles.categoryBox,
+                                            { backgroundColor: theme.background, borderColor: isDarkMode ? '#fff' : '#000' }
+                                        ]}
+                                        onPress={openCategoryModal}
+                                    >
+                                        <Text style={[styles.categoryText, { color: theme.text }]}>
+                                            {selectedCategory ? `Category: {currency.label.split(' ')[0]}{selectedCategory}` : 'Select a category'}
+                                        </Text>
+                                        <MaterialIcons name="arrow-drop-down" size={24} color={textColor} />
+                                    </TouchableOpacity>
+                                    <Text style={[styles.pickerHint, { color: theme.text }]}>Select a category for the transaction</Text>
+                                </View>
+
+                                {/* Date Picker */}
+                                <View style={styles.pickerContainer}>
+                                    <Text style={[styles.pickerLabel, { color: theme.text }]}>Transaction date</Text>
+                                    <TouchableOpacity
+                                        style={[styles.datePickerButton, { backgroundColor: theme.background }]}
+                                        onPress={() => setDatePickerVisible(true)}
+                                    >
+                                        <Text style={[styles.pickerText, { color: theme.text }]}>{transactionDate.toLocaleDateString('en-US')}</Text>
+                                        <MaterialIcons name="calendar-today" size={24} color={textColor} />
+                                    </TouchableOpacity>
+                                </View>
+
+                                {/* Save and Cancel Buttons */}
+                                <View style={styles.buttonContainer}>
+                                    <TouchableOpacity style={styles.cancelButton} onPress={closeModals}>
+                                        <Text style={styles.buttonText}>Cancel</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity style={styles.saveButton} onPress={closeModals}>
+                                        <Text style={styles.buttonText}>Save</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+                        </View>
+                    </Modal>
+
+                    {/* Modal for Category Selection */}
+                    <Modal visible={isCategoryModalVisible} animationType="slide" transparent={true}>
+                        <View style={styles.modalContainer}>
+                            <View style={[styles.modalContent, { backgroundColor: backgroundColor }]}>
+                                <Text style={[styles.modalTitle, { color: theme.text }]}>Select a Category</Text>
+
+                                {/* Create New Category Button */}
+                                <TouchableOpacity onPress={openCreateCategoryModal} style={styles.createNewCategoryButton}>
+                                    <Text style={[styles.createNewText, { color: theme.text }]}>+ Create New</Text>
+                                </TouchableOpacity>
+
+                                {/* Cancel Button */}
+                                <TouchableOpacity onPress={() => setCategoryModalVisible(false)} style={styles.smallCancelButton}>
+                                    <Text style={styles.smallCancelText}>Cancel</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    </Modal>
+
+
+
+                    {/* Modal for Creating New Category */}
+                    <Modal visible={isCreateCategoryModalVisible} animationType="slide" transparent={true}>
+                        <View style={styles.modalContainer}>
+                            <View style={[styles.modalContent, { backgroundColor: backgroundColor }]}>
+                                <Text style={[styles.modalTitle, { color: theme.text }]}>Create New Category</Text>
+
+                                {/* Input for Category Name */}
+                                <TextInput
+                                    placeholder="Category Name"
+                                    value={newCategory}
+                                    onChangeText={(text) => setNewCategory(text)}
+                                    style={[styles.input, { backgroundColor: theme.background, color: theme.text }]}
+                                    placeholderTextColor={modalTextColor}
+                                />
+
+                                {/* Icon Selection */}
+                                <TouchableOpacity style={styles.emojiButton} onPress={() => setEmojiPickerVisible(true)}>
+                                    <Text style={{ color: theme.text }}>{selectedIcon ? selectedIcon : 'Click To Select Icon'}</Text>
+                                </TouchableOpacity>
+
+                                {/* Save Button */}
+                                <TouchableOpacity onPress={handleSaveCategory} style={[styles.niceSaveButton, { backgroundColor: isDarkMode ? '#FF6A00' : '#008F11' }]}>
+                                    <Text style={[styles.niceButtonText, { color: isDarkMode ? '#fff' : '#fff' }]}>Save</Text>
+                                </TouchableOpacity>
+
+                                {/* Cancel Button */}
+                                <TouchableOpacity onPress={() => setCreateCategoryModalVisible(false)} style={[styles.niceCancelButton, { backgroundColor: isDarkMode ? '#444' : '#ddd' }]}>
+                                    <Text style={[styles.niceButtonText, { color: isDarkMode ? '#fff' : '#000' }]}>Cancel</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    </Modal>
+
+
+                    {/* Emoji Picker Modal */}
+                    <Modal visible={isEmojiPickerVisible} animationType="slide" transparent={true}>
+                        <View style={styles.emojiPickerContainer}>
+                            {/* Replace this with your Emoji Picker component */}
+                            <TouchableOpacity onPress={() => { setSelectedIcon('🙂'); setEmojiPickerVisible(false); }} style={styles.emoji}>
+                                <Text style={{ fontSize: 30 }}>🙂</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity onPress={() => setEmojiPickerVisible(false)} style={styles.cancelButton}>
+                                <Text style={styles.buttonText}>Close</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </Modal>
+
+
+                    {/* Modal for New Expense */}
+                    <Modal visible={isExpenseModalVisible} animationType="slide" transparent={true}>
+                        <View style={styles.modalContainer}>
+                            <View style={[styles.modalContent, { backgroundColor: theme.background }]}>
+                                <Text style={[styles.modalTitle, { color: theme.text }]}>
+                                    Add New <Text style={{ color: 'red' }}>Expense</Text> Transaction
+                                </Text>
+
+                                <TextInput style={styles.input} placeholder="Transaction Description" placeholderTextColor={textColor} />
+                                <Text style={[styles.optionalText, { color: theme.text }]}>Transaction Description (Optional)</Text>
+
+                                <TextInput style={styles.input} placeholder="Put the price" placeholderTextColor={textColor} />
+                                <Text style={[styles.requiredText, { color: theme.text }]}>Transaction Amount (Required)</Text>
+
+                                {/* Category Selection */}
+                                <View style={styles.pickerContainer}>
+                                    <Text style={[styles.pickerLabel, { color: theme.text }]}>Category</Text>
+                                    <TouchableOpacity
+                                        style={[styles.categoryBox, { backgroundColor: theme.background, borderColor: isDarkMode ? '#fff' : '#000' }]}
+                                        onPress={openCategoryModal}  // This opens the category selection modal
+                                    >
+                                        <Text style={[styles.categoryText, { color: theme.text }]}>
+                                            {selectedCategory ? `Category: {currency.label.split(' ')[0]}{selectedCategory}` : 'Select a category'}
+                                        </Text>
+                                        <MaterialIcons name="arrow-drop-down" size={24} color={textColor} />
+                                    </TouchableOpacity>
+                                    <Text style={[styles.pickerHint, { color: theme.text }]}>Select a category for the transaction</Text>
+                                </View>
+
+                                {/* Date Picker */}
+                                <View style={styles.pickerContainer}>
+                                    <Text style={[styles.pickerLabel, { color: theme.text }]}>Transaction date</Text>
+                                    <TouchableOpacity
+                                        style={[styles.datePickerButton, { backgroundColor: theme.background }]}
+                                        onPress={() => setDatePickerVisible(true)}
+                                    >
+                                        <Text style={[styles.pickerText, { color: theme.text }]}>{transactionDate.toLocaleDateString('en-US')}</Text>
+                                        <MaterialIcons name="calendar-today" size={24} color={textColor} />
+                                    </TouchableOpacity>
+                                </View>
+
+                                {/* Save and Cancel Buttons */}
+                                <View style={styles.buttonContainer}>
+                                    <TouchableOpacity style={styles.cancelButton} onPress={closeModals}>
+                                        <Text style={styles.buttonText}>Cancel</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity style={styles.saveButton} onPress={closeModals}>
+                                        <Text style={styles.buttonText}>Save</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+                        </View>
+                    </Modal>
+
+                    <Modal visible={isExpenseEmojiPickerVisible} animationType="slide" transparent={true}>
+                        <View style={styles.emojiPickerContainer}>
+                            <TouchableOpacity onPress={() => { setSelectedExpenseIcon('😎'); setExpenseEmojiPickerVisible(false); }} style={styles.emoji}>
+                                <Text style={{ fontSize: 30 }}>😎</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity onPress={() => setExpenseEmojiPickerVisible(false)} style={styles.cancelButton}>
+                                <Text style={styles.buttonText}>Close</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </Modal>
 
 
 
@@ -1092,6 +1326,23 @@ const DashboardScreen = ({ theme }) => {
 };
 
 const styles = StyleSheet.create({
+    buttonContainers: {
+        marginTop: 10, // Adjust spacing above the button
+        alignSelf: 'flex-end', // Aligns button to the right
+    },
+    seeMoreButtonSmall: {
+        paddingVertical: 8, // Adjust button height
+        paddingHorizontal: 6, // Adjust button width
+        borderRadius: 5, // Round button corners
+        // Adds the border
+        borderColor: 'black', // Sets border color to black
+        // Button background color
+        alignItems: 'center', // Center-aligns text
+    },
+    buttonText: {
+        color: 'white', // Text color
+        fontWeight: 'bold', // Text styling
+    },
     scrollContent: {
         flexGrow: 1, // Ensures the content can grow and scroll
         padding: 20, // Adjust padding as needed
@@ -1202,6 +1453,11 @@ const styles = StyleSheet.create({
     datePickerWrapper: {
         flexDirection: 'row',
         alignItems: 'center',
+    },
+
+    seeMoreButton: {
+        paddingHorizontal: 10, // Adjust button padding if needed
+        paddingVertical: 5,
     },
 
     overviewCard: {
