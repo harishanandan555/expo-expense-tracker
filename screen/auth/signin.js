@@ -109,7 +109,7 @@ export default function SignInPage({ navigation }) {
       return;
     }
 
-    console.log("Valid email entered:", cleanedInput);
+    // console.log("Valid email entered:", cleanedInput);
     setEmailEntered(cleanedInput);
     showAlertMessage("Checking your email id...", true);
 
@@ -144,7 +144,7 @@ export default function SignInPage({ navigation }) {
       return;
     }
 
-    console.log("Attempting to sign in with:", emailEntered, password);
+    // console.log("Attempting to sign in with:", emailEntered, password);
 
     try {
       setLoading(true);
@@ -157,7 +157,7 @@ export default function SignInPage({ navigation }) {
         return;
       }
 
-      console.log("Sign-in successful", user);
+      // console.log("Sign-in successful", user);
       navigation.navigate("Main");
     } catch (error) {
       console.error("Sign-in error:", error.code, error.message);
@@ -185,7 +185,7 @@ export default function SignInPage({ navigation }) {
       showAlertMessage("Please enter a valid email address.");
       return;
     }
-    console.log("Sending password reset email to:", emailEntered);
+    // console.log("Sending password reset email to:", emailEntered);
     try {
       await sendPasswordResetEmail(auth, emailEntered);
       showAlertMessage("A password reset email has been sent to your email address.");
@@ -239,13 +239,13 @@ export default function SignInPage({ navigation }) {
           // Save user info in AsyncStorage
           await AsyncStorage.setItem("userId", firebaseUser.uid);
           await AsyncStorage.setItem("userEmail", firebaseUser.email);
-          await AsyncStorage.setItem("userInfo", JSON.stringify(firebaseUser));
+          await AsyncStorage.setItem("userData", JSON.stringify(firebaseUser));
 
           // Save the user to Firestore
           await saveUserToFirestore(firebaseUser);
 
           // Navigate to the main screen
-          navigation.navigate("Main", { userInfo: firebaseUser });
+          navigation.navigate("Main", { userInfo: JSON.stringify(firebaseUser) });
 
         } catch (error) {
           console.error("Silent login failed, showing account picker...", error);
@@ -295,7 +295,7 @@ export default function SignInPage({ navigation }) {
       await saveUserToFirestore(firebaseUser);
 
       // Navigate to the main screen
-      navigation.navigate("Main", { userInfo: firebaseUser });
+      navigation.navigate("Main", { userInfo: JSON.stringify(firebaseUser) });
     } catch (error) {
       console.error("Google Sign-In failed:", error);
     }
@@ -326,7 +326,7 @@ export default function SignInPage({ navigation }) {
     }
   };
 
-  const user = userInfo?.data?.user;
+  // const user = userInfo?.data?.user;
 
   const signOutUser = async () => {
     await AsyncStorage.removeItem("userEmail"); // Clear stored email

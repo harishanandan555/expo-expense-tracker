@@ -263,11 +263,13 @@ const UpdateUserCurrency = async (currencyValue) => {
 };
 
 export function CurrencyComboBox({ theme }) {
+
   const [open, setOpen] = useState(false);
   const [selectedOption, setSelectedOption] = useState(null);
   const [settings, setSettings] = useState({ isFetching: true, data: null });
 
   useEffect(() => {
+
     const getSettings = async () => {
       try {
         const storedCurrency = await AsyncStorage.getItem("selectedCurrency");
@@ -298,25 +300,46 @@ export function CurrencyComboBox({ theme }) {
     };
 
     getSettings();
+
   }, []);
 
   const onSelectOption = useCallback(async (currency) => {
+
     if (!currency) {
-      Toast.show({ text1: "Please select a currency!", type: "error" });
+      Toast.show({
+        text1: "Please select a currency!",
+        type: "error",
+      });
       return;
     }
 
-    Toast.show({ text1: "Updating Currency...", type: "info" });
+    Toast.show({
+      text1: "Updating Currency...",
+      type: "info",
+    });
 
     try {
       await UpdateUserCurrency(currency.value);
       await AsyncStorage.setItem("selectedCurrency", JSON.stringify(currency));
       setSelectedOption(mockCurrencies.find((c) => c.value === currency.value) || null);
-      Toast.show({ text1: "Currency updated successfully!", type: "success" });
+
+      Toast.show({
+        text1: "Currency updated successfully!",
+        type: "success",
+      });
+
     } catch (error) {
       console.error("Error updating currency:", error);
-      Toast.show({ text1: "Something went wrong!", type: "error" });
+      Toast.show({
+        text1: "Something went wrong!",
+        type: "error",
+        // position: "top", // Ensure it's shown at the top
+        // topOffset: 20, // Adjust distance from top
+        // visibilityTime: 100, // Toast duration in milliseconds
+        // style: { zIndex: 9999, elevation: 10 }, // Ensure it is above all other UI elements
+      });
     }
+
   }, []);
 
   if (settings.isFetching) {
@@ -334,15 +357,8 @@ export function CurrencyComboBox({ theme }) {
 
       {open && <OptionList setOpen={setOpen} setSelectedOption={onSelectOption} />}
 
-      <Toast
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          zIndex: 10,
-        }}
-      />
+      {/* <Toast/> */}
+
     </View>
   );
 }

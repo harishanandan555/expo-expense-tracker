@@ -157,25 +157,32 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
 
 
     // Function to handle theme switching
-    const handleThemeSwitch = (mode) => {
-        setTheme(mode);
-    };
+    // const handleThemeSwitch = (mode) => {
+    //     setTheme(mode);
+    // };
+
     useEffect(() => {
+
         const fetchUserInfo = async () => {
             try {
+
                 const storedUserInfo = await AsyncStorage.getItem("userInfo");
+
                 if (storedUserInfo) {
                     setUserInfos(storedUserInfo ? JSON.parse(storedUserInfo) : {});
                 } else {
                     console.log("No User Info found.");
                 }
+
             } catch (error) {
                 console.error("Error retrieving user info:", error);
             }
         };
 
         fetchUserInfo();
+
     }, []);
+
     const calculateAndSaveFinancialData = () => {
         const userId = auth.currentUser?.uid;
 
@@ -192,6 +199,7 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
             userDocRef,
             (docSnapshot) => {
                 if (docSnapshot.exists()) {
+
                     const userInfo = docSnapshot.data();
 
                     const financialData = userInfo.financialData || {};
@@ -248,7 +256,7 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
                         },
                         { merge: true }
                     ).then(() => {
-                        console.log("Financial data updated successfully in Firestore.");
+                        // console.log("Financial data updated successfully in Firestore.");
                     }).catch((error) => {
                         console.error("Error updating financial data in Firestore:", error);
                     });
@@ -259,12 +267,12 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
                     setBalance(calculatedBalance);
                     setLastUpdated(formattedLastUpdatedDate);
 
-                    console.log("Updated financial data:", {
-                        totalIncome: calculatedTotalIncome,
-                        totalExpense: calculatedTotalExpense,
-                        balance: calculatedBalance,
-                        lastUpdated: formattedLastUpdatedDate,
-                    });
+                    // console.log("Updated financial data:", {
+                    //     totalIncome: calculatedTotalIncome,
+                    //     totalExpense: calculatedTotalExpense,
+                    //     balance: calculatedBalance,
+                    //     lastUpdated: formattedLastUpdatedDate,
+                    // });
                 } else {
                     console.error("User document does not exist.");
                 }
@@ -460,15 +468,16 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
 
 
 
-    const userInfo = route.params?.userInfo;
+    // const userInfo = route.params.userInfo;
 
-    useEffect(() => {
-        if (userInfo) {
-            console.log("User Info in Dashboard:", userInfo); // Log to confirm data
-        } else {
-            console.log("No User Info received");
-        }
-    }, [userInfo]);
+    // useEffect(() => {
+    //     if (userInfo) {
+    //         let value = true
+    //         // console.log("User Info in Dashboard:", userInfo); // Log to confirm data
+    //     } else {
+    //         console.log("No User Info received");
+    //     }
+    // }, [userInfo]);
 
     // Fetch income and expense data
 
@@ -522,9 +531,9 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
                     style={[
                         styles.newIncomeButton,
                         {
-                            backgroundColor:
-                                activeButton === 'income' ? (isDarkMode ? '#009cde' : '#009cde') : backgroundColor,
-                            borderColor: '#FF6A00',
+                            // backgroundColor: activeButton === 'income' ? (isDarkMode ? '#04539a' : '#04539a') : backgroundColor,
+                            backgroundColor: theme.buttonBackground,
+                            // borderColor: '#FF6A00',
                         },
                     ]}
                     onPress={toggleIncomeModals}
@@ -545,7 +554,8 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
                         {
                             // backgroundColor: activeButton === 'expense' ? (isDarkMode ? '#FF6A00' : '#FF8C00') : backgroundColor,
                             backgroundColor: theme.cardBackground,
-                            borderColor: '#04539a',
+                            // borderColor: '#04539a',
+                            borderColor: theme.buttonBackground,
                         },
                     ]}
                     onPress={toggleExpenseModals}
@@ -765,7 +775,7 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
                             onPress={() => setCurrentScreen('Transactions')}
                             style={styles.seeMoreButtonSmall}
                         >
-                              <Text style={[styles.buttonText, {color:'#009cde'}]}>See More ...</Text>
+                              <Text style={[styles.buttonText, {color:'#009cde', fontStyle:'italic'}]}>See More ...</Text>
                         </TouchableOpacity>
 
                     </View>
@@ -838,7 +848,7 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
                             onPress={() => setCurrentScreen('Transactions')}
                             style={styles.seeMoreButtonSmall}
                         >
-                            <Text style={[styles.buttonText, {color:'#009cde'}]}>See More ...</Text>
+                            <Text style={[styles.buttonText, {color:'#009cde', fontStyle:'italic'}]}>See More ...</Text>
                         </TouchableOpacity>
 
                     </View>
