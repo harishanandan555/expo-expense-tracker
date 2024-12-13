@@ -329,6 +329,8 @@ import { View, Text, FlatList, StyleSheet, TouchableOpacity, Modal, TextInput, B
 import { format } from 'date-fns';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useTheme } from '../../themeContext';
+import { useFocusEffect } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const TransactionHistoryModal = ({ route }) => {
   const [modalVisible, setModalVisible] = useState(false);
@@ -336,8 +338,27 @@ const TransactionHistoryModal = ({ route }) => {
   const [transactionHistory, setTransactionHistory] = useState([]);
   const { theme } = useTheme();
 
-  const { item } = route?.params || {};
+  const [currency, setCurrency] = useState({ value: 'USD', label: '$ Dollar', locale: 'en-US' });
+  useFocusEffect(
+    React.useCallback(() => {
+        const fetchCurrency = async () => {
+            try {
+                const storedCurrency = await AsyncStorage.getItem('selectedCurrency');
 
+                if (storedCurrency) {
+                    setCurrency(JSON.parse(storedCurrency));
+                }
+
+            } catch (error) {
+                console.error('Error fetching currency:', error);
+            }
+        };
+
+        fetchCurrency();
+    }, [])
+);
+
+  const { item } = route?.params || {}; 
   if (!item) {
     return (
       <View >
@@ -364,7 +385,10 @@ const TransactionHistoryModal = ({ route }) => {
         {
           text: "OK",
           onPress: () => {
-            deleteTransaction(transaction); // Call the delete function
+            deleteTransaction(transaction);
+            // setTransactionHistory((prevHistory) =>
+            //   prevHistory.filter((item) => item.Id !== transaction.Id)
+            // );
           }
         }
       ]
@@ -381,49 +405,33 @@ const TransactionHistoryModal = ({ route }) => {
   };
 
   const handleSave = async () => {
-    // Ensure all required fields are set
     if (!transaction.description || !transaction.category || transaction.amount === null || transaction.amount <= 0 || !transaction.type || !transaction.date) {
       Alert.alert("Error", "Please provide valid transaction details.");
       return;
     }
-
-    // Convert Firestore timestamp to JavaScript Date if needed
-    let date;
-    if (transaction.date && transaction.date.seconds && transaction.date.nanoseconds) {
-      // Firestore Timestamp Format: { seconds, nanoseconds }
-      date = new Date(transaction.date.seconds * 1000); // Convert seconds to milliseconds
-    } else {
-      // If it's already a valid date string, use it
-      date = new Date(transaction.date);
-    }
-
-    // Check if the date is valid
+  
+    const date = new Date(transaction.date);
     if (isNaN(date.getTime())) {
       Alert.alert("Error", "Invalid date.");
       return;
     }
-
-    const formattedDate = date.toISOString(); // Convert to ISO string
-
-    // Update transaction object with formatted date
+  
+    const formattedDate = date.toISOString();
     const updatedTransaction = { ...transaction, date: formattedDate };
-
-    // console.log("Saving updated transaction:", updatedTransaction);
-
-    // Send only updated transaction data
+  
+    console.log("Saving updated transaction:", updatedTransaction);
+  
     await editTransaction(updatedTransaction);
-
-    // Additional handling for successful edit
-    if (handleEditTransaction) {
-      handleEditTransaction(updatedTransaction); // Send updated transaction to parent component
-    } else {
-      console.error("handleEditTransaction is not defined");
-    }
-
+  
+    setTransactionHistory((prevHistory) =>
+      prevHistory.map((item) =>
+        item.Id === updatedTransaction.Id ? updatedTransaction : item
+      )
+    );
+  
     setModalVisible(false);
   };
-
-
+  
   const handleClose = () => {
     setModalVisible(false);
     setTransaction(null);
@@ -449,9 +457,7 @@ const TransactionHistoryModal = ({ route }) => {
                 ) : (
                   <MaterialIcons name="trending-down" size={29} color="red" />
                 )}
-                <Text
-                  style={[
-                    styles.transactionType, { color: theme.text },
+                <Text style={[ styles.transactionType,{color:theme.text},
                     item.type === "Income" ? styles.income : styles.expense,
                   ]}
                 >
@@ -460,15 +466,13 @@ const TransactionHistoryModal = ({ route }) => {
               </View>
             </View>
 
-            <View style={[styles.decriptionAmount, { backgroundColor: theme.transactionCard, color: theme.text, }]}>
-              <Text style={[styles.description, { color: theme.text }]}>{item.description}</Text>
-              <Text style={[styles.amount, { color: theme.text }]}>
-                {item.amount || "Amount not available"}
-              </Text>
+            <View style={[styles.decriptionAmount,{ backgroundColor: theme.transactionCard,color: theme.text,}]}>
+              <Text style={[styles.description,{color:theme.text} ]}>{item.description}</Text>
+              <Text style={[styles.amount, { color: theme.text }]}> {currency.label.split(' ')[0]}{item.amount || 0}</Text>
             </View>
-
-            <Text style={[styles.date, { color: theme.text }]}>
-              {formatDate(item.date)}
+           
+            <Text style={[styles.date,{color:theme.text}]}>
+              Date: {formatDate(item.date)}
             </Text>
 
             <View style={styles.actionIcons}>
@@ -482,6 +486,7 @@ const TransactionHistoryModal = ({ route }) => {
           </View>
         )}
       />
+     
       {/* Modal for Editing Transaction */}
       {transaction && (
         <Modal
@@ -540,19 +545,17 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   header: {
-    justifyContent: 'center',
-    marginLeft: 80,
+    justifyContent:'center',
+    textAlign:'center',
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 20,
+    marginBottom: 10, 
     marginTop: 20,
   },
   transactionCard: {
-    marginBottom: 15,
+    marginBottom: 10,
     padding: 15,
-    // backgroundColor: '#fff',
     borderRadius: 5,
-    // shadowColor: '#000',
     shadowOpacity: 0.1,
     shadowRadius: 5,
     elevation: 3,
@@ -562,33 +565,41 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  category:{
+    fontSize: 19,
+  },
   iconContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   transactionType: {
+    fontSize: 20,
     marginLeft: 5,
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
   },
   decriptionAmount: {
     marginVertical: 10,
+    flexDirection: 'row',
+    justifyContent:'space-between',
   },
   description: {
     fontSize: 24,
   },
   amount: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
+    right:30
   },
   date: {
-    fontSize: 12,
+    fontSize: 14,
     color: '#888',
+    marginBottom: 10,
   },
   actionIcons: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginRight: 10,
-    paddingRight: 10
+    justifyContent: 'space-between',
+    marginRight:10,
+
   },
   modalContainer: {
     flex: 1,

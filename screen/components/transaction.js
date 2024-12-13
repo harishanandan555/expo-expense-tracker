@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, FlatList, TouchableOpacity, Alert, Modal, TouchableWithoutFeedback } from "react-native";
+import React, { useState, useEffect  } from 'react';
+import { View, Text,TextInput, StyleSheet, FlatList, TouchableOpacity, Alert, Modal, TouchableWithoutFeedback, KeyboardAvoidingView,Platform,Keyboard,ScrollView  } from "react-native";
 import { Provider } from 'react-native-paper';
 import { Picker } from "@react-native-picker/picker";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
@@ -13,9 +13,10 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { auth, db } from "../../config/firebaseConfig";
 import { onAuthStateChanged } from 'firebase/auth';
 import { updateDoc, doc, getDoc } from 'firebase/firestore';
-import EditTransactionModal from './EditTransaction';
-import TransactionHistoryModal from './TransactionHistory';
 import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { BackHandler, ToastAndroid} from 'react-native';
 
 const TransactionScreen = ({theme}) => {
   const [selectedCategory, setSelectedCategory] = useState("Category");
@@ -34,15 +35,68 @@ const TransactionScreen = ({theme}) => {
   const [isFilterApplied, setIsFilterApplied] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState(null);
-  const [historyModalVisible, setHistoryModalVisible] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterModalVisible, setFilterModalVisible] = useState(false);
+  
   const navigation = useNavigation();
 
   const [tempSelectedCategory, setTempSelectedCategory] = useState("placeholder");
   const [tempSelectedType, setTempSelectedType] = useState("placeholder");
   const [tempSelectedDate, setTempSelectedDate] = useState(null);
   const [filteredTransactions, setFilteredTransactions] = useState(null);
+
+  const [transactionsPerPage] = useState(3);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalTransactions, setTotalTransactions] = useState(0)
+ 
+  // Handle back button behavior
+  const [backPressCount, setBackPressCount] = useState(0);
+  useFocusEffect(
+    React.useCallback(() => {
+      const onBackPress = () => {
+        if (navigation.isFocused()) {
+          if (backPressCount === 0) {
+            setBackPressCount(1);
+            ToastAndroid.show("Press back again to exit", ToastAndroid.SHORT);
+
+            // Reset counter after 2 seconds
+            setTimeout(() => setBackPressCount(0), 2000);
+          } else if (backPressCount === 1) {
+            BackHandler.exitApp();
+          }
+          return true; // Prevent default back action
+        } else {
+          navigation.goBack();
+          return true;
+        }
+      };
+
+      const backHandler = BackHandler.addEventListener("hardwareBackPress", onBackPress);
+
+      return () => backHandler.remove();
+    }, [backPressCount, navigation])
+  );
+
+  // Handle Currency
+  const [currency, setCurrency] = useState({ value: 'USD', label: '$ Dollar', locale: 'en-US' });
+  useFocusEffect(
+    React.useCallback(() => {
+        const fetchCurrency = async () => {
+            try {
+                const storedCurrency = await AsyncStorage.getItem('selectedCurrency');
+
+                if (storedCurrency) {
+                    setCurrency(JSON.parse(storedCurrency));
+                }
+
+            } catch (error) {
+                console.error('Error fetching currency:', error);
+            }
+        };
+
+        fetchCurrency();
+    }, [])
+  );
 
   const handleApplyFilters = () => {
     let filteredTransactions = transactionsData;
@@ -75,13 +129,6 @@ const TransactionScreen = ({theme}) => {
     setFilterModalVisible(false);
   };
 
-  const handleResetFilters = () => {
-    setTempSelectedCategory("placeholder");
-    setTempSelectedType("placeholder");
-    setTempSelectedDate(null);
-    setFilteredTransactions(transactionsData);
-  };
-
   const handleCancelFilters = () => {
     setFilterModalVisible(false);
   };
@@ -107,28 +154,26 @@ const TransactionScreen = ({theme}) => {
         const incomeData = data.income || [];
         const expenseData = data.expenses || [];
 
-        const validateDate = (dateString) => {
-          const dateObj = new Date(dateString);
-          return !isNaN(dateObj.getTime()) ? dateObj : null;
-        };
-
         const allTransactions = [
           ...incomeData.map((item) => ({
             ...item,
             type: 'Income',
-            date: validateDate(item.date),
+            date: new Date(item.date),
           })),
           ...expenseData.map((item) => ({
             ...item,
             type: 'Expense',
-            date: validateDate(item.date),
+            date: new Date(item.date),
           })),
         ];
+
 
         const validTransactions = allTransactions.filter(
           (transaction) => transaction.date && !isNaN(new Date(transaction.date).getTime())
         );
 
+        setTotalTransactions(validTransactions.length); // Set the total number of transactions
+        setTransactionsData(validTransactions);
         if (validTransactions.length > 0) {
           setTransactionsData(validTransactions);
           // console.log(
@@ -162,7 +207,6 @@ const TransactionScreen = ({theme}) => {
     } catch (error) {
       console.error('Error fetching transactions: ', error);
       setNoTransactionsMessage('Error fetching transactions.');
-      setTransactionsFound(false);
     }
   };
 
@@ -243,6 +287,7 @@ const TransactionScreen = ({theme}) => {
 
     hideDatePicker();
   };
+  
 
   const filterTransactions = () => {
     const filtered = transactionsData.filter((transaction) => {
@@ -279,7 +324,28 @@ const TransactionScreen = ({theme}) => {
 
     return Object.values(groupedTransactions);
   };
+  
+  const getCurrentPageTransactions = () => {
+    const startIndex = (currentPage - 1) * transactionsPerPage;
+    const endIndex = startIndex + transactionsPerPage;
+  
+    return filterTransactions().slice(startIndex, endIndex);
+  };
+  
+  const totalPages = Math.ceil(totalTransactions / transactionsPerPage);
 
+  const handleNextPage = () => {
+  if (currentPage < totalPages) {
+    setCurrentPage(currentPage + 1);
+  }
+};
+
+const handlePreviousPage = () => {
+  if (currentPage > 1) {
+    setCurrentPage(currentPage - 1);
+  }
+};
+  
   const deleteTransaction = async (transaction) => {
     const user = auth.currentUser;
     if (!user) {
@@ -461,82 +527,10 @@ const TransactionScreen = ({theme}) => {
     );
   };
 
-
-  const handleEditTransaction = (updatedData) => {
-    // console.log("Updated transaction received:", updatedData);// Log selected transaction
+  const handleEditTransaction =  (updatedData) => {
+  console.log("Updated transaction received:", updatedData);// Log selected transaction
     setModalVisible(false);
     setSelectedTransaction(null); // Reset selected transaction
-  };
-
-  const formatDate = (date) => {
-    return format(new Date(date), 'yyyy-MM-dd');
-  }
-
-  const showTransactionHistory = (category) => {
-    setSelectedCategory(category);
-    setHistoryModalVisible(true);
-  };
-
-  const closeHistoryModal = () => {
-    setHistoryModalVisible(false);
-  };
-
-  const renderTransactionItem = ({ item, index }) => {
-    const uniqueId = `${item.date}-${item.category}-${item.description}-${item.amount}-${index}`; // Combine fields + index for uniqueness
-    const isMenuVisible = menuVisible === uniqueId; // Compare with menuVisible state
-
-    return (
-      <View style={[styles.transactionRow, { backgroundColor: theme.transactionBackground },]} >
-        <Text
-          style={[styles.transactionCell, { color: theme.transactionText }]}
-        >
-          {formatDate(item.date)}
-        </Text>
-        <Text style={[styles.transactionCell, { color: theme.transactionText }]} >
-          {item.category}
-        </Text>
-        <Text style={[styles.transactionCell, { color: theme.transactionText }]}>
-          {item.description}
-        </Text>
-        <Text style={[styles.transactionCell, { color: theme.transactionText }]}>
-          {item.type}
-        </Text>
-        <Text style={[styles.transactionCell, { color: theme.transactionText }]}>
-          {item.totalAmount} {/* Display total amount */}
-        </Text>
-
-        {/* More Icon */}
-        <TouchableOpacity
-          onPress={() => setMenuVisible(isMenuVisible ? null : uniqueId)} // Toggle visibility
-        >
-          <Icon name="more-horiz" size={24} color={theme.transactionText} />
-        </TouchableOpacity>
-
-        {/* Dropdown Menu */}
-        {isMenuVisible && (
-          <View style={[styles.dropdownMenu, { backgroundColor: theme.transactionBackground }]} >
-            <TouchableOpacity onPress={() => { setSelectedTransaction(item); setModalVisible(true); }} style={styles.menuItem}>
-              <Icon name="edit" size={21} color="#007BFF" />
-              <Text style={[styles.menuText, { color: theme.transactionText }]}>Edit</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => { setMenuVisible(null); deleteTransaction(item); }} style={styles.menuItem}>
-              <Icon name="delete" size={21} color="#FF0000" />
-              <Text style={[styles.menuText, { color: theme.transactionText }]}> Delete  </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={() => showTransactionHistory(item.category)}
-              style={styles.menuItem}
-            >
-              <Icon name="history" size={21} color="#007BFF" />
-              <Text style={[styles.menuText, { color: theme.transactionText }]}>
-                History
-              </Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      </View>
-    );
   };
 
   const handleRefresh = () => {
@@ -546,6 +540,10 @@ const TransactionScreen = ({theme}) => {
     setNoTransactionsMessage("");
     setTransactionsFound(true);
     setIsFilterApplied(false);
+    setIsRefreshing(true);
+    setCurrentPage(1); 
+    fetchTransactions(auth.currentUser.uid);
+    setIsRefreshing(false); 
   };
 
   const exportToCSV = async () => {
@@ -764,12 +762,89 @@ const TransactionScreen = ({theme}) => {
     setTimeout(() => setSelectedExportOption("placeholder"), 500);
   };
 
+  // const renderTransaction = ({ item }) => (
+  //   <View
+  //   style={[
+  //     styles.transactionCard,
+  //     { backgroundColor: theme.transactionDropdownBackground },
+  //   ]}
+  // >
+  //   {/* Top Row: Category and Total Amount */}
+  //   <View style={styles.topRow}>
+  //     <Text style={[styles.category, { color: theme.text }]}>
+  //       {item.category}
+  //     </Text>
+  //     <Text style={[styles.amount, { color: theme.text }]}> {currency.label.split(' ')[0]}{item.totalAmount || 0}</Text>
+  //   </View>
+
+  //   {/* Middle Row: Date and Type with Icons */}
+  //   <View style={styles.middleRow}>
+  //     <Text style={[styles.date, { color: theme.text }]}>
+  //       {format(new Date(item.date), "yyyy-MM-dd")}
+  //     </Text>
+  //     <View style={styles.typeContainer}>
+  //       <MaterialIcons
+  //         name={
+  //           item.type === "Income"
+  //             ? "trending-up"
+  //             : "trending-down"
+  //         }
+  //         size={20}
+  //         color={item.type === "Income" ? "green" : "red"}
+  //       />
+  //       <Text style={[styles.typeText, { color: theme.text }]}>
+  //         {item.type === "Income" ? "Income" : "Expense"}
+  //       </Text>
+  //     </View>
+  //   </View>
+
+  //   {/* Bottom Row: History Button */}
+  //   <View style={styles.bottomRow}>
+  //     <TouchableOpacity
+  //       refreshTransactions={() =>
+  //         refreshTransactions(auth.currentUser?.uid)
+  //       }
+  //       onPress={() => {
+  //         const transactionsForCategory =
+  //           transactionsData.filter(
+  //             (transaction) =>
+  //               transaction.category === item.category
+  //           );
+
+  //         navigation.navigate("TransactionHistory", {
+  //           item: {
+  //             category: item.category,
+  //             transactions: transactionsForCategory,
+  //             deleteTransaction: deleteTransaction,
+  //             editTransaction: editTransaction,
+  //             handleEditTransaction: handleEditTransaction,
+  //             // refreshTransactions
+  //           },
+  //         });
+  //       }}
+  //       style={styles.historyButton}
+  //     >
+  //       <MaterialIcons
+  //         name="history"
+  //         size={20}
+  //         color={theme.text}
+  //       />
+  //       <Text style={[styles.menuText, { color: theme.text }]}>
+  //         History
+  //       </Text>
+  //     </TouchableOpacity>
+  //   </View>
+  // </View>
+  // );
+  
   return (
     <Provider>
-      <TouchableWithoutFeedback onPress={() => setMenuVisible(null)} accessible={false}  >
+      <TouchableWithoutFeedback
+        onPress={() => setMenuVisible(null)}
+        accessible={false}
+      >
         <View style={[styles.container, { backgroundColor: theme.background }]}>
-          <View style={styles.transactionsContainer}>
-
+          <View style={[styles.transactionsContainer]}>
             <View style={styles.headerContainer}>
               <TouchableOpacity style={styles.headerTitleContainer}>
                 <Text style={[styles.headerTitle, { color: theme.text }]}>
@@ -803,14 +878,14 @@ const TransactionScreen = ({theme}) => {
                       backgroundColor: theme.transactionDropdownBackground,
                       borderColor: theme.buttonBorder,
                       color: theme.text,
-                      zIndex: 10,
-                      paddingRight: 1
+                      // zIndex: 10,
+                      paddingRight: 1,
                     },
                   ]}
                   dropdownIconColor={theme.text}
                 >
                   <Picker.Item
-                    label="Download Transactions"
+                    label="Download Transaction"
                     value="placeholder"
                     style={{ color: "gray" }}
                   />
@@ -820,16 +895,23 @@ const TransactionScreen = ({theme}) => {
               </View>
 
               {/* Filter Button */}
-              <TouchableOpacity onPress={() => setFilterModalVisible(true)} style={styles.filterButton} >
+              <TouchableOpacity
+                onPress={() => setFilterModalVisible(true)}
+                style={styles.filterButton}
+              >
                 <Icon name="filter-list" size={30} color={theme.text} />
               </TouchableOpacity>
 
               {/* Refresh Button */}
-              <TouchableOpacity onPress={handleRefresh} style={styles.iconContainer}>
+              <TouchableOpacity
+                onPress={handleRefresh}
+                style={styles.iconContainer}
+              >
                 <Icon name="refresh" size={30} color={theme.text} />
               </TouchableOpacity>
             </View>
 
+            {/* Filter Modal */}
             {/* Filter Modal */}
             <View>
               <Modal
@@ -848,7 +930,10 @@ const TransactionScreen = ({theme}) => {
                       },
                     ]}
                   >
-                    <Text style={[styles.modalTitle, { color: theme.text }]}> Filters </Text>
+                    <Text style={[styles.modalTitle, { color: theme.text }]}>
+                      {" "}
+                      Filters{" "}
+                    </Text>
 
                     {/* Category Picker */}
                     <View style={styles.pickerContainer}>
@@ -945,15 +1030,21 @@ const TransactionScreen = ({theme}) => {
                     <View style={styles.modalActions}>
                       <TouchableOpacity
                         onPress={handleApplyFilters}
-                        style={[styles.applyButton, { color: theme.text }]}
+                        style={[
+                          styles.applyButton,
+                          {
+                            backgroundColor: theme.buttonBackground,
+                            color: theme.text,
+                          },
+                        ]}
                       >
-                        <Text style={{ color: theme.buttonText }}>Apply</Text>
+                        <Text style={{ color: theme.text }}>Apply</Text>
                       </TouchableOpacity>
                       <TouchableOpacity
                         onPress={handleCancelFilters}
                         style={[styles.cancelButton, { color: theme.text }]}
                       >
-                        <Text style={{ color: theme.buttonText }}>Cancel</Text>
+                        <Text style={{ color: theme.text }}>Cancel</Text>
                       </TouchableOpacity>
                       {/* <TouchableOpacity
                         onPress={handleResetFilters}
@@ -965,118 +1056,20 @@ const TransactionScreen = ({theme}) => {
                   </View>
                 </View>
               </Modal>
-
-              {/* Filter Section */}
-              {/* <View style={styles.filterContainer}>
-              <View style={styles.pickerContainer}>
-                <Picker
-                  selectedValue={selectedCategory}
-                  onValueChange={(itemValue) => {
-                    if (itemValue !== "placeholder") {
-                      setSelectedCategory(itemValue);
-                    }
-                  }}
-                  style={[
-                    styles.picker,
-                    {
-                      backgroundColor: theme.transactionDropdownBackground,
-                      borderColor: theme.buttonBorder,
-                      color: theme.text,
-                    },
-                  ]}
-                  dropdownIconColor={theme.text}
-                >
-                  <Picker.Item
-                    label="Category"
-                    value="placeholder"
-                    style={{ color: "gray" }}
-                  />
-                  {categories.map((category) => (
-                    <Picker.Item
-                      key={category}
-                      label={category}
-                      value={category}
-                    />
-                  ))}
-                </Picker>
-             </View>
-
-              <View style={styles.pickerContainer}>
-                <Picker
-                  selectedValue={selectedType}
-                  onValueChange={(itemValue) => {
-                    if (itemValue !== "placeholder") {
-                      setSelectedType(itemValue);
-                    }
-                  }}
-                  style={[
-                    styles.picker,
-                    {
-                      backgroundColor: theme.transactionDropdownBackground,
-                      borderColor: theme.buttonBorder,
-                  color: theme.text,
-                },
-              ]}
-                  dropdownIconColor={theme.text}
-                >
-                  <Picker.Item
-                    label="Type"
-                    value="placeholder"
-                    style={{ color: "gray" }}
-                  />
-                  {transactionTypes.map((type) => (
-                    <Picker.Item key={type} label={type} value={type} />
-              ))}
-            </Picker>
-              </View>
-            </View> */}
-
-              {/* <View style={styles.filterContainer}>
-            <TouchableOpacity
-                style={[
-                  styles.datePickerButton,
-                  {
-                    backgroundColor: theme.transactionDropdownBackground,
-                    borderColor: "#ccc",
-                  },
-                ]}
-                onPress={showDatePicker}
-            >
-              <Text style={[styles.datePickerText, { color: theme.buttonText }]}>
-                  {selectedDate ? `Selected Date: ${selectedDate}` : "Select Date"}
-              </Text>
-            </TouchableOpacity>
-            <DateTimePickerModal
-              isVisible={isDatePickerVisible}
-              mode="date"
-                onConfirm={handleConfirm}
-                onCancel={hideDatePicker}
-              />
-            </View> */}
-
-              {/* <View style={styles.filterContainer}> */}
             </View>
 
-            {/* Transactions Table Header */}
-            {/* <View  style={[ styles.tableHeader,  { backgroundColor: theme.tableHeaderBackground }, ]} >
-              <Text style={[styles.headerText, { color: theme.tableHeaderText },]}> Date </Text>
-              <Text style={[styles.headerText, { color: theme.tableHeaderText }]}> Category </Text>
-              <Text style={[styles.headerCell, { color: theme.tableHeaderText }]}> Description </Text>
-              <Text style={[styles.headerText, { color: theme.tableHeaderText }]}> Type{" "} </Text>
-              <Text style={[ styles.lastHeaderText,{ color: theme.tableHeaderText },]}> Amount{" "}{" "}{" "}</Text>
-
-            </View> */}
-
             <View style={{ flex: 1 }}>
+              {console.log("Flatlist data", filterTransactions())}
               <FlatList
-                data={filterTransactions()}
-                keyExtractor={(item, index) =>
-                  `${item.date}-${item.category}-${item.amount}-${index}`
-                }
+                data={getCurrentPageTransactions()}
+                keyExtractor={(item) => item.Id.toString()}
+                style={{ flexGrow: 1 }}
                 refreshing={isRefreshing}
-                onRefresh={filterTransactions}
-                contentContainerStyle={{ flexGrow: 1 }}
-
+                onRefresh={handleRefresh}
+                contentContainerStyle={{ paddingBottom: 10 }}
+                scrollEnabled={true}
+                showsVerticalScrollIndicator={true}
+                keyboardShouldPersistTaps="handled"
                 renderItem={({ item }) => (
                   <View
                     style={[
@@ -1090,7 +1083,9 @@ const TransactionScreen = ({theme}) => {
                         {item.category}
                       </Text>
                       <Text style={[styles.amount, { color: theme.text }]}>
-                        ${item.totalAmount}
+                        {" "}
+                        {currency.label.split(" ")[0]}
+                        {item.totalAmount || 0}
                       </Text>
                     </View>
 
@@ -1154,52 +1149,34 @@ const TransactionScreen = ({theme}) => {
                   </View>
                 )}
                 ListEmptyComponent={
-                  <Text style={[styles.emptyText, { color: theme.text }]}>
-                    No transactions found
-                  </Text>
+                  currentPage === totalPages && !getCurrentPageTransactions().length ? (
+                    <Text style={[styles.emptyText, { color: theme.text }]}>
+                      No transactions found
+                    </Text>
+                  ) : null
                 }
               />
-              {/* <View style={{ flex: 1, height: "100%" }}> */}
-              {/* Transactions List */}
-              {/* {transactionsFound ? (
-                <FlatList
-                data={filterTransactions()}
-                keyExtractor={(item, index) => `${item.date}-${item.category}-${item.amount}-${index}`}                renderItem={renderTransactionItem}
-                contentContainerStyle={styles.listContainer}
-                nestedScrollEnabled
-                refreshing={isRefreshing}
-                onRefresh={filterTransactions}
-              />
-              ) : (
-                <View style={styles.noTransactionsContainer}>
-                  <Text
-                    style={[styles.noTransactionsText, { color: theme.text }]}
-                  >
-                    {noTransactionsMessage}
-                  </Text>
-                </View>
-              )} */}
+              <View style={styles.paginationContainer}>
+                <TouchableOpacity
+                  onPress={handlePreviousPage}
+                  disabled={currentPage === 1}
+                >
+                  <Icon name="chevron-left" size={30} color={theme.text} />
+                </TouchableOpacity>
+                <Text style={[styles.pageText, { color: theme.text }]}>
+                  {currentPage} 
+                  {/* {Math.ceil(totalTransactions / transactionsPerPage)} */}
+                </Text>
+                <TouchableOpacity
+                  onPress={handleNextPage}
+                  disabled={
+                    currentPage * transactionsPerPage >= totalTransactions
+                  }
+                >
+                  <Icon name="chevron-right" size={30} color={theme.text} />
+                </TouchableOpacity>
+              </View>
             </View>
-
-            {/* History Modal */}
-            <TransactionHistoryModal
-              visible={historyModalVisible}
-              category={selectedCategory}
-              transactions={transactionsData}
-              onClose={closeHistoryModal}
-              theme={theme}
-              refreshing={isRefreshing}
-              onRefresh={filterTransactions}
-            />
-            {/* Edit Transaction Modal */}
-            {selectedTransaction && (
-              <EditTransactionModal
-                visible={modalVisible}
-                transaction={selectedTransaction}
-                onClose={() => setModalVisible(false)}
-                onSave={handleEditTransaction}
-              />
-            )}
           </View>
         </View>
       </TouchableWithoutFeedback>
@@ -1227,13 +1204,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    // marginBottom: 10,
+    marginBottom: 10,
     // marginTop:10,
     width: 220,
     // height:50
-    border: 1,
-    borderWidth: 0.9,
-    boederRadius: 1
+   
+    borderWidth:0.5,
+    boederRadius:10
   },
   filterButton: {
     padding: 10,
@@ -1242,14 +1219,13 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end'
     // justifyContent: "flex-end",
     // alignItems: "flex-end",
-  },
-
+  }, 
   // Modal container
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    // backgroundColor: 'rgba(0, 0, 0, 0.5)', // Transparent background to darken the screen
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent: {
     // backgroundColor: '#fff',
@@ -1319,9 +1295,6 @@ const styles = StyleSheet.create({
     marginLeft: 5,
     fontSize: 14,
   },
-  // listContainer: {
-  //   paddingHorizontal: 10,
-  // },
   emptyText: {
     textAlign: "center",
     fontSize: 16,
@@ -1366,7 +1339,7 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
     marginBottom: 10,
     marginHorizontal: 1,
-    zIndex: 1,
+    // zIndex: 1,
   },
   pickerContainer: {
     width: '100%',
@@ -1403,7 +1376,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   applyButton: {
-    backgroundColor: '#01579b',
+    // backgroundColor: '#01579b',
     padding: 10,
     borderRadius: 5,
     width: '48%',
@@ -1421,22 +1394,6 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     marginTop: 0
   },
-  noTransactionsContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  noTransactionsText: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 10,
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-  },
   modalContent: {
     width: "80%",
     backgroundColor: "white",
@@ -1448,125 +1405,18 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 10,
   },
-  historyItem: {
-    padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#ccc",
-  },
-  closeModalButton: {
-    color: "#007BFF",
-    textAlign: "center",
-    marginTop: 10,
-  },
-  tableHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    borderWidth: 0.9,
-    borderColor: "#ccc",
-    backgroundColor: "#333",
-    padding: 15,
-    paddingLeft: 1,
-    marginRight: 3,
-    borderRadius: 3,
-    marginBottom: 5,
-    marginLeft: 5,
-  },
-  headerCell: {
-    color: "#fff",
-    fontWeight: "bold",
-    textAlign: "center",
-  },
-  headerText: {
-    color: "#fff",
-    fontWeight: "bold",
-    flex: 1,
-    minWidth: 50,
-    paddingRight: 10,
-  },
-  lastHeaderText: {
-    color: "#fff",
-    fontWeight: "bold",
-    textAlign: "center",
-    paddingVertical: 5,
-    paddingRight: 20,
-  },
-  transactionItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: "#ccc",
-    backgroundColor: "#121212",
-    marginBottom: 10,
-    borderRadius: 5,
-  },
-  transactionRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#ccc",
-    border: 3,
-    borderRadius: 4,
-    backgroundColor: "#121212",
-    padding: 10,
-    borderRadius: 5,
-    marginBottom: 5,
-    marginLeft: 5,
-    marginRight: 4.5,
-    position: "relative",
-  },
-  transactionCell: {
-    flex: 1,
-    textAlign: "center",
-    fontSize: 14,
-    paddingRight: 9,
-  },
-  transactionDate: {
-    color: "#aaa",
-    flex: 1,
-    minWidth: 10,
-    paddingLeft: 15,
-  },
   transactionType: {
     color: "#aaa",
-    flex: 1,
+    // flex: 1,
     paddingLeft: 10,
   },
-  transactionAmount: {
-    color: "#FF6A00",
-    flex: 1,
-    minWidth: 20,
-    paddingLeft: 10,
-  },
-  deleteButton: {
-    color: "#FF0000",
-    fontWeight: "bold",
-    flex: 1,
-    textAlign: "center",
-    paddingLeft: 10,
-  },
-  listContainer: {
-    // flexGrow: 1,
-    paddingBottom: 20,
-    zIndex: 1,
-    padding: 0,
-    margin: 0,
-  },
-  refreshButton: {
-    backgroundColor: "#007BFF",
-    padding: 15,
-    borderRadius: 5,
-    // marginTop: 20,
-    borderWidth: 1,
-  },
-  refreshButtonText: {
-    color: "#fff",
-    textAlign: "center",
-    fontSize: 16,
-    width: 100,
-  },
+  // listContainer: {
+  //   // flexGrow: 1,
+  //   paddingBottom: 20,
+  //   zIndex: 1,
+  //   padding: 0, 
+  //   margin: 0,
+  // },
   exportButton: {
     height: 50,
     backgroundColor: "#333",
@@ -1594,21 +1444,25 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 4,
     padding: 5,
-    zIndex: 10,
-  },
-  menuItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 1,
-    flex: 1,
-    top: 0,
-    position: "relative",
+    // zIndex: 10,
   },
   menuText: {
     marginLeft: 10,
     color: "#333",
     fontSize: 16,
   },
+  transactionItem: { padding: 16, borderRadius: 8, marginBottom: 8 },
+  transactionText: { fontSize: 16 },
+  paginationContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  pageText: {
+    marginHorizontal: 20,
+    fontSize: 16,
+  },
+
 });
 
 export default TransactionScreen;
