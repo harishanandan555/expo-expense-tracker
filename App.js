@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'; 
+import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -18,13 +18,11 @@ import { auth } from './config/firebaseConfig';
 const Stack = createStackNavigator();
 
 export default function App() {
+
   const [initialRoute, setInitialRoute] = useState(null);
   const [userInfo, setUserInfo] = useState(null);
   const [userId, setUserId] = useState(null); // Declare a state for userId
 
-	
-
-	
   useEffect(() => {
     const checkLoginStatus = async () => {
       try {
@@ -100,10 +98,10 @@ export default function App() {
       <NavigationContainer>
         <Stack.Navigator initialRouteName={initialRoute}>
           <Stack.Screen name="SignIn" component={SignInPage} options={{ headerShown: false }} />
-          <Stack.Screen 
-            name="Main" 
-            component={MainScreen} 
-            options={{ headerShown: false }} 
+          <Stack.Screen
+            name="Main"
+            component={MainScreen}
+            options={{ headerShown: false }}
             initialParams={{ userId }} // Passing the userId to MainScreen
           />
           <Stack.Screen name="NewIncome" options={{ headerShown: false }} component={NewIncomeScreen} />
