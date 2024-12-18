@@ -283,7 +283,7 @@ const NewExpenseScreen = ({ navigation, route, isVisible, onClose }) => {
 
                             {/* Category and Date Picker */
                             }<Text style={[{ color: theme.text }]}>
-                                {selectedCategory ? `Category: ${selectedCategory}` : 'Select a category'}
+                                 Select a category
                             </Text>
 
                             <View style={styles.row}>
@@ -293,7 +293,7 @@ const NewExpenseScreen = ({ navigation, route, isVisible, onClose }) => {
                                         onPress={openCategoryModal}
                                     >
                                         <Text style={[styles.categoryText, { color: theme.text }]}>
-                                            {selectedCategory ? `Category: ${selectedCategory}` : 'Select a category'}
+                                            {selectedCategory ? ` ${selectedCategory}` : 'Select a category'}
                                         </Text>
                                         <MaterialIcons name="arrow-drop-down" size={24} color={theme.text} />
                                     </TouchableOpacity>
@@ -509,9 +509,17 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         padding: 12,
         flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
+        justifyContent: 'space-between', // Space out text and icon
+        alignItems: 'center', // Vertically align both elements
         marginBottom: 5,
+    },
+    categoryText: {
+     
+        fontSize: 14,
+        color: '#000', // Default color
+    },
+    arrowIcon: {
+        marginLeft: 10, // Add space between text and icon
     },
     datePickerButton: {
         borderWidth: 1,

@@ -8,42 +8,27 @@ import {
     Modal,
     TextInput,
     RefreshControl,
-    Button,
-    Dimensions, Image,
-    FlatList,
-
-} from 'react-native';
+    Dimensions, Alert} from 'react-native';
 import { auth, db } from "../../config/firebaseConfig";
 import { ProgressBar } from "react-native-paper"; // For a Progress bar
 import { useFocusEffect } from '@react-navigation/native';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../ui/card';
-
-import { Separator } from "../ui/separator";
+import { Card} from '../ui/card';
+import { onAuthStateChanged } from "firebase/auth";
 import { useRoute } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
-import DropDownPicker from "react-native-dropdown-picker";
-import { getUserById } from '../services/firebaseSettings';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Avatar, Menu, Divider, Provider } from 'react-native-paper';
-import DateTimePickerModal from 'react-native-modal-datetime-picker';
-import { format } from 'date-fns'; // Use date-fns for formatting dates
+import { Provider } from 'react-native-paper';
+
 import { useNavigation } from '@react-navigation/native'; // Import useNavigation hook
-import { doc, setDoc, getDoc, collection, onSnapshot } from "firebase/firestore";
-import { BarChart } from 'react-native-gifted-charts';
+import { doc, setDoc, onSnapshot } from "firebase/firestore";
+import { BarChart, PieChart } from 'react-native-gifted-charts';
 const DashboardScreen = ({ theme, setCurrentScreen }) => {
 
-
-
-
-    const [menuVisible, setMenuVisible] = useState(false);
     const [isIncomeModalVisible, setIncomeModalVisible] = useState(false);
     const [isExpenseModalVisible, setExpenseModalVisible] = useState(false);
     const [transactionDate, setTransactionDate] = useState(new Date());
-    const [startDate, setStartDate] = useState(new Date());
-    const [endDate, setEndDate] = useState(new Date());
-    const [isDatePickerVisible, setDatePickerVisible] = useState(false);
-    const [isEndDatePickerVisible, setEndDatePickerVisible] = useState(false);
+   
     const [activeButton, setActiveButton] = useState('income');
     const [isCategoryModalVisible, setCategoryModalVisible] = useState(false);
     const [isCreateCategoryModalVisible, setCreateCategoryModalVisible] = useState(false);
@@ -52,114 +37,128 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
     const [newCategory, setNewCategory] = useState('');
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [selectedGraph, setSelectedGraph] = useState(null); // Default to null for showing all data
-
+    const [balancePercentage, setBalancePercentage] = useState(0); 
     const navigation = useNavigation();
-    const [firebaseBalance, setFirebaseBalance] = useState(0);
-    const [firebaseTotalIncome, setFirebaseTotalIncome] = useState(0);
-    const [firebaseTotalExpense, setFirebaseTotalExpense] = useState(0);
-    const [firebaseLastUpdated, setFirebaseLastUpdated] = useState("");
-    const [isModalVisible, setModalVisible] = useState(false);
-
+    
     const [IncomeCategory, setIncomeCategory] = useState([]); // State to store the income data
     const [currency, setCurrency] = useState({ value: 'USD', label: '$ Dollar', locale: 'en-US' });
 
-    const [open, setOpen] = useState(false);
-    const [value, setValue] = useState(null);
-    const [items, setItems] = useState([
-        { label: "January", value: "January" },
-        { label: "February", value: "February" },
-        { label: "March", value: "March" },
-        { label: "April", value: "April" },
-        { label: "May", value: "May" },
-        { label: "June", value: "June" },
-        { label: "July", value: "July" },
-        { label: "August", value: "August" },
-        { label: "September", value: "September" },
-        { label: "October", value: "October" },
-        { label: "November", value: "November" },
-        { label: "December", value: "December" },
-    ]);
+    const [barData, setBarData] = useState([]);
 
     const [totalIncome, setTotalIncome] = useState(0);
     const [totalExpense, setTotalExpense] = useState(0);
     const [balance, setBalance] = useState(0);
     const [lastUpdated, setLastUpdated] = useState("");
     const [isExpenseEmojiPickerVisible, setExpenseEmojiPickerVisible] = useState(false);
-    const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
     const [isRefreshing, setIsRefreshing] = useState(false);
     // Default to current month
     const screenWidth = Dimensions.get('window').width;
-    const [tooltip, setTooltip] = useState(null); // State to manage tooltip
     const maxValue = Math.max(totalIncome, totalExpense, balance);
-    const yAxisStep = Math.ceil(maxValue / 5);
 
-    const toggleGraph = (graphType) => {
-        setSelectedGraph(graphType); // Update selected graph
-    };
+
     const [userInfos, setUserInfos] = useState(null);
 
     const route = useRoute();
     const [expenses, setExpenses] = useState([]);
-    const data = {
-        labels: ['Income', 'Expense', 'Balance'],
-        datasets: [
-            {
-                data: [totalIncome, totalExpense, balance],
-                colors: [
-                    () => `rgba(34, 197, 94, 0.9)`, // Green
-                    () => `rgba(220, 38, 38, 0.9)`, // Red
-                    () => `rgba(75, 85, 99, 0.9)`, // Gray
-                ],
-            },
-        ],
+   
+
+    const initFinancialDataListener = () => {
+        const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+            if (user) {
+                const userId = user.uid;
+    
+                // Fetch income and expense data
+                fetchIncomeData(userId);
+                fetchExpenseData(userId);
+    
+                // Call the financial data listener
+                const unsubscribeFinancialData = calculateAndSaveFinancialData(userId);
+    
+                // Return cleanup functions for auth and financial data listeners
+                return () => {
+                    unsubscribeFinancialData();
+                    unsubscribeAuth();
+                };
+            } else {
+                console.error("User is not logged in.");
+            }
+        });
     };
+    
+    useEffect(() => {
+        const unsubscribe = initFinancialDataListener();
+    
+        // Clean up on component unmount
+        return () => {
+            if (unsubscribe) {
+                unsubscribe();
+            }
+        };
+    }, []);
+    
     useFocusEffect(
         React.useCallback(() => {
+            // Refetch currency when the screen is focused
             const fetchCurrency = async () => {
                 try {
-                    const storedCurrency = await AsyncStorage.getItem('selectedCurrency');
-
+                    const storedCurrency = await AsyncStorage.getItem("selectedCurrency");
                     if (storedCurrency) {
                         setCurrency(JSON.parse(storedCurrency));
                     }
-
                 } catch (error) {
-                    console.error('Error fetching currency:', error);
+                    console.error("Error fetching currency:", error);
                 }
             };
-
+    
             fetchCurrency();
-        }, [])
+    
+            // Ensure the chart data is recalculated on focus
+            const absoluteBalance = Math.abs(balance);
+            const percentage = totalIncome + totalExpense > 0
+            ? Math.round((absoluteBalance / (totalIncome + totalExpense)) * 100)
+            : 0;
+
+            setBalancePercentage(percentage);
+            setBarData([
+                {
+                    value: totalIncome,
+                    label: "Income",
+                    color: "#79D2DE",
+                },
+                {
+                    value: totalExpense,
+                    label: "Expense",
+                    color: "#ED6665",
+                },
+                {
+                    value: absoluteBalance,
+                    label: "Balance",
+                    color:"#177AD5"
+
+
+
+
+
+
+                    ,
+                },
+            ]);
+        }, [balance, totalIncome, totalExpense]) // Dependencies to recalculate when these change
     );
 
-
-    // Chart configuration
-
-    const absoluteBalance = Math.abs(balance);
-    const barData = [
-        {
-            value: totalIncome,
-            label: 'Income',
-            frontColor: 'green', // Green
-        },
-        {
-            value: totalExpense,
-            label: 'Expense',
-            frontColor: 'red', // Red
-        },
-        {
-            value: absoluteBalance,
-            label: 'Balance',
-            frontColor: 'blue', // Blue
-        },
-    ];
+    const handleSectionPress = (section) => {
+        if (section) {
+            Alert.alert(
+                ` ${section.label}`,
+                `Value: ${section.value}`,
+                [{ text: "OK" }]
+            );
+        }
+    };
+    
 
 
 
-    // Function to handle theme switching
-    // const handleThemeSwitch = (mode) => {
-    //     setTheme(mode);
-    // };
 
     useEffect(() => {
 
@@ -183,14 +182,10 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
 
     }, []);
 
-    const calculateAndSaveFinancialData = () => {
-        const userId = auth.currentUser?.uid;
+    const calculateAndSaveFinancialData = (userId) => {
+       
 
-        if (!userId) {
-            console.error("User ID is required. Cannot update financial data.");
-            return;
-        }
-
+     
         // Reference to the user's document in Firestore
         const userDocRef = doc(db, "users", userId);
 
@@ -290,11 +285,11 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
 
 
 
-    const fetchIncomeData = () => {
+    const fetchIncomeData = (userId) => {
         try {
-            const id = auth.currentUser?.uid; // Get the user ID
+           // Get the user ID
 
-            if (!id) {
+            if (!userId) {
                 console.error("User ID is required.");
                 return;
             }
@@ -302,7 +297,7 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
 
 
             // Reference to the user's Firestore document
-            const userDocRef = doc(db, "users", id);
+            const userDocRef = doc(db, "users", userId);
 
             // Set up real-time listener
             const unsubscribe = onSnapshot(
@@ -348,17 +343,16 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
     };
 
 
-    const fetchExpenseData = () => {
+    const fetchExpenseData = (userId) => {
         try {
-            const id = auth.currentUser?.uid; // Get the user ID
 
-            if (!id) {
+            if (!userId) {
                 console.error("User ID is required.");
                 return;
             }
 
             // Reference to the user's Firestore document
-            const userDocRef = doc(db, "users", id);
+            const userDocRef = doc(db, "users", userId);
 
             // Set up real-time listener
             const unsubscribe = onSnapshot(
@@ -468,28 +462,6 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
 
 
 
-    // const userInfo = route.params.userInfo;
-
-    // useEffect(() => {
-    //     if (userInfo) {
-    //         let value = true
-    //         // console.log("User Info in Dashboard:", userInfo); // Log to confirm data
-    //     } else {
-    //         console.log("No User Info received");
-    //     }
-    // }, [userInfo]);
-
-    // Fetch income and expense data
-
-
-
-
-
-
-
-
-
-    // Extracting user initials
 
     useEffect(() => {
         const fetchData = async () => {
@@ -908,7 +880,7 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
 
 
                     {/* Income and Expense Toggle */}
-                    <View style={[styles.toggleContainer, { backgroundColor: theme.background }]}>
+                    {/* <View style={[styles.toggleContainer, { backgroundColor: theme.background }]}>
                         <TouchableOpacity
                             style={[
                                 styles.toggleButton,
@@ -936,196 +908,51 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
                         </TouchableOpacity>
 
 
+                    </View> */}
+                    <View style={{flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        marginTop:15}}>
+            <PieChart
+                data={barData}
+                showText
+                donut
+         
+          sectionAutoFocus
+          focusOnPress
+        
+          
+          radius={120}
+          innerRadius={60}// For a donut chart, set this value greater than 0
+                centerLabelComponent={() => (
+                    <View style={{justifyContent: 'center', alignItems: 'center'}}>
+                    <Text
+                      style={{fontSize: 22, color: 'black', fontWeight: 'bold'}}>
+                     {balancePercentage}%
+</Text>
+                    <Text style={{fontSize: 14, color: 'black'}}>Balance</Text>
+                  </View>
+                    
+                )}
+                onPress={(section) => handleSectionPress(section)} // Capture press events
+            />
+             <View style={styles.legendContainer}>
+                {barData.map((item, index) => (
+                    <View key={index} style={styles.legendItem}>
+                        <View
+                            style={[
+                                styles.legendColor,
+                                { backgroundColor: item.color },
+                            ]}
+                        />
+                        <Text style={styles.legendText}>
+                            {item.label}: {item.value}
+                        </Text>
                     </View>
-                    <View
-                        style={{
-                            marginRight: 10,
-                            padding: 10,
-                            borderRadius: 10,
-                            backgroundColor: theme.background, // Dark background for better contrast
-                            alignItems: 'center',
-                            marginVertical: 20,
-                        }}
-                    >
-                        {selectedGraph === null && (
-                            <BarChart
-                                data={barData}
-                                barWidth={screenWidth * 0.1}
-                                renderTooltip={(item, index) => {
-                                    const value = item.label === 'Balance' ? balance : item.value;
-                                    return (
-                                        <View
-                                            style={{
-
-                                                marginBottom: -5550,
-                                                backgroundColor: '#DB7093',
-                                                paddingHorizontal: 6,
-                                                paddingVertical: 4,
-                                                borderRadius: 4,
-
-                                            }}>
-                                            <Text style={{ color: theme.text }}> {currency.label.split(' ')[0]}{value}</Text>
-                                        </View>
-                                    );
-                                }}
-                                barBorderRadius={6}
-                                yAxisThickness={1.5} // Y-axis line thickness
-                                yAxisColor={theme.text} // Y-axis line color
-                                xAxisThickness={2.5} // X-axis line thickness
-                                xAxisColor={theme.text}
-                                yAxisStepValue={5000}
-                                // X-axis line color
-                                noOfSections={8} // Divide y-axis into 5 sections
-                                maxValue={Math.max(totalIncome, totalExpense, balance) + 1000} // Close to the highest value
-                                yAxisTextStyle={{ color: theme.text, fontSize: 12 }} // Customize y-axis labels
-                                xAxisLabelTextStyle={{ color: theme.text, fontSize: 12 }} // Customize x-axis labels
-                                height={500} // Chart height
-                                yAxisLabelContainerStyle={{
-                                    marginRight: 10, // Add a gap between the Y-axis line and labels
-                                }}
-                                isAnimated
-                                side="right"
-                                barStyle={{
-
-
-                                    borderWidth: 0,
-                                    shadowColor: '#999',
-                                    shadowOffset: { width: 0, height: 2 },
-                                    shadowOpacity: 0.8,
-                                    shadowRadius: 6,
-                                    elevation: 8,
-                                }}
-
-                                initialSpacing={20}
-                                barMarginBottom={5}//
-                                Enable animation
-                                spacing={20}
-
-                            />
-                        )}
-                        {selectedGraph === 'income' && (
-                            <BarChart
-                                data={[
-                                    { value: totalIncome, label: 'Income', frontColor: 'green' },
-                                ]}
-                                barWidth={screenWidth * 0.09}
-                                renderTooltip={(item, index) => {
-                                    const value = item.label === 'Balance' ? balance : item.value;
-                                    return (
-                                        <View
-                                            style={{
-
-                                                marginBottom: -5550,
-                                                backgroundColor: '#DB7093',
-                                                paddingHorizontal: 6,
-                                                paddingVertical: 4,
-                                                borderRadius: 4,
-
-                                            }}>
-                                            <Text style={{ color: theme.text }}> {currency.label.split(' ')[0]}{value}</Text>
-                                        </View>
-                                    );
-                                }}
-                                barBorderRadius={6}
-                                yAxisThickness={1.5} // Y-axis line thickness
-                                yAxisColor={theme.text} // Y-axis line color
-                                xAxisThickness={1.5} // X-axis line thickness
-                                xAxisColor={theme.text}
-                                yAxisStepValue={5000}
-                                // X-axis line color
-                                noOfSections={8} // Divide y-axis into 5 sections
-                                maxValue={Math.max(totalIncome, totalExpense, balance) + 5000} // Close to the highest value
-                                yAxisTextStyle={{ color: theme.text, fontSize: 12 }} // Customize y-axis labels
-                                xAxisLabelTextStyle={{ color: theme.text, fontSize: 12 }} // Customize x-axis labels
-                                height={500} // Chart height
-                                yAxisLabelContainerStyle={{
-                                    marginRight: 10, // Add a gap between the Y-axis line and labels
-                                }}
-                                isAnimated
-                                side="right"
-                                barStyle={{
-
-
-                                    borderWidth: 0,
-                                    shadowColor: '#999',
-                                    shadowOffset: { width: 0, height: 2 },
-                                    shadowOpacity: 0.8,
-                                    shadowRadius: 6,
-                                    elevation: 8,
-                                }}
-
-                                initialSpacing={20}
-                                barMarginBottom={5}//
-                                Enable animation
-                                spacing={20}
-
-                            />
-
-                        )}
-
-
-                        {selectedGraph === 'expense' && (
-
-                            <BarChart
-                                data={[
-                                    { value: totalExpense, label: 'Expense', frontColor: 'red' },
-                                ]}
-                                barWidth={screenWidth * 0.09}
-                                renderTooltip={(item, index) => {
-                                    const value = item.label === 'Balance' ? balance : item.value;
-                                    return (
-                                        <View
-                                            style={{
-
-                                                marginBottom: -5550,
-                                                backgroundColor: '#DB7093',
-                                                paddingHorizontal: 6,
-                                                paddingVertical: 4,
-                                                borderRadius: 4,
-
-                                            }}>
-                                            <Text style={{ color: theme.text }}> {currency.label.split(' ')[0]}{value}</Text>
-                                        </View>
-                                    );
-                                }}
-                                barBorderRadius={6}
-                                yAxisThickness={1.5} // Y-axis line thickness
-                                yAxisColor={theme.text} // Y-axis line color
-                                xAxisThickness={1.5} // X-axis line thickness
-                                xAxisColor={theme.text}
-                                yAxisStepValue={5000}
-                                // X-axis line color
-                                noOfSections={6} // Divide y-axis into 5 sections
-                                maxValue={Math.max(totalIncome, totalExpense, balance) + 5000} // Close to the highest value
-                                yAxisTextStyle={{ color: theme.text, fontSize: 12 }} // Customize y-axis labels
-                                xAxisLabelTextStyle={{ color: theme.text, fontSize: 12 }} // Customize x-axis labels
-                                height={500} // Chart height
-                                yAxisLabelContainerStyle={{
-                                    marginRight: 10, // Add a gap between the Y-axis line and labels
-                                }}
-                                isAnimated
-                                side="right"
-                                barStyle={{
-
-
-                                    borderWidth: 0,
-                                    shadowColor: '#999',
-                                    shadowOffset: { width: 0, height: 2 },
-                                    shadowOpacity: 0.8,
-                                    shadowRadius: 6,
-                                    elevation: 8,
-                                }}
-
-                                initialSpacing={20}
-                                barMarginBottom={5}//
-                                Enable animation
-                                spacing={20}
-
-                            />
-                        )}
-
-
-                    </View>
+                ))}
+            </View>
+        </View>
+                  
                     {/* Modal for New Income */}
                     <Modal visible={isIncomeModalVisible} animationType="slide" transparent={true}>
                         <View style={styles.modalContainer}>
@@ -1421,6 +1248,28 @@ const styles = StyleSheet.create({
     categoryEmoji: {
         fontSize: 18, // Adjust size for a minimal look
         marginRight: 5,
+    },
+    legendContainer: {
+        flexDirection: 'row',
+          justifyContent: 'center',
+        marginTop: 20,
+       
+    },
+    legendItem: {
+        flexDirection: "row",
+        alignItems: "center",
+        marginBottom: 10,
+    },
+    legendColor: {
+        height: 10,
+        width: 10,
+        borderRadius: 5,
+      
+        marginLeft: 10,
+    },
+    legendText: {
+        fontSize: 14,
+        color: "#333",
     },
     categoryLabel: {
         fontSize: 16,

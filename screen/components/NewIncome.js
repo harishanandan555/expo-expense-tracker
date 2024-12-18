@@ -27,6 +27,8 @@ import { useNavigation } from '@react-navigation/native';
 import { CreateCategoryDialogButton } from '../local__components/create-category-dialog';
 import { useTheme } from '../../themeContext';
 import cuid from "cuid";
+import Toast from 'react-native-toast-message';
+
 
 const NewIncomeScreen = ({ route, isVisible, onClose }) => {
     const { theme } = useTheme();
@@ -215,8 +217,12 @@ const NewIncomeScreen = ({ route, isVisible, onClose }) => {
             }
 
 
-            console.log('Income transaction saved to Firebase.');
-            Alert.alert('Success', 'Income transaction saved successfully!');
+            Toast.show({
+                           type: 'success',
+                           text1: 'Success',
+                           text2: 'Income transaction saved successfully!',
+                       });
+           
 
             // Reset fields
             setTransactionDescription('');
@@ -327,8 +333,8 @@ const NewIncomeScreen = ({ route, isVisible, onClose }) => {
                             <Text style={[styles.requiredText, { color: theme.text }]}>Transaction Amount (Required)</Text>
 
                             {/* Category and Date Picker */
-                            }<Text style={[styles.categoryText, { color: theme.text }]}>
-                                {selectedCategory ? `Category: ${selectedCategory}` : 'Select a category'}
+                            }<Text style={[ { color: theme.text }]}>
+                                  Select a category
                             </Text>
 
                             <View style={styles.row}>
@@ -338,9 +344,10 @@ const NewIncomeScreen = ({ route, isVisible, onClose }) => {
                                         onPress={openCategoryModal}
                                     >
                                         <Text style={[styles.categoryText, { color: theme.text }]}>
-                                            {selectedCategory ? `Category: ${selectedCategory}` : 'Select a category'}
+                                            {selectedCategory ? `${selectedCategory}` : 'Select a category'}
                                         </Text>
-                                        <MaterialIcons name="arrow-drop-down" size={24} color={theme.text} />
+                                        <MaterialIcons name="arrow-drop-down" size={24} color={theme.text}      // Add the style here
+                                        />
                                     </TouchableOpacity>
                                     <Text style={[styles.optionalText, { color: theme.text }]}>Select a category for the transaction</Text>
                                 </View>
@@ -560,10 +567,19 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         padding: 12,
         flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
+        justifyContent: 'space-between', // Space out text and icon
+        alignItems: 'center', // Vertically align both elements
         marginBottom: 5,
     },
+    categoryText: {
+     
+        fontSize: 14,
+        color: '#000', // Default color
+    },
+    arrowIcon: {
+        marginLeft: 10, // Add space between text and icon
+    },
+    
     datePickerButton: {
         borderWidth: 1,
         borderRadius: 10,
@@ -593,6 +609,8 @@ const styles = StyleSheet.create({
         padding: 15,
         alignItems: 'center',
     },
+
+    
     cancelButtonText: {
         fontSize: 16,
         fontWeight: 'bold',
