@@ -275,6 +275,7 @@
 import React, { useState } from "react";
 import { View, Text, Modal, TouchableOpacity, StyleSheet, Button } from "react-native";
 import { useMutation } from "@tanstack/react-query";
+import { MaterialIcons } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
 import * as Yup from "yup";
 
@@ -292,7 +293,7 @@ const DeleteCategorySchema = Yup.object().shape({
 });
 
 export const DeleteCategoryDialog = ({ children, category, onSuccessCallback }) => {
-
+  const [open, setOpen] = useState(false);
   // const [isModalVisible, setModalVisible] = useState(false);
 
   // const deleteCategory = async (id, name, type, userId) => {
@@ -358,46 +359,45 @@ export const DeleteCategoryDialog = ({ children, category, onSuccessCallback }) 
   };
 
   return (
-    // <>
-    //   <TouchableOpacity onPress={() => setModalVisible(true)}>{children}</TouchableOpacity>
-
-    //   <Modal visible={isModalVisible} transparent>
-    //     <View style={styles.modalOverlay}>
-    //       <View style={styles.modalContent}>
-    //         <Text>Delete {category.icon} {category.name} category?</Text>
-    //         <TouchableOpacity onPress={handleDelete}>
-    //           <Text>Confirm</Text>
-    //         </TouchableOpacity>
-    //         <TouchableOpacity onPress={() => setModalVisible(false)}>
-    //           <Text>Cancel</Text>
-    //         </TouchableOpacity>
-    //       </View>
-    //     </View>
-    //   </Modal>
-    // </>
-
     <>
-    {/* The trigger button is outside the modal */}
-    <Button title="Delete" onPress={() => setModalVisible(true)} />
 
-    <Modal visible={isModalVisible} transparent animationType="fade">
+    {/* <Button title="D=elete" onPress={() => setModalVisible(true)} /> */}
+
+    <TouchableOpacity
+      style={styles.button}
+      onPress={() => setModalVisible(true)}
+    >
+      <View style={styles.content}>
+        <MaterialIcons name="delete" size={15} color="#fff" style={styles.icon} />
+        <Text style={styles.buttonText}>Delete</Text>
+      </View>
+    </TouchableOpacity>
+
+    <Modal visible={isModalVisible} transparent animationType="slide">
 
       <View style={styles.modalOverlay}>
 
-        <View style={styles.modalContent}>
+        <View style={styles.dialogContainer}>
 
-          <Text> Delete {category.icon} {category.name} category? </Text>
+            <Text> Delete {category.icon} {category.name} category? </Text>
 
-          {/* Confirm deletion */}
-          <Button title="Confirm" onPress={handleDelete} color="red" />
+            {/* <View style={styles.ConfirmDeletion} >
+              <Button title="Confirm" onPress={handleDelete} color="#ff4d4d" />
+              <Button title="Cancel" onPress={() => setModalVisible(false)} color="gray" />
+            </View> */}
 
-          {/* Cancel deletion */}
-          <Button title="Cancel" onPress={() => setModalVisible(false)} color="gray" />
+            <View style={styles.ConfirmDeletion}>
+              <TouchableOpacity style={styles.confirmButton} onPress={handleDelete}>
+                <Text style={styles.buttonText}>Confirm</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.cancelButton} onPress={() => setModalVisible(false)}>
+                <Text style={styles.buttonText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+
 
         </View>
-
       </View>
-
     </Modal>
 
   </>
@@ -405,6 +405,68 @@ export const DeleteCategoryDialog = ({ children, category, onSuccessCallback }) 
 };
 
 const styles = StyleSheet.create({
-  modalOverlay: { flex: 1, justifyContent: "center", alignItems: "center" },
-  modalContent: { padding: 20, backgroundColor: "white", borderRadius: 10 },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  dialogContainer: {
+    width: '90%',
+    padding: 20,
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    alignItems: "center",
+  },
+  button: {
+    // flex: 0, // Makes the button grow to fill available space in its parent container
+    // maxWidth: 200, // Optional: Restrict maximum width
+    backgroundColor: "#ff4d4d", // Red background color
+    borderRadius: 8,
+    marginTop: 5,
+    padding:2,
+    // paddingVertical: 5,
+    // paddingHorizontal: 5,
+    // elevation: 3, // For Android shadow
+    // justifyContent: "center", // Center content vertically
+    // alignItems: "center", // Center content horizontally
+  },
+  content: {
+    flexDirection: "row", // Arrange icon and text in a row
+    alignItems: "center", // Align icon and text vertically in the center
+    paddingRight:5,
+  },
+  icon: {
+    // marginRight: 8, // Space between the icon and the text
+  },
+  buttonText: {
+    color: "#ffffff", // White text
+    fontWeight: "bold",
+    fontSize: 12,
+  },
+  ConfirmDeletion: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: 10,
+  },
+  confirmButton: {
+    flex: 1,
+    backgroundColor: '#ff4d4d',
+    padding: 10,
+    alignItems: 'center',
+    borderRadius: 5,
+    marginHorizontal: 5,
+  },
+  cancelButton: {
+    flex: 1,
+    backgroundColor: 'gray',
+    padding: 10,
+    alignItems: 'center',
+    borderRadius: 5,
+    marginHorizontal: 5,
+  },
+  buttonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
 });

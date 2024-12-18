@@ -517,20 +517,19 @@ export const CreateCategoryDialogButton = ({ theme, type, onSuccessCallback }) =
         <Modal visible={open} transparent animationType="slide">
           <View style={styles.modalOverlay}>
             <View style={styles.dialogContainer}>
-              <Text style={styles.dialogTitle}>
+
+              {/* <Text style={styles.dialogTitle}>
                 Create{" "}
-                <Text
-                  style={[
-                    styles.dialogType,
-                    type === "income"
-                      ? styles.incomeColor
-                      : styles.expenseColor,
-                  ]}
-                >
+                <Text style={[ styles.dialogType, type === "income" ? styles.incomeColor : styles.expenseColor, ]} >
                   {type}
-                </Text>{" "}
-                Category
+                </Text>
+                {" "} Category
+              </Text> */}
+
+              <Text style={styles.dialogTitle}>
+                Create Category
               </Text>
+
               <Text style={styles.dialogDescription}>
                 Categories are used to group your transactions.
               </Text>
