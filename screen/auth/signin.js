@@ -40,6 +40,7 @@ export default function SignInPage({ navigation }) {
   };
 
 
+
   // Function to show alert with a custom message
   const showAlertMessage = (message) => {
     setAlertMessage(message);
@@ -214,6 +215,7 @@ export default function SignInPage({ navigation }) {
     });
   }, []);
 
+
   const onGoogleButtonPress = async () => {
     try {
       // Check Google services availability
@@ -234,22 +236,24 @@ export default function SignInPage({ navigation }) {
           const userCredential = await signInWithCredential(auth, googleCredential);
           const firebaseUser = userCredential.user;
 
-          // console.log("Silent sign-in successful:", firebaseUser);
-
           // Save user info in AsyncStorage
           await AsyncStorage.setItem("userId", firebaseUser.uid);
           await AsyncStorage.setItem("userEmail", firebaseUser.email);
           await AsyncStorage.setItem("userData", JSON.stringify(firebaseUser));
 
-          // Save the user to Firestore
-          await saveUserToFirestore(firebaseUser);
+          // Get the token and expiration time
+          const tokenResult = await firebaseUser.getIdTokenResult();
+          const { token, expirationTime } = tokenResult;
+
+          // Save token and expiration (6 months expiration time)
+          await AsyncStorage.setItem('userToken', token);
+          await AsyncStorage.setItem('tokenExpiration', new Date(Date.now() + 6 * 30 * 24 * 60 * 60 * 1000).toString()); // 6 months expiration
 
           // Navigate to the main screen
           navigation.navigate("Main", { userInfo: JSON.stringify(firebaseUser) });
 
         } catch (error) {
           console.error("Silent login failed, showing account picker...", error);
-
           // If silent login fails, show account picker
           const userInfo = await GoogleSignin.signIn();
           handleNewGoogleSignIn(userInfo);
@@ -262,37 +266,28 @@ export default function SignInPage({ navigation }) {
       }
     } catch (error) {
       console.error("Google Sign-In Error:", error);
-
-      // Handle specific error cases
-      if (error.code === "SIGN_IN_CANCELLED") {
-        console.log("User canceled the sign-in process.");
-      } else if (error.code === "IN_PROGRESS") {
-        console.log("Google Sign-In is already in progress.");
-      } else {
-        console.error("Google Sign-In failed:", error);
-      }
     }
   };
 
   const handleNewGoogleSignIn = async (userInfo) => {
     try {
-      // Retrieve fresh ID token
       const tokens = await GoogleSignin.getTokens();
       const { idToken } = tokens;
 
-      // Authenticate with Firebase using the Google credentials
+      // Authenticate with Firebase
       const googleCredential = GoogleAuthProvider.credential(idToken);
       const userCredential = await signInWithCredential(auth, googleCredential);
       const firebaseUser = userCredential.user;
 
+      // Save user info
+      const tokenResult = await firebaseUser.getIdTokenResult();
+      const { token, expirationTime } = tokenResult;
 
-      // Save user info in AsyncStorage
+      await AsyncStorage.setItem("userToken", token);
+      await AsyncStorage.setItem("tokenExpiration", new Date(Date.now() + 6 * 30 * 24 * 60 * 60 * 1000).toString()); // 6 months expiration
       await AsyncStorage.setItem("userId", firebaseUser.uid);
       await AsyncStorage.setItem("userEmail", firebaseUser.email);
       await AsyncStorage.setItem("userInfo", JSON.stringify(firebaseUser));
-
-      // Save the user to Firestore
-      await saveUserToFirestore(firebaseUser);
 
       // Navigate to the main screen
       navigation.navigate("Main", { userInfo: JSON.stringify(firebaseUser) });
@@ -300,8 +295,6 @@ export default function SignInPage({ navigation }) {
       console.error("Google Sign-In failed:", error);
     }
   };
-
-
 
 
 
