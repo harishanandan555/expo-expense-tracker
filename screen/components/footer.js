@@ -80,7 +80,7 @@
 
 
 import React from 'react';
-import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Text } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 
 export default function Footer({ theme, setCurrentScreen }) {
@@ -93,6 +93,7 @@ export default function Footer({ theme, setCurrentScreen }) {
       >
         {/* <Icon name="home-outline" size={24} color={theme.footerIconText} /> */}
         <Icon name="home-outline" size={24} color={theme.buttonBackground} />
+        <Text style={[styles.buttonText, { color: theme.text }]}>Home</Text>
       </TouchableOpacity>
       <TouchableOpacity
         onPress={() => setCurrentScreen('Transactions')}
@@ -101,6 +102,7 @@ export default function Footer({ theme, setCurrentScreen }) {
       >
         {/* <Icon name="wallet-outline" size={24} color={theme.footerIconText} /> */}
         <Icon name="wallet-outline" size={24} color={theme.buttonBackground} />
+        <Text style={[styles.buttonText, { color: theme.text }]}>History</Text>
       </TouchableOpacity>
       <TouchableOpacity
         onPress={() => setCurrentScreen('Settings')}
@@ -109,6 +111,7 @@ export default function Footer({ theme, setCurrentScreen }) {
       >
         {/* <Icon name="settings-outline" size={24} color={theme.footerIconText} /> */}
         <Icon name="settings-outline" size={24} color={theme.buttonBackground} />
+        <Text style={[styles.buttonText, { color: theme.text }]}>Setting</Text>
       </TouchableOpacity>
     </View>
   );
@@ -127,4 +130,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center', // Ensures icons are vertically centered
   },
+  buttonText: {
+      // color: "#ffffff", // White text
+      // color: theme.text, // White text
+      fontWeight: "bold",
+      fontSize: 11,
+  }
 });

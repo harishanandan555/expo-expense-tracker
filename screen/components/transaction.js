@@ -845,13 +845,13 @@ const TransactionScreen = ({ theme }) => {
       >
         <View style={[styles.container, { backgroundColor: theme.background }]}>
           <View style={[styles.transactionsContainer]}>
-            <View style={styles.headerContainer}>
+            {/* <View style={styles.headerContainer}>
               <TouchableOpacity style={styles.headerTitleContainer}>
                 <Text style={[styles.headerTitle, { color: theme.text }]}>
                   Transactions History
                 </Text>
               </TouchableOpacity>
-            </View>
+            </View> */}
 
             <TextInput
               style={[

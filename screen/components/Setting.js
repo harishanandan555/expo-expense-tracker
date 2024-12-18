@@ -130,6 +130,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { TypographyH2 } from "../global_components/typography-h2";
 import { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent } from "../ui/card";
+
 import { CurrencyComboBox } from "../global_components/currency-combo-box";
 import { BillingSection } from "../local__components/billing-section";
 import { CategoriesList } from "../local__components/categories-list";

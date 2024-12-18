@@ -144,16 +144,28 @@ export const CategoryCard = ({ category, isDefault, onDeleteSuccess, theme }) =>
 
   return (
     <View
+      style={styles.card}
+    >
+    {/* <View
       style={[
         styles.card,
         isDefault ? { backgroundColor: theme.defaultBackground } : { backgroundColor: theme.cardBackground },
       ]}
-    >
-      <Text style={[styles.icon, { color: theme.icon }]}>{category.icon || "❓"}</Text>
-      <Text style={[styles.categoryName, { color: theme.text }]}>{category.name}</Text>
-      {!isDefault && (
-        <DeleteCategoryDialog category={category} onSuccessCallback={onDeleteSuccess} />
-      )}
+    > */}
+      <View style= {styles.cardData}>
+        <Text style={[styles.icon, { color: theme.icon }]}>{category.icon || "❓"}</Text>
+      </View>
+
+      <View style= {styles.cardData}>
+        <Text style={[styles.categoryName, { color: theme.text }]}>{category.name}</Text>
+      </View>
+
+      <View style= {styles.cardData}>
+        {!isDefault && (
+          <DeleteCategoryDialog category={category} onSuccessCallback={onDeleteSuccess} />
+        )}
+      </View>
+
     </View>
   );
 };
@@ -161,28 +173,22 @@ export const CategoryCard = ({ category, isDefault, onDeleteSuccess, theme }) =>
 const styles = StyleSheet.create({
   card: {
     width: "30%", // Adjust percentage width to ensure three items per row
-    height: 120, // Increase height slightly for better touchable area
-    borderRadius: 8,
+    height: 100, // Increase height slightly for better touchable area
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 15, // Adjust spacing between rows
+    // borderRadius: 8,
+    // marginBottom: 15, // Adjust spacing between rows
   },
+  // cardData: {
+  //   width: "100%",
+  //   height: 100,
+  // },
   icon: {
     fontSize: 32,
   },
   categoryName: {
     fontSize: 14,
-    marginTop: 5,
+    // marginTop: 2,
     textAlign: "center", // Ensure text aligns properly
-  },
-  buttonContainer: {
-    marginTop: 10,
-    zIndex: 10, // Ensure button is on top of other components
-  },
-  button: {
-    padding: 8, // Increase touchable area of the button
-    borderRadius: 5,
-    alignItems: "center",
-    justifyContent: "center",
   },
 });

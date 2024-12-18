@@ -341,19 +341,182 @@
 
 
 
+// import React, { useEffect, useState } from "react";
+// import { View, Text, StyleSheet } from "react-native";
+// import AsyncStorage from "@react-native-async-storage/async-storage";
+
+// import { Separator } from "../ui/separator";
+// import { CategoryCard } from "./category-card";
+// import { CreateCategoryDialogButton } from "./create-category-dialog";
+// import { getAllUserCategories, getAllDefaultCategories } from "../services/firebaseSettings";
+
+// export const CategoriesList = ({ theme }) => {
+
+//   const [categories, setCategories] = useState([]);
+//   const [isLoading, setIsLoading] = useState(true);
+//   const [error, setError] = useState(null);
+//   const [userId, setUserId] = useState(null);
+
+//   useEffect(() => {
+//     const fetchUserData = async () => {
+//       const userId = await AsyncStorage.getItem("userId");
+//       setUserId(userId);
+//     };
+//     fetchUserData();
+//   }, []);
+
+//   const fetchCategories = async () => {
+//     if (!userId) {
+//       console.error("User ID is not available. Ensure the user is logged in.");
+//       setError("User ID is required.");
+//       setIsLoading(false);
+//       return;
+//     }
+
+//     setIsLoading(true);
+//     setError(null);
+
+//     try {
+
+//       const userCategories = await getAllUserCategories(userId) || [];
+//       const defaultCategories = await getAllDefaultCategories() || [];
+//       const combinedCategories = [
+//         ...defaultCategories.map((category) => ({ ...category, isDefault: true })),
+//         ...userCategories.map((category) => ({ ...category, isDefault: false })),
+//       ];
+
+//       setCategories(combinedCategories);
+
+//     }
+//     catch (err) {
+//       console.error("Error fetching categories:", err);
+//       setError(err.message || "Failed to fetch categories");
+//     }
+//     finally {
+//       setIsLoading(false);
+//     }
+//   };
+
+//   useEffect(() => {
+//     if (userId) {
+//       fetchCategories();
+//     }
+//   }, [userId]);
+
+//   return (
+//     <View style={{ padding: 0 }}>
+
+//         <CreateCategoryDialogButton theme={theme} onSuccessCallback={fetchCategories} />
+
+//         <Separator theme={theme} />
+
+//         {categories.length > 0 ? (
+
+//           <View style={styles.categoryList}>
+
+//             {categories.map((category) => (
+
+//               <CategoryCard
+//                 theme={theme}
+//                 key={category.id}
+//                 category={category}
+//                 isDefault={category.isDefault}
+//                 type={category.type}
+//                 onDeleteSuccess={fetchCategories}
+//               />
+
+//             ))}
+
+//           </View>
+
+//         ) : (
+
+//           <View style={styles.noDataContainer}>
+//             <Text style={[styles.noDataText, { color: theme.textColor }]}>
+//               No categories found. Create one to get started!
+//             </Text>
+//           </View>
+
+//         )}
+
+//         {error && (
+//           <View style={styles.errorContainer}>
+//             <Text style={styles.errorText}>{error}</Text>
+//           </View>
+//         )}
+
+//     </View>
+//   );
+// };
+
+// const styles = StyleSheet.create({
+//   card: {
+//     borderRadius: 8,
+//     margin: 10,
+//   },
+//   cardHeader: {
+//     padding: 10,
+//   },
+//   cardTitle: {
+//     flexDirection: "row",
+//     justifyContent: "space-between",
+//     alignItems: "center",
+//   },
+//   categoryText: {
+//     fontSize: 18,
+//     fontWeight: "bold",
+//   },
+//   sortedText: {
+//     fontSize: 12,
+//   },
+//   categoryList: {
+//     flexDirection: "row",
+//     flexWrap: "wrap",
+//     // justifyContent: "space-between",
+//     padding: 10,
+//   },
+//   noDataContainer: {
+//     alignItems: "center",
+//     marginTop: 20,
+//   },
+//   noDataText: {
+//     fontSize: 16,
+//   },
+//   errorContainer: {
+//     padding: 10,
+//     backgroundColor: "#f8d7da",
+//     borderRadius: 5,
+//   },
+//   errorText: {
+//     color: "#721c24",
+//     fontWeight: "bold",
+//   },
+// });
+
+
+
+
+
+
+
+
+
+
+
+
 import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import { SkeletonWrapper } from "../global_components/skeleton-wrapper";
 import { Separator } from "../ui/separator";
 import { CategoryCard } from "./category-card";
 import { CreateCategoryDialogButton } from "./create-category-dialog";
 import { getAllUserCategories, getAllDefaultCategories } from "../services/firebaseSettings";
 
 export const CategoriesList = ({ theme }) => {
-
   const [categories, setCategories] = useState([]);
+  const [userCategories, setUserCategories] = useState([]);
+  const [defaultCategories, setDefaultCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [userId, setUserId] = useState(null);
@@ -367,6 +530,7 @@ export const CategoriesList = ({ theme }) => {
   }, []);
 
   const fetchCategories = async () => {
+
     if (!userId) {
       console.error("User ID is not available. Ensure the user is logged in.");
       setError("User ID is required.");
@@ -379,6 +543,12 @@ export const CategoriesList = ({ theme }) => {
 
     try {
 
+      // const fetchedUserCategories = await getAllUserCategories(userId) || [];
+      // const fetchedDefaultCategories = await getAllDefaultCategories() || [];
+
+      // setUserCategories(fetchedUserCategories);
+      // setDefaultCategories(fetchedDefaultCategories);
+
       const userCategories = await getAllUserCategories(userId) || [];
       const defaultCategories = await getAllDefaultCategories() || [];
       const combinedCategories = [
@@ -388,12 +558,10 @@ export const CategoriesList = ({ theme }) => {
 
       setCategories(combinedCategories);
 
-    }
-    catch (err) {
+    } catch (err) {
       console.error("Error fetching categories:", err);
       setError(err.message || "Failed to fetch categories");
-    }
-    finally {
+    } finally {
       setIsLoading(false);
     }
   };
@@ -405,93 +573,144 @@ export const CategoriesList = ({ theme }) => {
   }, [userId]);
 
   return (
-    <View style={{ padding: 0 }}>
+    <View style={[ styles.cardContainer, { padding: 0 }]}>
 
-    {/* <SkeletonWrapper theme={theme} isLoading={isLoading} fullWidth> */}
+      <CreateCategoryDialogButton theme={theme} onSuccessCallback={fetchCategories} />
 
-      {/* <View style={[styles.card, { backgroundColor: theme.cardBackground }]}> */}
+      <Separator theme={theme} />
 
-        {/* <View style={styles.cardHeader}> */}
-          {/* <View style={styles.cardTitle}>
-            <Text style={[styles.categoryText, { color: theme.textColor }]}>All Categories</Text>
-            <Text style={[styles.sortedText, { color: theme.subTextColor }]}>Sorted by name</Text>
-          </View> */}
-          {/* <CreateCategoryDialog theme={theme} onSuccessCallback={fetchCategories} /> */}
-        {/* </View> */}
-
-        <CreateCategoryDialogButton theme={theme} onSuccessCallback={fetchCategories} />
-
-        <Separator theme={theme} />
-
-        {categories.length > 0 ? (
-
-          <View style={styles.categoryList}>
-
-            {categories.map((category) => (
-
-              <CategoryCard
-                theme={theme}
-                key={category.id}
-                category={category}
-                isDefault={category.isDefault}
-                type={category.type}
-                onDeleteSuccess={fetchCategories}
-              />
-
-            ))}
-
-          </View>
-
+      <View style={styles.categoryList} >
+        {isLoading ? (
+          <Text style={{ color: theme.text, textAlign: "center", paddingTop: 10, fontWeight: "bold" }}>Loading categories...</Text>
         ) : (
 
-          <View style={styles.noDataContainer}>
-            <Text style={[styles.noDataText, { color: theme.textColor }]}>
-              No categories found. Create one to get started!
-            </Text>
-          </View>
+        <>
+          {categories.length > 0 ? (
 
+            <View style={styles.categoryCard}>
+
+              {categories.map((category) => (
+
+                <CategoryCard
+                  theme={theme}
+                  key={category.id}
+                  category={category}
+                  isDefault={category.isDefault}
+                  type={category.type}
+                  onDeleteSuccess={fetchCategories}
+                />
+
+              ))}
+
+            </View>
+
+          ) : (
+
+            <View style={styles.noDataContainer}>
+              <Text style={[styles.noDataText, { color: theme.textColor }]}>
+                No categories found. Create one to get started!
+              </Text>
+            </View>
+
+          )}
+
+            {/* {defaultCategories.length > 0 && (
+              <View>
+                <View style={styles.defaultCategoryList}>
+                  {defaultCategories.map((category) => (
+                    <CategoryCard
+                      theme={theme}
+                      key={category.id}
+                      category={category}
+                      isDefault={true}
+                      type={category.type}
+                      onDeleteSuccess={fetchCategories}
+                    />
+                  ))}
+                </View>
+              </View>
+            )}
+
+            {userCategories.length > 0 && (
+              <View>
+                <View style={styles.userCategoryList}>
+                  {userCategories.map((category) => (
+                    <CategoryCard
+                      theme={theme}
+                      key={category.id}
+                      category={category}
+                      isDefault={false}
+                      type={category.type}
+                      onDeleteSuccess={fetchCategories}
+                    />
+                  ))}
+                </View>
+              </View>
+            )} */}
+
+            {/* {defaultCategories.length === 0 && userCategories.length === 0 && (
+              <View style={styles.noDataContainer}>
+                <Text style={[styles.noDataText, { color: theme.textColor }]}>
+                  No categories found. Create one to get started!
+                </Text>
+              </View>
+            )} */}
+
+            {error && (
+              <View style={styles.errorContainer}>
+                <Text style={styles.errorText}>{error}</Text>
+              </View>
+            )}
+          {/* </View> */}
+          </>
         )}
-
-        {error && (
-          <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>{error}</Text>
-          </View>
-        )}
-
-      {/* </View> */}
-
-    {/* </SkeletonWrapper> */}
-
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  card: {
-    borderRadius: 8,
-    margin: 10,
+  cardContainer: {
   },
-  cardHeader: {
-    padding: 10,
+  categoryList:{
   },
-  cardTitle: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  categoryText: {
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  sortedText: {
-    fontSize: 12,
-  },
-  categoryList: {
+  categoryCard: {
     flexDirection: "row",
     flexWrap: "wrap",
-    justifyContent: "space-between",
-    padding: 10,
+    gap: 10,
+    paddingLeft:10,
   },
+  defaultCategoryList: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "flex-start", // Align cards starting from the left
+    justifyContent: "space-between",
+    gap: 10, // Adds spacing between cards
+    paddingHorizontal: 5, // Small padding for alignment
+  },
+  userCategoryList: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "flex-start",
+    gap: 10,
+    paddingHorizontal: 5,
+  },
+  // defaultCategoryList: {
+  //   flex: 1,
+  //   flexDirection: "row",
+  //   flexWrap: "wrap",
+  //   gap:15,
+  //   // justifyContent: "space-between",
+  //   // padding: 10,
+  // },
+  // userCategoryList: {
+  //   flex: 1,
+  //   flexDirection: "row",
+  //   flexWrap: "wrap",
+  //   gap:15,
+  //   // justifyContent: "space-between",
+  //   // padding: 10,
+  // },
   noDataContainer: {
     alignItems: "center",
     marginTop: 20,

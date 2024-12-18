@@ -343,7 +343,7 @@ export function CurrencyComboBox({ theme }) {
   }, []);
 
   if (settings.isFetching) {
-    return <Text>Loading...</Text>;
+    return <Text style={{ color: theme.text, textAlign: "center", fontWeight: "bold"  }}>Loading...</Text>;
   }
 
   return (
