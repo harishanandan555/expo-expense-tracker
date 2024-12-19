@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { View } from 'react-native-web';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -89,7 +90,6 @@ export default function App() {
   }, []);
 
   if (!initialRoute) {
-    // Render a splash/loading screen until we determine the initial route
     return null;
   }
 

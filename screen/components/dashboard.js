@@ -8,11 +8,12 @@ import {
     Modal,
     TextInput,
     RefreshControl,
-    Dimensions, Alert} from 'react-native';
+    Dimensions, Alert
+} from 'react-native';
 import { auth, db } from "../../config/firebaseConfig";
 import { ProgressBar } from "react-native-paper"; // For a Progress bar
 import { useFocusEffect } from '@react-navigation/native';
-import { Card} from '../ui/card';
+import { Card } from '../ui/card';
 import { onAuthStateChanged } from "firebase/auth";
 import { useRoute } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -23,12 +24,12 @@ import { Provider } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native'; // Import useNavigation hook
 import { doc, setDoc, onSnapshot } from "firebase/firestore";
 import { BarChart, PieChart } from 'react-native-gifted-charts';
+
 const DashboardScreen = ({ theme, setCurrentScreen }) => {
 
     const [isIncomeModalVisible, setIncomeModalVisible] = useState(false);
     const [isExpenseModalVisible, setExpenseModalVisible] = useState(false);
     const [transactionDate, setTransactionDate] = useState(new Date());
-   
     const [activeButton, setActiveButton] = useState('income');
     const [isCategoryModalVisible, setCategoryModalVisible] = useState(false);
     const [isCreateCategoryModalVisible, setCreateCategoryModalVisible] = useState(false);
@@ -36,44 +37,36 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
     const [selectedIcon, setSelectedIcon] = useState(null);
     const [newCategory, setNewCategory] = useState('');
     const [selectedCategory, setSelectedCategory] = useState(null);
-    const [selectedGraph, setSelectedGraph] = useState(null); // Default to null for showing all data
-    const [balancePercentage, setBalancePercentage] = useState(0); 
+    const [selectedGraph, setSelectedGraph] = useState(null);
+    const [balancePercentage, setBalancePercentage] = useState(0);
     const navigation = useNavigation();
-    
-    const [IncomeCategory, setIncomeCategory] = useState([]); // State to store the income data
+    const [IncomeCategory, setIncomeCategory] = useState([]);
     const [currency, setCurrency] = useState({ value: 'USD', label: '$ Dollar', locale: 'en-US' });
-
     const [barData, setBarData] = useState([]);
-
     const [totalIncome, setTotalIncome] = useState(0);
     const [totalExpense, setTotalExpense] = useState(0);
     const [balance, setBalance] = useState(0);
     const [lastUpdated, setLastUpdated] = useState("");
     const [isExpenseEmojiPickerVisible, setExpenseEmojiPickerVisible] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
-    // Default to current month
     const screenWidth = Dimensions.get('window').width;
     const maxValue = Math.max(totalIncome, totalExpense, balance);
-
-
     const [userInfos, setUserInfos] = useState(null);
-
     const route = useRoute();
     const [expenses, setExpenses] = useState([]);
-   
 
     const initFinancialDataListener = () => {
         const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
             if (user) {
                 const userId = user.uid;
-    
+
                 // Fetch income and expense data
                 fetchIncomeData(userId);
                 fetchExpenseData(userId);
-    
+
                 // Call the financial data listener
                 const unsubscribeFinancialData = calculateAndSaveFinancialData(userId);
-    
+
                 // Return cleanup functions for auth and financial data listeners
                 return () => {
                     unsubscribeFinancialData();
@@ -84,10 +77,10 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
             }
         });
     };
-    
+
     useEffect(() => {
         const unsubscribe = initFinancialDataListener();
-    
+
         // Clean up on component unmount
         return () => {
             if (unsubscribe) {
@@ -95,7 +88,7 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
             }
         };
     }, []);
-    
+
     useFocusEffect(
         React.useCallback(() => {
             // Refetch currency when the screen is focused
@@ -109,14 +102,14 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
                     console.error("Error fetching currency:", error);
                 }
             };
-    
+
             fetchCurrency();
-    
+
             // Ensure the chart data is recalculated on focus
             const absoluteBalance = Math.abs(balance);
             const percentage = totalIncome + totalExpense > 0
-            ? Math.round((absoluteBalance / (totalIncome + totalExpense)) * 100)
-            : 0;
+                ? Math.round((absoluteBalance / (totalIncome + totalExpense)) * 100)
+                : 0;
 
             setBalancePercentage(percentage);
             setBarData([
@@ -133,7 +126,7 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
                 {
                     value: absoluteBalance,
                     label: "Balance",
-                    color:"#177AD5"
+                    color: "#177AD5"
 
 
 
@@ -155,10 +148,6 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
             );
         }
     };
-    
-
-
-
 
     useEffect(() => {
 
@@ -183,9 +172,7 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
     }, []);
 
     const calculateAndSaveFinancialData = (userId) => {
-       
 
-     
         // Reference to the user's document in Firestore
         const userDocRef = doc(db, "users", userId);
 
@@ -281,21 +268,8 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
         return unsubscribe;
     };
 
-
-
-
-
     const fetchIncomeData = (userId) => {
         try {
-           // Get the user ID
-
-            if (!userId) {
-                console.error("User ID is required.");
-                return;
-            }
-
-
-
             // Reference to the user's Firestore document
             const userDocRef = doc(db, "users", userId);
 
@@ -342,15 +316,8 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
         }
     };
 
-
     const fetchExpenseData = (userId) => {
         try {
-
-            if (!userId) {
-                console.error("User ID is required.");
-                return;
-            }
-
             // Reference to the user's Firestore document
             const userDocRef = doc(db, "users", userId);
 
@@ -397,20 +364,10 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
         }
     };
 
-
-
-
-
-
-
-
-
-
     const toggleIncomeModals = () => {
         navigation.navigate('NewIncome', { type: 'income' });
     };
 
-    // Navigate to NewExpense screen
     const toggleExpenseModals = () => {
         navigation.navigate('NewExpense', { type: 'expense' });
     };
@@ -424,18 +381,12 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
         setCreateCategoryModalVisible(true);
     };
 
-
-
-
     const handleSaveCategory = () => {
         if (newCategory && selectedIcon) {
             // Save the new category (this is for demonstration; you may save it in a state)
             setCreateCategoryModalVisible(false);
         }
     };
-
-
-
 
     const closeModals = () => {
         setIncomeModalVisible(false);
@@ -444,24 +395,12 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
         setCreateCategoryModalVisible(false);
     };
 
-
-
-
-
-
-
-
-
-
     useEffect(() => {
         GoogleSignin.configure({
             webClientId:
                 "622095554406-32i6saoa7sn60bu32n33f4um21ep2i65.apps.googleusercontent.com",
         });
     }, []);
-
-
-
 
     useEffect(() => {
         const fetchData = async () => {
@@ -471,7 +410,6 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
         };
         fetchData();
     }, []);
-
 
     const onRefresh = () => {
         setIsRefreshing(true);
@@ -485,15 +423,11 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
             setIsRefreshing(false); // Reset the refreshing state
         }, 2000); // Example: 2-second delay
     };
-    // Determine colors based on the theme
+
     const isDarkMode = theme === 'dark';
     const backgroundColor = isDarkMode ? '#000' : '#fff';
-
     const textColor = isDarkMode ? '#fff' : '#000';
-
     const modalTextColor = isDarkMode ? '#fff' : '#000';
-    // Function to format the date
-
 
     return (
         <Provider>
@@ -747,7 +681,7 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
                             onPress={() => setCurrentScreen('Transactions')}
                             style={styles.seeMoreButtonSmall}
                         >
-                              <Text style={[styles.buttonText, {color:'#009cde', fontStyle:'italic'}]}>See More ...</Text>
+                            <Text style={[styles.buttonText, { color: '#009cde', fontStyle: 'italic' }]}>See More ...</Text>
                         </TouchableOpacity>
 
                     </View>
@@ -820,7 +754,7 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
                             onPress={() => setCurrentScreen('Transactions')}
                             style={styles.seeMoreButtonSmall}
                         >
-                            <Text style={[styles.buttonText, {color:'#009cde', fontStyle:'italic'}]}>See More ...</Text>
+                            <Text style={[styles.buttonText, { color: '#009cde', fontStyle: 'italic' }]}>See More ...</Text>
                         </TouchableOpacity>
 
                     </View>
@@ -909,50 +843,52 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
 
 
                     </View> */}
-                    <View style={{flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-        marginTop:15}}>
-            <PieChart
-                data={barData}
-                showText
-                donut
-         
-          sectionAutoFocus
-          focusOnPress
-        
-          
-          radius={120}
-          innerRadius={60}// For a donut chart, set this value greater than 0
-                centerLabelComponent={() => (
-                    <View style={{justifyContent: 'center', alignItems: 'center'}}>
-                    <Text
-                      style={{fontSize: 22, color: 'black', fontWeight: 'bold'}}>
-                     {balancePercentage}%
-</Text>
-                    <Text style={{fontSize: 14, color: 'black'}}>Balance</Text>
-                  </View>
-                    
-                )}
-                onPress={(section) => handleSectionPress(section)} // Capture press events
-            />
-             <View style={styles.legendContainer}>
-                {barData.map((item, index) => (
-                    <View key={index} style={styles.legendItem}>
-                        <View
-                            style={[
-                                styles.legendColor,
-                                { backgroundColor: item.color },
-                            ]}
+                    <View style={{
+                        flex: 1,
+                        justifyContent: "center",
+                        alignItems: "center",
+                        marginTop: 15
+                    }}>
+                        <PieChart
+                            data={barData}
+                            showText
+                            donut
+
+                            sectionAutoFocus
+                            focusOnPress
+
+
+                            radius={120}
+                            innerRadius={60}// For a donut chart, set this value greater than 0
+                            centerLabelComponent={() => (
+                                <View style={{ justifyContent: 'center', alignItems: 'center' }}>
+                                    <Text
+                                        style={{ fontSize: 22, color: 'black', fontWeight: 'bold' }}>
+                                        {balancePercentage}%
+                                    </Text>
+                                    <Text style={{ fontSize: 14, color: 'black' }}>Balance</Text>
+                                </View>
+
+                            )}
+                            onPress={(section) => handleSectionPress(section)} // Capture press events
                         />
-                        <Text style={styles.legendText}>
-                            {item.label}: {item.value}
-                        </Text>
+                        <View style={styles.legendContainer}>
+                            {barData.map((item, index) => (
+                                <View key={index} style={styles.legendItem}>
+                                    <View
+                                        style={[
+                                            styles.legendColor,
+                                            { backgroundColor: item.color },
+                                        ]}
+                                    />
+                                    <Text style={styles.legendText}>
+                                        {item.label}: {item.value}
+                                    </Text>
+                                </View>
+                            ))}
+                        </View>
                     </View>
-                ))}
-            </View>
-        </View>
-                  
+
                     {/* Modal for New Income */}
                     <Modal visible={isIncomeModalVisible} animationType="slide" transparent={true}>
                         <View style={styles.modalContainer}>
@@ -1251,9 +1187,9 @@ const styles = StyleSheet.create({
     },
     legendContainer: {
         flexDirection: 'row',
-          justifyContent: 'center',
+        justifyContent: 'center',
         marginTop: 20,
-       
+
     },
     legendItem: {
         flexDirection: "row",
@@ -1264,7 +1200,7 @@ const styles = StyleSheet.create({
         height: 10,
         width: 10,
         borderRadius: 5,
-      
+
         marginLeft: 10,
     },
     legendText: {
@@ -1790,4 +1726,5 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
 });
+
 export default DashboardScreen;

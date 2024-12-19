@@ -406,10 +406,10 @@ export async function updateCategoryAttempts(userId, decrementValue) {
   }
 }
 
-export async function deleteCategoryByUserId(id, userId, categoryData) {
+export async function deleteCategoryByUserId(id, userId, name, type) {
   try {
-    if (!id || !userId || !categoryData || !categoryData.name || !categoryData.type) {
-      throw new Error("Invalid input: All parameters (id, userId, categoryData) are required.");
+    if (!id || !userId || !name || !type) {
+      throw new Error("Invalid input: All parameters (id, userId, name, type) are required.");
     }
 
     const categoryRef = collection(db, "UserCategories");
@@ -419,8 +419,8 @@ export async function deleteCategoryByUserId(id, userId, categoryData) {
       categoryRef,
       where("id", "==", id),
       where("userId", "==", userId),
-      where("name", "==", categoryData.name),
-      where("type", "==", categoryData.type)
+      where("name", "==", name),
+      where("type", "==", type)
     );
 
     const querySnapshot = await getDocs(q);
@@ -437,7 +437,7 @@ export async function deleteCategoryByUserId(id, userId, categoryData) {
 
     await Promise.all(deletePromises);
 
-    console.log(`Category with id: ${id} deleted successfully.`);
+    console.log(`deleted successfully.`);
     return { success: true };
 
   } catch (error) {

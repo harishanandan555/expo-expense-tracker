@@ -20,6 +20,8 @@ import { BackHandler, ToastAndroid } from 'react-native';
 
 const TransactionScreen = ({ theme }) => {
   const [selectedCategory, setSelectedCategory] = useState("Category");
+  const [showCategories, setShowCategories] = useState(false);
+  const [showTypes, setShowTypes] = useState(false);
   const [selectedType, setSelectedType] = useState("Type");
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
@@ -37,7 +39,8 @@ const TransactionScreen = ({ theme }) => {
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterModalVisible, setFilterModalVisible] = useState(false);
-
+  const [isPickerVisible, setPickerVisible] = useState(false);
+  const [exportModalVisible, setExportModalVisible] = useState(false);
   const navigation = useNavigation();
 
   const [tempSelectedCategory, setTempSelectedCategory] = useState("placeholder");
@@ -45,7 +48,7 @@ const TransactionScreen = ({ theme }) => {
   const [tempSelectedDate, setTempSelectedDate] = useState(null);
   const [filteredTransactions, setFilteredTransactions] = useState(null);
 
-  const [transactionsPerPage] = useState(3);
+  const [transactionsPerPage] = useState(4);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalTransactions, setTotalTransactions] = useState(0)
 
@@ -619,6 +622,7 @@ const TransactionScreen = ({ theme }) => {
       console.error("Error writing or sharing file:", error);
       Alert.alert("Error", "Failed to write or share the CSV file.");
     }
+    console.log('Exporting transactions in CSV format');
   };
 
   const generateHtml = (transactionsData) => {
@@ -722,6 +726,7 @@ const TransactionScreen = ({ theme }) => {
   };
 
   const printToFile = async () => {
+    console.log('Exporting transactions in PDF format');
     try {
       const html = generateHtml(transactionsData);
       // console.log('Generated HTML for PDF:\n', html);
@@ -762,7 +767,7 @@ const TransactionScreen = ({ theme }) => {
     setTimeout(() => setSelectedExportOption("placeholder"), 500);
   };
 
-  // const renderTransaction = ({ item }) => (
+  // const renderTransactionItem = React.memo(({ item }) =>(
   //   <View
   //   style={[
   //     styles.transactionCard,
@@ -853,6 +858,7 @@ const TransactionScreen = ({ theme }) => {
               </TouchableOpacity>
             </View> */}
 
+            {/* Search Input */}
             <TextInput
               style={[
                 styles.searchInput,
@@ -867,197 +873,279 @@ const TransactionScreen = ({ theme }) => {
               onChangeText={(text) => setSearchTerm(text)}
             />
 
-            <View style={styles.filterExportContainer}>
-              <View style={styles.pickerContainer}>
-                <Picker
-                  selectedValue={selectedExportOption}
-                  onValueChange={handleExportOption}
-                  style={[
-                    styles.picker,
-                    {
-                      backgroundColor: theme.transactionDropdownBackground,
-                      borderColor: theme.buttonBorder,
-                      color: theme.text,
-                      // zIndex: 10,
-                      paddingRight: 1,
-                    },
-                  ]}
-                  dropdownIconColor={theme.text}
-                >
-                  <Picker.Item
-                    label="Download Transaction"
-                    value="placeholder"
-                    style={{ color: "gray" }}
-                  />
-                  <Picker.Item label="CSV" value="CSV" />
-                  <Picker.Item label="PDF" value="PDF" />
-                </Picker>
-              </View>
+            {/* Filter, Refresh, Download Option */}
+            <View style={styles.secondRowontainer}>
+              <TouchableOpacity
+                onPress={() => setExportModalVisible(true)}
+                style={[
+                  styles.iconButton,
+                  {
+                    // backgroundColor: theme.buttonBackground,
+                    borderColor: theme.text,
+                  },
+                ]}
+              >
+                <Text style={[styles.exportText, { color: theme.text }]}>
+                  Download
+                </Text>
+              </TouchableOpacity>
 
               {/* Filter Button */}
               <TouchableOpacity
                 onPress={() => setFilterModalVisible(true)}
-                style={styles.filterButton}
+                style={[
+                  styles.iconButton,
+                  {
+                    // backgroundColor: theme.buttonBackground,
+                    borderColor: theme.text,
+                  },
+                ]}
               >
-                <Icon name="filter-list" size={30} color={theme.text} />
+                <Icon name="filter-list" size={24} color={theme.text} />
               </TouchableOpacity>
 
               {/* Refresh Button */}
               <TouchableOpacity
                 onPress={handleRefresh}
-                style={styles.iconContainer}
+                style={[
+                  styles.iconButton,
+                  {
+                    // backgroundColor: theme.buttonBackground,
+                    borderColor: theme.text,
+                  },
+                ]}
               >
-                <Icon name="refresh" size={30} color={theme.text} />
+                <Icon name="refresh" size={24} color={theme.text} />
               </TouchableOpacity>
             </View>
 
-            {/* Filter Modal */}
-            {/* Filter Modal */}
-            <View>
-              <Modal
-                transparent={true}
-                visible={filterModalVisible}
-                animationType="slide"
-                onRequestClose={() => setFilterModalVisible(false)}
-              >
-                <View style={[styles.modalContainer]}>
-                  <View
-                    style={[
-                      styles.modalContent,
-                      {
-                        backgroundColor: theme.transactionDropdownBackground,
-                        color: theme.text,
-                      },
-                    ]}
+            {/* PDF ad CSV  Modal */}
+            <Modal
+              visible={exportModalVisible}
+              transparent
+              animationType="fade"
+              onRequestClose={() => setExportModalVisible(false)}
+            >
+              <View style={styles.exportmodalContainer}>
+                <View
+                  style={[
+                    styles.exportmodalContent,
+                    { backgroundColor: theme.transactionDropdownBackground },
+                  ]}
+                >
+                  <Text
+                    style={[styles.exportmodalTitle, { color: theme.text }]}
                   >
-                    <Text style={[styles.modalTitle, { color: theme.text }]}>
-                      {" "}
-                      Filters{" "}
+                    Download Transactions
+                  </Text>
+                  <TouchableOpacity
+                    style={[styles.exportOption, { borderColor: theme.text }]}
+                    onPress={() => handleExportOption("CSV")}
+                  >
+                    <Text
+                      style={[styles.exportOptionText, { color: theme.text }]}
+                    >
+                      CSV
                     </Text>
-
-                    {/* Category Picker */}
-                    <View style={styles.pickerContainer}>
-                      <Picker
-                        selectedValue={selectedCategory}
-                        onValueChange={(itemValue) => {
-                          if (itemValue !== "placeholder") {
-                            setSelectedCategory(itemValue);
-                          }
-                        }}
-                        style={[
-                          styles.picker,
-                          {
-                            backgroundColor:
-                              theme.transactionDropdownBackground,
-                            borderColor: theme.buttonBorder,
-                            color: theme.text,
-                          },
-                        ]}
-                        dropdownIconColor={theme.text}
-                      >
-                        <Picker.Item
-                          label="Category"
-                          value="placeholder"
-                          style={{ color: "gray" }}
-                        />
-                        {categories.map((category) => (
-                          <Picker.Item
-                            key={category}
-                            label={category}
-                            value={category}
-                          />
-                        ))}
-                      </Picker>
-                    </View>
-
-                    {/* Type Picker */}
-                    <View style={styles.pickerContainer}>
-                      <Picker
-                        selectedValue={selectedType}
-                        onValueChange={(itemValue) => {
-                          if (itemValue !== "placeholder") {
-                            setSelectedType(itemValue);
-                          }
-                        }}
-                        style={[
-                          styles.picker,
-                          {
-                            backgroundColor:
-                              theme.transactionDropdownBackground,
-                            borderColor: theme.buttonBorder,
-                            color: theme.text,
-                          },
-                        ]}
-                        dropdownIconColor={theme.text}
-                      >
-                        <Picker.Item
-                          label="Type"
-                          value="placeholder"
-                          style={{ color: "gray" }}
-                        />
-                        {transactionTypes.map((type) => (
-                          <Picker.Item key={type} label={type} value={type} />
-                        ))}
-                      </Picker>
-                    </View>
-
-                    {/* Date Picker */}
-                    <TouchableOpacity
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.exportOption, { borderColor: theme.text }]}
+                    onPress={() => handleExportOption("PDF")}
+                  >
+                    <Text
+                      style={[styles.exportOptionText, { color: theme.text }]}
+                    >
+                      PDF
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.exportcloseButton,
+                      { backgroundColor: theme.buttonBackground },
+                    ]}
+                    onPress={() => setExportModalVisible(false)}
+                  >
+                    <Text
                       style={[
-                        styles.datePickerButton,
-                        {
-                          backgroundColor: theme.transactionDropdownBackground,
-                        },
+                        styles.exportcloseButtonText,
+                        { color: theme.text },
                       ]}
-                      onPress={showDatePicker}
+                    >
+                      Close
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </Modal>
+
+            {/* Filter Modal */}
+            <Modal
+              transparent={true}
+              visible={filterModalVisible}
+              animationType="slide"
+              onRequestClose={() => setFilterModalVisible(false)}
+            >
+              <View style={styles.modalContainer}>
+                <View
+                  style={[
+                    styles.modalContent,
+                    {
+                      backgroundColor: theme.transactionDropdownBackground,
+                      color: theme.text,
+                    },
+                  ]}
+                >
+                  <Text style={[styles.modalTitle, { color: theme.text }]}>
+                    {""} Apply Filters
+                  </Text>
+
+                  {/* Category Selection */}
+                  <View style={styles.selectionContainer}>
+                    <TouchableOpacity
+                      onPress={() => setShowCategories(!showCategories)}
                     >
                       <Text
-                        style={[styles.datePickerText, { color: theme.text }]}
-                      >
-                        {tempSelectedDate
-                          ? `Selected Date: ${tempSelectedDate}`
-                          : "Select Date"}
-                      </Text>
-                    </TouchableOpacity>
-                    <DateTimePickerModal
-                      isVisible={isDatePickerVisible}
-                      mode="date"
-                      onConfirm={handleConfirm}
-                      onCancel={hideDatePicker}
-                    />
-
-                    {/* Apply/Cancel Buttons */}
-                    <View style={styles.modalActions}>
-                      <TouchableOpacity
-                        onPress={handleApplyFilters}
                         style={[
-                          styles.applyButton,
+                          styles.sectionTitle,
                           {
-                            backgroundColor: theme.buttonBackground,
+                            backgroundColor:
+                              theme.transactionDropdownBackground,
+                            borderColor: theme.buttonBorder,
                             color: theme.text,
                           },
                         ]}
                       >
-                        <Text style={{ color: theme.text }}>Apply</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        onPress={handleCancelFilters}
-                        style={[styles.cancelButton, { color: theme.text }]}
+                        Select Category
+                      </Text>
+                    </TouchableOpacity>
+                    {showCategories && (
+                      <View style={styles.optionsContainer}>
+                        {categories.map((category) => (
+                          <TouchableOpacity
+                            key={category}
+                            onPress={() => {
+                              setSelectedCategory(category);
+                              setShowCategories(false); // Collapse after selection
+                            }}
+                            style={[
+                              styles.optionButton,
+                              selectedCategory === category && {
+                                backgroundColor: theme.buttonBackground,
+                              },
+                            ]}
+                          >
+                            <Text
+                              style={[
+                                styles.optionText,
+                                selectedCategory === category
+                                  ? { color: theme.text }
+                                  : { backgroundColor: theme.unselectedText },
+                                  { color: theme.text }
+                              ]}
+                            >
+                              {category}
+                            </Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    )}
+                  </View>
+
+                  {/* Type Selection */}
+                  <View style={styles.selectionContainer}>
+                    <TouchableOpacity onPress={() => setShowTypes(!showTypes)}>
+                      <Text
+                        style={[styles.sectionTitle, { color: theme.text }]}
                       >
-                        <Text style={{ color: theme.text }}>Cancel</Text>
-                      </TouchableOpacity>
-                      {/* <TouchableOpacity
-                        onPress={handleResetFilters}
-                        style={styles.resetButton}
-                      >
-                        <Text style={{ color: theme.buttonText }}>Reset</Text>
-                      </TouchableOpacity> */}
-                    </View>
+                        Select Type
+                      </Text>
+                    </TouchableOpacity>
+                    {showTypes && (
+                      <View style={styles.optionsContainer}>
+                        {transactionTypes.map((type) => (
+                          <TouchableOpacity
+                            key={type}
+                            onPress={() => {
+                              setSelectedType(type);
+                              setShowTypes(false); // Collapse after selection
+                            }}
+                            style={[
+                              styles.optionButton,
+                              selectedType === type && {
+                                backgroundColor: theme.buttonBackground,
+                              },
+                            ]}
+                          >
+                            <Text
+                              style={[
+                                styles.optionText,
+                                selectedType === type &&
+                                  {
+                                    // color: theme.text,
+                                  },
+                                { color: theme.text },
+                              ]}
+                            >
+                              {type}
+                            </Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    )}
+                  </View>
+
+                  {/* Date Picker */}
+                  <TouchableOpacity
+                    style={[
+                      styles.datePickerButton,
+                      {
+                        backgroundColor: theme.transactionDropdownBackground,
+                      },
+                    ]}
+                    onPress={showDatePicker}
+                  >
+                    <Text
+                      style={[styles.datePickerText, { color: theme.text }]}
+                    >
+                      {tempSelectedDate
+                        ? `Selected Date: ${tempSelectedDate}`
+                        : "Select Date"}
+                    </Text>
+                  </TouchableOpacity>
+                  <DateTimePickerModal
+                    isVisible={isDatePickerVisible}
+                    mode="date"
+                    onConfirm={handleConfirm}
+                    onCancel={hideDatePicker}
+                  />
+
+                  {/* Apply/Cancel Buttons */}
+                  <View style={styles.modalActions}>
+                    <TouchableOpacity
+                      onPress={handleApplyFilters}
+                      style={[
+                        styles.applyButton,
+                        { backgroundColor: theme.buttonBackground },
+                      ]}
+                    >
+                      <Text style={{ color: theme.text }}>Apply</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => {
+                        setShowCategories(false);
+                        setShowTypes(false);
+                        handleCancelFilters();
+                      }}
+                      style={styles.cancelButton}
+                    >
+                      <Text style={{ color: theme.text }}>Cancel</Text>
+                    </TouchableOpacity>
                   </View>
                 </View>
-              </Modal>
-            </View>
+              </View>
+            </Modal>
 
+            {/* Transation List with history button */}
             <View style={{ flex: 1 }}>
               {/* {console.log("Flatlist data", filterTransactions())} */}
               <FlatList
@@ -1130,6 +1218,10 @@ const TransactionScreen = ({ theme }) => {
                               deleteTransaction: deleteTransaction,
                               editTransaction: editTransaction,
                               handleEditTransaction: handleEditTransaction,
+                              transactions: transactionsForCategory.map((transaction) => ({
+                                ...transaction,
+                                date: transaction.date.toISOString(), // Convert Date to ISO string
+                              })),
                               // refreshTransactions
                             },
                           });
@@ -1149,11 +1241,11 @@ const TransactionScreen = ({ theme }) => {
                   </View>
                 )}
                 ListEmptyComponent={
-                  currentPage === totalPages && !getCurrentPageTransactions().length ? (
+                  <View style={styles.emptyContainer}>
                     <Text style={[styles.emptyText, { color: theme.text }]}>
-                      No transactions found
+                      No transaction data added
                     </Text>
-                  ) : null
+                  </View>
                 }
               />
               <View style={styles.paginationContainer}>
@@ -1164,8 +1256,8 @@ const TransactionScreen = ({ theme }) => {
                   <Icon name="chevron-left" size={30} color={theme.text} />
                 </TouchableOpacity>
                 <Text style={[styles.pageText, { color: theme.text }]}>
-                  {currentPage}
-                  {/* {Math.ceil(totalTransactions / transactionsPerPage)} */}
+                 page  {currentPage} of {''}
+                  {Math.ceil(totalTransactions / transactionsPerPage)}
                 </Text>
                 <TouchableOpacity
                   onPress={handleNextPage}
@@ -1194,33 +1286,80 @@ const styles = StyleSheet.create({
     height: 50,
     color: "#fff",
     borderColor: "#ccc",
-    borderWidth: 1,
-    borderRadius: 8,
+    borderWidth: 0.5,
+    borderRadius: 2,
     paddingHorizontal: 10,
-    marginBottom: 10,
+    marginBottom: 15, 
     backgroundColor: "#fff",
   },
-  filterExportContainer: {
+  secondRowontainer:{
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "space-between", // Equal spacing between items
+    alignItems: "center", // Vertically aligns all items
+    marginBottom: 15,
+  },
+  iconAndTextContainer: {
+    width:330,
+    // height:50,
+    flexDirection: "row", 
     alignItems: "center",
-    marginBottom: 10,
-    // marginTop:10,
-    width: 220,
-    // height:50
-
+  },
+  exportText: {
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+ 
+  exportmodalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+  },
+  exportmodalContent: {
+    width: '80%',
+    padding: 20,
+    borderRadius: 2,
+  },
+  exportmodalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 16,
+  },
+  exportOption: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     borderWidth: 0.5,
-    boederRadius: 10
+    borderRadius: 2,
+    marginVertical: 8,
+  },
+  exportOptionText: {
+    fontSize: 16,
+  },
+  exportcloseButton: {
+    width:100,
+    marginTop: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginLeft:70,
+    borderRadius: 2,
+    justifyContent:'center',
+    alignItems:'center'
+  },
+  exportcloseButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   filterButton: {
-    padding: 10,
+    flex: 1, 
+    height: 50,
+    marginHorizontal: 15, 
+    alignItems: "center", 
+    justifyContent: "center",
     borderRadius: 8,
-    justifyContent: 'flex-end',
-    alignItems: 'flex-end'
-    // justifyContent: "flex-end",
-    // alignItems: "flex-end",
+    borderWidth: 0.5,
   },
-  // Modal container
+ 
+  // Filter Modal container 
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -1228,21 +1367,49 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent: {
-    // backgroundColor: '#fff',
     width: '80%',
-    borderWidth: 0.2,
+    borderWidth: 0.5,
     borderColor: '#ccc',
     borderRadius: 10,
     padding: 20,
     alignItems: 'center',
-    borderWidth: 0.2,
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    // marginBottom: 20,
+    marginBottom: 20,
   },
-
+  selectionContainer: {
+    width: '100%',
+    marginBottom: 10,
+    padding: 10,
+    borderWidth: 0.2,
+    borderRadius: 2,
+    borderColor: '#cccc',
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  optionsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  optionButton: {
+    width: '48%',
+    padding: 10,
+    borderWidth: 0.5,
+    borderColor: '#ccc',
+    borderRadius: 2,
+    marginBottom: 10,
+    alignItems: 'center',
+  },
+  optionText: {
+    fontSize: 14,
+    color: '#333',
+  },
   transactionCard: {
     padding: 10,
     borderRadius: 10,
@@ -1295,10 +1462,15 @@ const styles = StyleSheet.create({
     marginLeft: 5,
     fontSize: 14,
   },
+  emptyContainer: {
+    flex: 1,
+
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   emptyText: {
-    textAlign: "center",
     fontSize: 16,
-    marginTop: 20,
+    fontWeight: 'bold',
   },
   headerContainer: {
     flexDirection: "row",
@@ -1313,6 +1485,15 @@ const styles = StyleSheet.create({
   },
   iconContainer: {
     marginLeft: 8,
+  },
+  iconButton: {
+    flex: 1, 
+    height: 50, 
+    marginHorizontal: 5, 
+    alignItems: "center", 
+    justifyContent: "center",
+    borderRadius: 2,
+    borderWidth: 0.3,
   },
   headerTitleContainer: {
     flexDirection: "row",
@@ -1332,23 +1513,35 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   filterContainer: {
-    width: 150,
+     width: 150,
     height: 45,
+    // right:"10%",
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-end",
     marginBottom: 10,
-    marginHorizontal: 1,
+    // marginHorizontal: 1,
     // zIndex: 1,
   },
   pickerContainer: {
     width: '100%',
+    marginVertical:2,
+    padding:0,
     // marginBottom: 10,
+    // borderColor: '#ccc',
+    borderRadius: 5,
+  },
+  ExportpickerContainer: {
+    width: '40%',
     borderColor: '#ccc',
     borderRadius: 5,
-    // borderWidth: 0.2,
+    position: 'relative', 
   },
   picker: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    // padding: 10,
     height: 50,
     borderWidth: 1,
     borderRadius: 5,
@@ -1363,12 +1556,12 @@ const styles = StyleSheet.create({
     borderRadius: 2,
     justifyContent: 'center',
     alignItems: 'flex-start',
-    // marginLeft:18,
-    paddingLeft: 18,
+    padding: 10,
     marginBottom: 10,
   },
   datePickerText: {
     fontSize: 16,
+    fontWeight: "bold",
   },
   modalActions: {
     flexDirection: 'row',
@@ -1376,7 +1569,6 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   applyButton: {
-    // backgroundColor: '#01579b',
     padding: 10,
     borderRadius: 5,
     width: '48%',
@@ -1398,7 +1590,7 @@ const styles = StyleSheet.create({
     width: "80%",
     backgroundColor: "white",
     padding: 20,
-    borderRadius: 10,
+    borderRadius: 2,
   },
   modalTitle: {
     fontSize: 18,
@@ -1417,34 +1609,21 @@ const styles = StyleSheet.create({
   //   padding: 0,
   //   margin: 0,
   // },
-  exportButton: {
-    height: 50,
-    backgroundColor: "#333",
-    padding: 10,
-    borderRadius: 5,
-    // marginBottom: 10,
-    marginLeft: 5,
-    width: 50,
-    borderWidth: 1,
-  },
-  exportButtonText: {
-    color: "#fff",
-    textAlign: "center",
-    fontSize: 16,
-  },
   dropdownMenu: {
-    position: "relative",
-    top: 0,
-    right: 10,
-    // height: '90%',
-    backgroundColor: "#fff",
-    borderRadius: 5,
-    elevation: 5, // For shadow on Android
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    padding: 5,
-    // zIndex: 10,
+    position: 'absolute',
+    left: '10',
+    top:60,
+    right: 70,
+    zIndex: 10,
+    height: '10%',
+    backgroundColor: 'white',
+    borderColor: '#ccc',
+    borderWidth: 0.2,
+    borderRadius: 2,
+  },
+  dropdownItem: {
+    padding: 10,
+    color: 'black',
   },
   menuText: {
     marginLeft: 10,

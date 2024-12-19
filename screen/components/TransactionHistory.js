@@ -405,19 +405,48 @@ const TransactionHistoryModal = ({ route }) => {
   };
 
   const handleSave = async () => {
-    if (!transaction.description || !transaction.category || transaction.amount === null || transaction.amount <= 0 || !transaction.type || !transaction.date) {
-      Alert.alert("Error", "Please provide valid transaction details.");
+    // Check for empty fields and show specific alerts
+    // if (!transaction.description) {
+    //   Alert.alert("Alert", "Please provide a description.");
+    //   return;
+    // }
+    
+    if (transaction.amount === null || transaction.amount <= 0) {
+      Alert.alert("Alert", "Please provide a valid amount.");
+      return;
+    }
+  
+    if (!transaction.type) {
+      Alert.alert("Alert", "Please select a transaction type.");
+      return;
+    }
+  
+    if (!transaction.date) {
+      Alert.alert("Alert", "Please provide a date.");
       return;
     }
   
     const date = new Date(transaction.date);
     if (isNaN(date.getTime())) {
-      Alert.alert("Error", "Invalid date.");
+      Alert.alert("Alert", "Invalid date.");
       return;
     }
   
     const formattedDate = date.toISOString();
     const updatedTransaction = { ...transaction, date: formattedDate };
+  
+    // Check if there are any changes
+    const originalTransaction = transactionHistory.find(item => item.Id === updatedTransaction.Id);
+    const hasChanges = 
+      originalTransaction.description !== updatedTransaction.description ||
+      originalTransaction.amount !== updatedTransaction.amount ||
+      originalTransaction.type !== updatedTransaction.type ||
+      originalTransaction.date !== updatedTransaction.date;
+  
+    if (!hasChanges) {
+      Alert.alert("No Changes", "No changes have been made.");
+      return;
+    }
   
     console.log("Saving updated transaction:", updatedTransaction);
   
