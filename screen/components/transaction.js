@@ -48,7 +48,7 @@ const TransactionScreen = ({ theme }) => {
   const [tempSelectedDate, setTempSelectedDate] = useState(null);
   const [filteredTransactions, setFilteredTransactions] = useState(null);
 
-  const [transactionsPerPage] = useState(4);
+  const [transactionsPerPage] = useState(3);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalTransactions, setTotalTransactions] = useState(0)
 
@@ -850,13 +850,13 @@ const TransactionScreen = ({ theme }) => {
       >
         <View style={[styles.container, { backgroundColor: theme.background }]}>
           <View style={[styles.transactionsContainer]}>
-            {/* <View style={styles.headerContainer}>
+            <View style={styles.headerContainer}>
               <TouchableOpacity style={styles.headerTitleContainer}>
                 <Text style={[styles.headerTitle, { color: theme.text }]}>
                   Transactions History
                 </Text>
               </TouchableOpacity>
-            </View> */}
+            </View>
 
             {/* Search Input */}
             <TextInput
