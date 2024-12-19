@@ -37,10 +37,11 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
     const [selectedIcon, setSelectedIcon] = useState(null);
     const [newCategory, setNewCategory] = useState('');
     const [selectedCategory, setSelectedCategory] = useState(null);
-    const [selectedGraph, setSelectedGraph] = useState(null);
+    const [selectedGraph, setSelectedGraph] = useState(null); // Default to null for showing all data
     const [balancePercentage, setBalancePercentage] = useState(0);
     const navigation = useNavigation();
-    const [IncomeCategory, setIncomeCategory] = useState([]);
+
+    const [IncomeCategory, setIncomeCategory] = useState([]); // State to store the income data
     const [currency, setCurrency] = useState({ value: 'USD', label: '$ Dollar', locale: 'en-US' });
     const [barData, setBarData] = useState([]);
     const [totalIncome, setTotalIncome] = useState(0);
@@ -149,6 +150,10 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
         }
     };
 
+
+
+
+
     useEffect(() => {
 
         const fetchUserInfo = async () => {
@@ -172,104 +177,98 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
     }, []);
 
     const calculateAndSaveFinancialData = (userId) => {
-
-        // Reference to the user's document in Firestore
         const userDocRef = doc(db, "users", userId);
 
-        // Set up real-time listener
         const unsubscribe = onSnapshot(
             userDocRef,
             (docSnapshot) => {
-                if (docSnapshot.exists()) {
-
-                    const userInfo = docSnapshot.data();
-
-                    const financialData = userInfo.financialData || {};
-                    const lastUpdatedTime = financialData.lastUpdated || "Not Available";
-
-                    // Find the latest dates from income and expenses
-                    const latestIncomeDate = userInfo.income?.length
-                        ? new Date(Math.max(...userInfo.income?.map((item) => new Date(item.date).getTime())))
-                        : null;
-                    const latestExpenseDate = userInfo.expenses?.length
-                        ? new Date(Math.max(...userInfo.expenses.map((item) => new Date(item.date).getTime())))
-                        : null;
-
-                    // Determine the most recent date
-                    let lastUpdatedDate = null;
-                    if (latestIncomeDate && latestExpenseDate) {
-                        lastUpdatedDate = latestIncomeDate > latestExpenseDate ? latestIncomeDate : latestExpenseDate;
-                    } else if (latestIncomeDate) {
-                        lastUpdatedDate = latestIncomeDate;
-                    } else if (latestExpenseDate) {
-                        lastUpdatedDate = latestExpenseDate;
-                    }
-
-                    // Format the lastUpdatedDate to ISO string
-                    const formattedLastUpdatedDate = lastUpdatedDate
-                        ? lastUpdatedDate.toISOString()
-                        : "Not Available";
-
-                    // Calculate total income
-                    const calculatedTotalIncome = (userInfo.income || []).reduce(
-                        (sum, incomeItem) => sum + (incomeItem.amount || 0),
-                        0
-                    );
-
-                    // Calculate total expenses
-                    const calculatedTotalExpense = (userInfo.expenses || []).reduce(
-                        (sum, expenseItem) => sum + (expenseItem.amount || 0),
-                        0
-                    );
-
-                    // Calculate the balance
-                    const calculatedBalance = calculatedTotalIncome - calculatedTotalExpense;
-
-                    // Update Firestore document without using `await`
-                    setDoc(
-                        userDocRef,
-                        {
-                            financialData: {
-                                balance: calculatedBalance,
-                                totalIncome: calculatedTotalIncome,
-                                totalExpense: calculatedTotalExpense,
-                                lastUpdated: formattedLastUpdatedDate,
-                            },
-                        },
-                        { merge: true }
-                    ).then(() => {
-                        // console.log("Financial data updated successfully in Firestore.");
-                    }).catch((error) => {
-                        console.error("Error updating financial data in Firestore:", error);
-                    });
-
-                    // Update the state variables
-                    setTotalIncome(calculatedTotalIncome);
-                    setTotalExpense(calculatedTotalExpense);
-                    setBalance(calculatedBalance);
-                    setLastUpdated(formattedLastUpdatedDate);
-
-                    // console.log("Updated financial data:", {
-                    //     totalIncome: calculatedTotalIncome,
-                    //     totalExpense: calculatedTotalExpense,
-                    //     balance: calculatedBalance,
-                    //     lastUpdated: formattedLastUpdatedDate,
-                    // });
-                } else {
+                if (!docSnapshot.exists()) {
                     console.error("User document does not exist.");
+                    return;
                 }
+
+                const userInfo = docSnapshot.data();
+
+                const incomeArray = Array.isArray(userInfo.income) ? userInfo.income : [];
+                const expensesArray = Array.isArray(userInfo.expenses) ? userInfo.expenses : [];
+
+                const validIncomeDates = incomeArray
+                    .map(item => new Date(item.date))
+                    .filter(date => !isNaN(date.getTime()));
+                const validExpenseDates = expensesArray
+                    .map(item => new Date(item.date))
+                    .filter(date => !isNaN(date.getTime()));
+
+                const latestIncomeDate = validIncomeDates.length
+                    ? new Date(Math.max(...validIncomeDates.map(date => date.getTime())))
+                    : null;
+                const latestExpenseDate = validExpenseDates.length
+                    ? new Date(Math.max(...validExpenseDates.map(date => date.getTime())))
+                    : null;
+
+                const lastUpdatedDate = latestIncomeDate && latestExpenseDate
+                    ? (latestIncomeDate > latestExpenseDate ? latestIncomeDate : latestExpenseDate)
+                    : (latestIncomeDate || latestExpenseDate);
+
+                const formattedLastUpdatedDate = lastUpdatedDate
+                    ? lastUpdatedDate.toISOString()
+                    : "Not Available";
+
+                const calculatedTotalIncome = incomeArray.reduce(
+                    (sum, incomeItem) => sum + (typeof incomeItem.amount === 'number' ? incomeItem.amount : 0),
+                    0
+                );
+                const calculatedTotalExpense = expensesArray.reduce(
+                    (sum, expenseItem) => sum + (typeof expenseItem.amount === 'number' ? expenseItem.amount : 0),
+                    0
+                );
+
+                const calculatedBalance = calculatedTotalIncome - calculatedTotalExpense;
+
+                setDoc(
+                    userDocRef,
+                    {
+                        financialData: {
+                            balance: calculatedBalance,
+                            totalIncome: calculatedTotalIncome,
+                            totalExpense: calculatedTotalExpense,
+                            lastUpdated: formattedLastUpdatedDate,
+                        },
+                    },
+                    { merge: true }
+                ).catch((error) => {
+                    console.error("Error updating financial data in Firestore:", error);
+                });
+
+                setTotalIncome(calculatedTotalIncome || 0);
+                setTotalExpense(calculatedTotalExpense || 0);
+                setBalance(calculatedBalance || 0);
+                setLastUpdated(formattedLastUpdatedDate || "Not Available");
             },
             (error) => {
                 console.error("Error listening to user financial data:", error);
             }
         );
 
-        // Return unsubscribe function to clean up the listener when no longer needed
         return unsubscribe;
     };
 
+
+
+
+
+
     const fetchIncomeData = (userId) => {
         try {
+            // Get the user ID
+
+            if (!userId) {
+
+                return;
+            }
+
+
+
             // Reference to the user's Firestore document
             const userDocRef = doc(db, "users", userId);
 
@@ -318,6 +317,12 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
 
     const fetchExpenseData = (userId) => {
         try {
+
+            if (!userId) {
+
+                return;
+            }
+
             // Reference to the user's Firestore document
             const userDocRef = doc(db, "users", userId);
 
@@ -417,7 +422,7 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
         // Add your refresh logic here (e.g., fetch new data or reset the form)
         fetchIncomeData(); // Example of refreshing category data
         fetchExpenseData();
-        calculateAndSaveFinancialData();
+        // calculateAndSaveFinancialData();
         // Simulate an API call or data refresh with a timeout
         setTimeout(() => {
             setIsRefreshing(false); // Reset the refreshing state
@@ -765,324 +770,55 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
                 {/* <Separator theme={theme} /> */}
 
                 {/* History Section */}
-                <Text style={[styles.sectionTitle, { color: theme.text }]}>History</Text>
-                <View style={[styles.historyContainer, { backgroundColor: theme.background }]}>
-                    {/* Switch between Year and Month */}
-                    <View style={styles.switchContainer}>
-                        <View>
-                            {/* <TouchableOpacity style={[styles.switchButton, { backgroundColor: theme.background }]}>
-                                <Text style={[styles.switchButtonText, { color: theme.text }]}>2024</Text>
-                            </TouchableOpacity> */}
+                <Card theme={theme}>
+                    <Text style={[styles.sectionTitle, { color: theme.text }]}>History</Text>
+                   
+                            <PieChart
+                                data={barData}
+                                showText
+                                donut
+
+                                sectionAutoFocus
+                                focusOnPress
 
 
-
-                            {/* Month Selection Dropdown */}
-                            {/* <View style={styles.dropdownWrapper}>
-                                <DropDownPicker
-                                    open={open}
-                                    value={value}
-                                    items={items}
-                                    setOpen={setOpen}
-                                    setValue={setValue}
-                                    setItems={setItems}
-                                    placeholder="Select Month"
-                                    placeholderStyle={styles.dropdownPlaceholder}
-                                    style={styles.dropdown}
-                                    dropDownContainerStyle={styles.dropdownContainer}
-                                    textStyle={styles.dropdownText}
-                                    arrowIconStyle={styles.arrowIcon}
-                                    listMode="SCROLLVIEW" // Enables scrolling
-                                    scrollViewProps={{
-                                        nestedScrollEnabled: true, // Ensure smooth scrolling within parent ScrollView
-                                    }}
-                                    maxHeight={300} // Set an appropriate max height for the dropdown
-                                    zIndex={5000} // Ensure dropdown is displayed above other components
-                                    zIndexInverse={1000}
-                                    onChangeValue={(selectedMonth) => {
-                                        console.log("Selected Month:", selectedMonth);
-                                        setSelectedMonth(selectedMonth); // Update state
-                                    }}
-                                />
-
-                            </View> */}
-
-
-                        </View>
-                    </View>
-
-                    {/* Date Picker */}
-
-
-                    {/* Income and Expense Toggle */}
-                    {/* <View style={[styles.toggleContainer, { backgroundColor: theme.background }]}>
-                        <TouchableOpacity
-                            style={[
-                                styles.toggleButton,
-                                styles.incomeButton,
-                                selectedGraph === 'income', // Highlight if selected
-                            ]}
-                            onLongPress={() => setSelectedGraph('income')} // Show only Expense on long press
-                            onPressOut={() => setSelectedGraph(null)} // Show only Income
-                        >
-                            <View style={[styles.icon, styles.incomeIcon]} />
-                            <Text style={[styles.toggleText, { color: theme.text }]}>Income</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                            style={[
-                                styles.toggleButton,
-                                styles.expenseButton,
-                                selectedGraph === 'expense', // Highlight if selected
-                            ]}
-                            onLongPress={() => setSelectedGraph('expense')} // Show only Income on long press
-                            onPressOut={() => setSelectedGraph(null)} // Show only Expense
-                        >
-                            <View style={[styles.icon, styles.expenseIcon]} />
-                            <Text style={[styles.toggleText, { color: theme.text }]}>Expense</Text>
-                        </TouchableOpacity>
-
-
-                    </View> */}
-                    <View style={{
-                        flex: 1,
-                        justifyContent: "center",
-                        alignItems: "center",
-                        marginTop: 15
-                    }}>
-                        <PieChart
-                            data={barData}
-                            showText
-                            donut
-
-                            sectionAutoFocus
-                            focusOnPress
-
-
-                            radius={120}
-                            innerRadius={60}// For a donut chart, set this value greater than 0
-                            centerLabelComponent={() => (
-                                <View style={{ justifyContent: 'center', alignItems: 'center' }}>
-                                    <Text
-                                        style={{ fontSize: 22, color: 'black', fontWeight: 'bold' }}>
-                                        {balancePercentage}%
-                                    </Text>
-                                    <Text style={{ fontSize: 14, color: 'black' }}>Balance</Text>
-                                </View>
-
-                            )}
-                            onPress={(section) => handleSectionPress(section)} // Capture press events
-                        />
-                        <View style={styles.legendContainer}>
-                            {barData.map((item, index) => (
-                                <View key={index} style={styles.legendItem}>
-                                    <View
-                                        style={[
-                                            styles.legendColor,
-                                            { backgroundColor: item.color },
-                                        ]}
-                                    />
-                                    <Text style={styles.legendText}>
-                                        {item.label}: {item.value}
-                                    </Text>
-                                </View>
-                            ))}
-                        </View>
-                    </View>
-
-                    {/* Modal for New Income */}
-                    <Modal visible={isIncomeModalVisible} animationType="slide" transparent={true}>
-                        <View style={styles.modalContainer}>
-                            <View style={[styles.modalContent, { backgroundColor: backgroundColor }]}>
-                                <Text style={[styles.modalTitle, { color: theme.text }]}>
-                                    Add New <Text style={{ color: 'green' }}>Income</Text> Transaction
-                                </Text>
-
-                                <TextInput style={styles.input} placeholder="Transaction Description" placeholderTextColor={textColor} />
-                                <Text style={[styles.optionalText, { color: theme.text }]}>Transaction Description (Optional)</Text>
-
-                                <TextInput style={styles.input} placeholder="Put the price" placeholderTextColor={textColor} />
-                                <Text style={[styles.requiredText, { color: theme.text }]}>Transaction Amount (Required)</Text>
-
-                                {/* Category Selection */}
-                                <View style={styles.pickerContainer}>
-                                    <Text style={[styles.pickerLabel, { color: theme.text }]}>Category</Text>
-                                    <TouchableOpacity
-                                        style={[
-                                            styles.categoryBox,
-                                            { backgroundColor: theme.background, borderColor: isDarkMode ? '#fff' : '#000' }
-                                        ]}
-                                        onPress={openCategoryModal}
-                                    >
-                                        <Text style={[styles.categoryText, { color: theme.text }]}>
-                                            {selectedCategory ? `Category: {currency.label.split(' ')[0]}{selectedCategory}` : 'Select a category'}
+                                radius={140}
+                                innerRadius={60}// For a donut chart, set this value greater than 0
+                                centerLabelComponent={() => (
+                                    <View style={{ justifyContent: 'center', alignItems: 'center' }}>
+                                        <Text
+                                            style={{ fontSize: 22, color: 'black', fontWeight: 'bold' }}>
+                                            {balancePercentage}%
                                         </Text>
-                                        <MaterialIcons name="arrow-drop-down" size={24} color={textColor} />
-                                    </TouchableOpacity>
-                                    <Text style={[styles.pickerHint, { color: theme.text }]}>Select a category for the transaction</Text>
-                                </View>
+                                        <Text style={{ fontSize: 14, color: 'black' }}>Balance</Text>
+                                    </View>
 
-                                {/* Date Picker */}
-                                <View style={styles.pickerContainer}>
-                                    <Text style={[styles.pickerLabel, { color: theme.text }]}>Transaction date</Text>
-                                    <TouchableOpacity
-                                        style={[styles.datePickerButton, { backgroundColor: theme.background }]}
-                                        onPress={() => setDatePickerVisible(true)}
-                                    >
-                                        <Text style={[styles.pickerText, { color: theme.text }]}>{transactionDate.toLocaleDateString('en-US')}</Text>
-                                        <MaterialIcons name="calendar-today" size={24} color={textColor} />
-                                    </TouchableOpacity>
-                                </View>
-
-                                {/* Save and Cancel Buttons */}
-                                <View style={styles.buttonContainer}>
-                                    <TouchableOpacity style={styles.cancelButton} onPress={closeModals}>
-                                        <Text style={styles.buttonText}>Cancel</Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity style={styles.saveButton} onPress={closeModals}>
-                                        <Text style={styles.buttonText}>Save</Text>
-                                    </TouchableOpacity>
-                                </View>
-                            </View>
-                        </View>
-                    </Modal>
-
-                    {/* Modal for Category Selection */}
-                    <Modal visible={isCategoryModalVisible} animationType="slide" transparent={true}>
-                        <View style={styles.modalContainer}>
-                            <View style={[styles.modalContent, { backgroundColor: backgroundColor }]}>
-                                <Text style={[styles.modalTitle, { color: theme.text }]}>Select a Category</Text>
-
-                                {/* Create New Category Button */}
-                                <TouchableOpacity onPress={openCreateCategoryModal} style={styles.createNewCategoryButton}>
-                                    <Text style={[styles.createNewText, { color: theme.text }]}>+ Create New</Text>
-                                </TouchableOpacity>
-
-                                {/* Cancel Button */}
-                                <TouchableOpacity onPress={() => setCategoryModalVisible(false)} style={styles.smallCancelButton}>
-                                    <Text style={styles.smallCancelText}>Cancel</Text>
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-                    </Modal>
-
-
-
-                    {/* Modal for Creating New Category */}
-                    <Modal visible={isCreateCategoryModalVisible} animationType="slide" transparent={true}>
-                        <View style={styles.modalContainer}>
-                            <View style={[styles.modalContent, { backgroundColor: backgroundColor }]}>
-                                <Text style={[styles.modalTitle, { color: theme.text }]}>Create New Category</Text>
-
-                                {/* Input for Category Name */}
-                                <TextInput
-                                    placeholder="Category Name"
-                                    value={newCategory}
-                                    onChangeText={(text) => setNewCategory(text)}
-                                    style={[styles.input, { backgroundColor: theme.background, color: theme.text }]}
-                                    placeholderTextColor={modalTextColor}
-                                />
-
-                                {/* Icon Selection */}
-                                <TouchableOpacity style={styles.emojiButton} onPress={() => setEmojiPickerVisible(true)}>
-                                    <Text style={{ color: theme.text }}>{selectedIcon ? selectedIcon : 'Click To Select Icon'}</Text>
-                                </TouchableOpacity>
-
-                                {/* Save Button */}
-                                <TouchableOpacity onPress={handleSaveCategory} style={[styles.niceSaveButton, { backgroundColor: isDarkMode ? '#FF6A00' : '#008F11' }]}>
-                                    <Text style={[styles.niceButtonText, { color: isDarkMode ? '#fff' : '#fff' }]}>Save</Text>
-                                </TouchableOpacity>
-
-                                {/* Cancel Button */}
-                                <TouchableOpacity onPress={() => setCreateCategoryModalVisible(false)} style={[styles.niceCancelButton, { backgroundColor: isDarkMode ? '#444' : '#ddd' }]}>
-                                    <Text style={[styles.niceButtonText, { color: isDarkMode ? '#fff' : '#000' }]}>Cancel</Text>
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-                    </Modal>
-
-
-                    {/* Emoji Picker Modal */}
-                    <Modal visible={isEmojiPickerVisible} animationType="slide" transparent={true}>
-                        <View style={styles.emojiPickerContainer}>
-                            {/* Replace this with your Emoji Picker component */}
-                            <TouchableOpacity onPress={() => { setSelectedIcon('🙂'); setEmojiPickerVisible(false); }} style={styles.emoji}>
-                                <Text style={{ fontSize: 30 }}>🙂</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity onPress={() => setEmojiPickerVisible(false)} style={styles.cancelButton}>
-                                <Text style={styles.buttonText}>Close</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </Modal>
-
-
-                    {/* Modal for New Expense */}
-                    <Modal visible={isExpenseModalVisible} animationType="slide" transparent={true}>
-                        <View style={styles.modalContainer}>
-                            <View style={[styles.modalContent, { backgroundColor: theme.background }]}>
-                                <Text style={[styles.modalTitle, { color: theme.text }]}>
-                                    Add New <Text style={{ color: 'red' }}>Expense</Text> Transaction
-                                </Text>
-
-                                <TextInput style={styles.input} placeholder="Transaction Description" placeholderTextColor={textColor} />
-                                <Text style={[styles.optionalText, { color: theme.text }]}>Transaction Description (Optional)</Text>
-
-                                <TextInput style={styles.input} placeholder="Put the price" placeholderTextColor={textColor} />
-                                <Text style={[styles.requiredText, { color: theme.text }]}>Transaction Amount (Required)</Text>
-
-                                {/* Category Selection */}
-                                <View style={styles.pickerContainer}>
-                                    <Text style={[styles.pickerLabel, { color: theme.text }]}>Category</Text>
-                                    <TouchableOpacity
-                                        style={[styles.categoryBox, { backgroundColor: theme.background, borderColor: isDarkMode ? '#fff' : '#000' }]}
-                                        onPress={openCategoryModal}  // This opens the category selection modal
-                                    >
-                                        <Text style={[styles.categoryText, { color: theme.text }]}>
-                                            {selectedCategory ? `Category: {currency.label.split(' ')[0]}{selectedCategory}` : 'Select a category'}
+                                )}
+                                onPress={(section) => handleSectionPress(section)} // Capture press events
+                            />
+                            <View style={styles.legendContainer}>
+                                {barData.map((item, index) => (
+                                    <View key={index} style={styles.legendItem}>
+                                        <View
+                                            style={[
+                                                styles.legendColor,
+                                                { backgroundColor: item.color },
+                                            ]}
+                                        />
+                                        <Text style={[styles.legendText, { color: theme.text }]}>
+                                            {item.label}: {item.value}
                                         </Text>
-                                        <MaterialIcons name="arrow-drop-down" size={24} color={textColor} />
-                                    </TouchableOpacity>
-                                    <Text style={[styles.pickerHint, { color: theme.text }]}>Select a category for the transaction</Text>
-                                </View>
+                                    </View>
+                                ))}
+                            
+                        
+{/* ============================================================================================================================================================ */}
 
-                                {/* Date Picker */}
-                                <View style={styles.pickerContainer}>
-                                    <Text style={[styles.pickerLabel, { color: theme.text }]}>Transaction date</Text>
-                                    <TouchableOpacity
-                                        style={[styles.datePickerButton, { backgroundColor: theme.background }]}
-                                        onPress={() => setDatePickerVisible(true)}
-                                    >
-                                        <Text style={[styles.pickerText, { color: theme.text }]}>{transactionDate.toLocaleDateString('en-US')}</Text>
-                                        <MaterialIcons name="calendar-today" size={24} color={textColor} />
-                                    </TouchableOpacity>
-                                </View>
-
-                                {/* Save and Cancel Buttons */}
-                                <View style={styles.buttonContainer}>
-                                    <TouchableOpacity style={styles.cancelButton} onPress={closeModals}>
-                                        <Text style={styles.buttonText}>Cancel</Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity style={styles.saveButton} onPress={closeModals}>
-                                        <Text style={styles.buttonText}>Save</Text>
-                                    </TouchableOpacity>
-                                </View>
-                            </View>
-                        </View>
-                    </Modal>
-
-                    <Modal visible={isExpenseEmojiPickerVisible} animationType="slide" transparent={true}>
-                        <View style={styles.emojiPickerContainer}>
-                            <TouchableOpacity onPress={() => { setSelectedExpenseIcon('😎'); setExpenseEmojiPickerVisible(false); }} style={styles.emoji}>
-                                <Text style={{ fontSize: 30 }}>😎</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity onPress={() => setExpenseEmojiPickerVisible(false)} style={styles.cancelButton}>
-                                <Text style={styles.buttonText}>Close</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </Modal>
+                       
 
 
-
-                </View>
+                    </View>
+                </Card>
             </ScrollView >
         </Provider >
     );
@@ -1186,7 +922,6 @@ const styles = StyleSheet.create({
         marginRight: 5,
     },
     legendContainer: {
-        flexDirection: 'row',
         justifyContent: 'center',
         marginTop: 20,
 
