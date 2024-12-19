@@ -71,7 +71,7 @@ import { getFirestore, doc, setDoc, getDoc, Timestamp } from "firebase/firestore
         createdAt: Timestamp.now(),
       });
       console.log("User data successfully stored in Firestore.");
-      navigation.navigate("signin");
+      navigation.navigate("SignIn");
     } catch (error) {
       console.error("Error creating user: ", error);
       setValue({ ...value, error: error.message });
@@ -411,9 +411,9 @@ useEffect(() => {
             Have an account?{" "}
             <Text
               style={styles.link}
-              onPress={() => navigation.navigate("signin")}
+              onPress={() => navigation.navigate("SignIn")}
             >
-              Sign In
+              SignIn
             </Text>
           </Text>
         </View>
