@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { StyleSheet, Modal, ActivityIndicator, StatusBar } from "react-native";
+import {Alert, StyleSheet, Modal, ActivityIndicator, StatusBar } from "react-native";
 import {
   View,
   Text,
@@ -32,6 +32,7 @@ export default function SignInPage({ navigation }) {
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const[IsEmailVerified, setIsEmailVerified]= useState(false);
 
   const isEmail = (input) => {
     // A robust regex pattern for email validation
@@ -144,7 +145,6 @@ export default function SignInPage({ navigation }) {
       showAlertMessage("Please enter a valid email address.");
       return;
     }
-
     // console.log("Attempting to sign in with:", emailEntered, password);
 
     try {
@@ -154,7 +154,7 @@ export default function SignInPage({ navigation }) {
 
       // Check if email verification is required
       if (!user.emailVerified) {
-        showAlertMessage("Please verify your email before signing in.");
+        showAlertMessage("A verification email has been sent your email Address, Please verify your email before signing in.");
         return;
       }
 
@@ -205,6 +205,21 @@ export default function SignInPage({ navigation }) {
     }
   };
 
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      if (user && user.emailVerified) {
+        setIsEmailVerified(true);
+        
+        // Update Firestore to mark email as verified
+        await setDoc(doc(db, "users", user.uid), { emailVerified: true }, { merge: true });
+        
+        // Alert.alert("Email Verified", "Your email is successfully verified!");
+      }
+    });
+  
+    return () => unsubscribe(); // Cleanup the listener on unmount
+  }, []);
+  
   //-----------------------------------------------------------------------------------------------------------
 
   // Configure Google Sign-In
@@ -481,7 +496,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   alertHeading: {
-    color: "#FFA500",
+    color: "red",
     fontSize: 20,
     fontWeight: "bold",
     marginBottom: 10,
@@ -496,7 +511,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   alertButton: {
-    backgroundColor: "#FFA500",
+    backgroundColor: "#01579b",
     paddingVertical: 8,
     paddingHorizontal: 15,
     borderRadius: 5,
@@ -563,7 +578,7 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
   resetPasswordText: {
-    color: 'orange',
+    color: '#ffff',
     marginTop: 1,
     marginLeft: 180,
   },
@@ -604,7 +619,7 @@ const styles = StyleSheet.create({
   //   backgroundColor: "#f9f9f9",
   // },
   loginButton: {
-    backgroundColor: "#0A74DA",
+    backgroundColor: "#01579b",
     width: "100%",
     padding: 15,
     borderRadius: 8,
@@ -634,7 +649,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FFA500",
+    backgroundColor: "#01579b",
     paddingHorizontal: 15,
     paddingVertical: 10,
     borderWidth: 1,
