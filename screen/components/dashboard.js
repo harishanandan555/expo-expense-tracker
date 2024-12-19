@@ -183,103 +183,82 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
     }, []);
 
     const calculateAndSaveFinancialData = (userId) => {
-       
-
-     
-        // Reference to the user's document in Firestore
         const userDocRef = doc(db, "users", userId);
-
-        // Set up real-time listener
+    
         const unsubscribe = onSnapshot(
             userDocRef,
             (docSnapshot) => {
-                if (docSnapshot.exists()) {
-
-                    const userInfo = docSnapshot.data();
-
-                    const financialData = userInfo.financialData || {};
-                    const lastUpdatedTime = financialData.lastUpdated || "Not Available";
-
-                    // Find the latest dates from income and expenses
-                    const latestIncomeDate = userInfo.income?.length
-                        ? new Date(Math.max(...userInfo.income?.map((item) => new Date(item.date).getTime())))
-                        : null;
-                    const latestExpenseDate = userInfo.expenses?.length
-                        ? new Date(Math.max(...userInfo.expenses.map((item) => new Date(item.date).getTime())))
-                        : null;
-
-                    // Determine the most recent date
-                    let lastUpdatedDate = null;
-                    if (latestIncomeDate && latestExpenseDate) {
-                        lastUpdatedDate = latestIncomeDate > latestExpenseDate ? latestIncomeDate : latestExpenseDate;
-                    } else if (latestIncomeDate) {
-                        lastUpdatedDate = latestIncomeDate;
-                    } else if (latestExpenseDate) {
-                        lastUpdatedDate = latestExpenseDate;
-                    }
-
-                    // Format the lastUpdatedDate to ISO string
-                    const formattedLastUpdatedDate = lastUpdatedDate
-                        ? lastUpdatedDate.toISOString()
-                        : "Not Available";
-
-                    // Calculate total income
-                    const calculatedTotalIncome = (userInfo.income || []).reduce(
-                        (sum, incomeItem) => sum + (incomeItem.amount || 0),
-                        0
-                    );
-
-                    // Calculate total expenses
-                    const calculatedTotalExpense = (userInfo.expenses || []).reduce(
-                        (sum, expenseItem) => sum + (expenseItem.amount || 0),
-                        0
-                    );
-
-                    // Calculate the balance
-                    const calculatedBalance = calculatedTotalIncome - calculatedTotalExpense;
-
-                    // Update Firestore document without using `await`
-                    setDoc(
-                        userDocRef,
-                        {
-                            financialData: {
-                                balance: calculatedBalance,
-                                totalIncome: calculatedTotalIncome,
-                                totalExpense: calculatedTotalExpense,
-                                lastUpdated: formattedLastUpdatedDate,
-                            },
-                        },
-                        { merge: true }
-                    ).then(() => {
-                        // console.log("Financial data updated successfully in Firestore.");
-                    }).catch((error) => {
-                        console.error("Error updating financial data in Firestore:", error);
-                    });
-
-                    // Update the state variables
-                    setTotalIncome(calculatedTotalIncome);
-                    setTotalExpense(calculatedTotalExpense);
-                    setBalance(calculatedBalance);
-                    setLastUpdated(formattedLastUpdatedDate);
-
-                    // console.log("Updated financial data:", {
-                    //     totalIncome: calculatedTotalIncome,
-                    //     totalExpense: calculatedTotalExpense,
-                    //     balance: calculatedBalance,
-                    //     lastUpdated: formattedLastUpdatedDate,
-                    // });
-                } else {
+                if (!docSnapshot.exists()) {
                     console.error("User document does not exist.");
+                    return;
                 }
+    
+                const userInfo = docSnapshot.data();
+    
+                const incomeArray = Array.isArray(userInfo.income) ? userInfo.income : [];
+                const expensesArray = Array.isArray(userInfo.expenses) ? userInfo.expenses : [];
+    
+                const validIncomeDates = incomeArray
+                    .map(item => new Date(item.date))
+                    .filter(date => !isNaN(date.getTime()));
+                const validExpenseDates = expensesArray
+                    .map(item => new Date(item.date))
+                    .filter(date => !isNaN(date.getTime()));
+    
+                const latestIncomeDate = validIncomeDates.length
+                    ? new Date(Math.max(...validIncomeDates.map(date => date.getTime())))
+                    : null;
+                const latestExpenseDate = validExpenseDates.length
+                    ? new Date(Math.max(...validExpenseDates.map(date => date.getTime())))
+                    : null;
+    
+                const lastUpdatedDate = latestIncomeDate && latestExpenseDate
+                    ? (latestIncomeDate > latestExpenseDate ? latestIncomeDate : latestExpenseDate)
+                    : (latestIncomeDate || latestExpenseDate);
+    
+                const formattedLastUpdatedDate = lastUpdatedDate
+                    ? lastUpdatedDate.toISOString()
+                    : "Not Available";
+    
+                const calculatedTotalIncome = incomeArray.reduce(
+                    (sum, incomeItem) => sum + (typeof incomeItem.amount === 'number' ? incomeItem.amount : 0),
+                    0
+                );
+                const calculatedTotalExpense = expensesArray.reduce(
+                    (sum, expenseItem) => sum + (typeof expenseItem.amount === 'number' ? expenseItem.amount : 0),
+                    0
+                );
+    
+                const calculatedBalance = calculatedTotalIncome - calculatedTotalExpense;
+    
+                setDoc(
+                    userDocRef,
+                    {
+                        financialData: {
+                            balance: calculatedBalance,
+                            totalIncome: calculatedTotalIncome,
+                            totalExpense: calculatedTotalExpense,
+                            lastUpdated: formattedLastUpdatedDate,
+                        },
+                    },
+                    { merge: true }
+                ).catch((error) => {
+                    console.error("Error updating financial data in Firestore:", error);
+                });
+    
+                setTotalIncome(calculatedTotalIncome || 0);
+                setTotalExpense(calculatedTotalExpense || 0);
+                setBalance(calculatedBalance || 0);
+                setLastUpdated(formattedLastUpdatedDate || "Not Available");
             },
             (error) => {
                 console.error("Error listening to user financial data:", error);
             }
         );
-
-        // Return unsubscribe function to clean up the listener when no longer needed
+    
         return unsubscribe;
     };
+    
 
 
 
@@ -290,7 +269,7 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
            // Get the user ID
 
             if (!userId) {
-                console.error("User ID is required.");
+            
                 return;
             }
 
@@ -347,7 +326,7 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
         try {
 
             if (!userId) {
-                console.error("User ID is required.");
+             
                 return;
             }
 
@@ -479,7 +458,7 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
         // Add your refresh logic here (e.g., fetch new data or reset the form)
         fetchIncomeData(); // Example of refreshing category data
         fetchExpenseData();
-        calculateAndSaveFinancialData();
+        // calculateAndSaveFinancialData();
         // Simulate an API call or data refresh with a timeout
         setTimeout(() => {
             setIsRefreshing(false); // Reset the refreshing state
@@ -831,6 +810,7 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
                 {/* <Separator theme={theme} /> */}
 
                 {/* History Section */}
+                <Card theme={theme}>
                 <Text style={[styles.sectionTitle, { color: theme.text }]}>History</Text>
                 <View style={[styles.historyContainer, { backgroundColor: theme.background }]}>
                     {/* Switch between Year and Month */}
@@ -912,7 +892,7 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
                     <View style={{flex: 1,
         justifyContent: "center",
         alignItems: "center",
-        marginTop:15}}>
+        marginTop:-25}}>
             <PieChart
                 data={barData}
                 showText
@@ -922,7 +902,7 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
           focusOnPress
         
           
-          radius={120}
+          radius={140}
           innerRadius={60}// For a donut chart, set this value greater than 0
                 centerLabelComponent={() => (
                     <View style={{justifyContent: 'center', alignItems: 'center'}}>
@@ -952,6 +932,7 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
                 ))}
             </View>
         </View>
+       
                   
                     {/* Modal for New Income */}
                     <Modal visible={isIncomeModalVisible} animationType="slide" transparent={true}>
@@ -1147,6 +1128,7 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
 
 
                 </View>
+                </Card>
             </ScrollView >
         </Provider >
     );
@@ -1250,7 +1232,7 @@ const styles = StyleSheet.create({
         marginRight: 5,
     },
     legendContainer: {
-        flexDirection: 'row',
+       
           justifyContent: 'center',
         marginTop: 20,
        
