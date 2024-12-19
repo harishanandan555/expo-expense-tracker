@@ -397,10 +397,21 @@ import { getUserByEmail, storeUserCategories, updateCategoryAttempts, deleteCate
 import { hasSubscription } from "../services/stripe.services";
 
 // Define a schema using Yup for validation
+// const CreateCategorySchema = Yup.object().shape({
+//     name: Yup.string().required('Name is required'),
+//     icon: Yup.string().required('Icon is required'),
+//     type: Yup.string().oneOf(['income', 'expense'], 'Invalid category type').required('Type is required'),
+// });
+
 const CreateCategorySchema = Yup.object().shape({
-    name: Yup.string().required('Name is required'),
-    icon: Yup.string().required('Icon is required'),
-    type: Yup.string().oneOf(['income', 'expense'], 'Invalid category type').required('Type is required'),
+  name: Yup.string()
+    .min(3, "Name must be at least 3 characters")
+    .max(20, "Name must be less than 20 characters")
+    .required("Name is required"),
+  icon: Yup.string().required('Icon is required'),
+  type: Yup.mixed()
+    .oneOf(["income", "expense"], 'Type must be either "income" or "expense"')
+    .required("Type is required"),
 });
 
 export const CreateCategoryDialogButton = ({ theme, type, onSuccessCallback }) => {
@@ -411,7 +422,14 @@ export const CreateCategoryDialogButton = ({ theme, type, onSuccessCallback }) =
     const [userInfo, setUserInfo] = useState(null);
     const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
 
-    //
+    const showToast = () => {
+      Toast.show({
+        type: 'success',
+        text1: 'Hello!',
+        text2: 'This toast appears over the modal 👋',
+      });
+    };
+
     const { control, handleSubmit, formState: { isValid, isSubmitting }, reset } = useForm({
       defaultValues: {
         name: "",
