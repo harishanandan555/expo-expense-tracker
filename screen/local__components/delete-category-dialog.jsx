@@ -334,9 +334,10 @@ export const DeleteCategoryDialog = ({ children, category, onSuccessCallback }) 
   const deleteCategory = async (id, name, type, userId) => {
     // console.log("categoryId: ", id);
     try {
-      // Validate data before proceeding with the deletion
-      const validatedData = await DeleteCategorySchema.validate({ name, type }, { abortEarly: false });
-      const response = await deleteCategoryByUserId(id, userId, validatedData); // pass categoryId directly
+
+      // const validatedData = await DeleteCategorySchema.validate({ name, type }, { abortEarly: false });
+
+      const response = await deleteCategoryByUserId(id, userId, name, type); // pass categoryId directly
       if (!response?.success) {
         throw new Error(response?.message || "Failed to delete category");
       }
@@ -345,6 +346,7 @@ export const DeleteCategoryDialog = ({ children, category, onSuccessCallback }) 
       Toast.show({ type: "success", text1: "Category deleted successfully" });
       setModalVisible(false);
       onSuccessCallback();
+
     } catch (error) {
       // Handle errors
       console.error("Error during category deletion:", error);

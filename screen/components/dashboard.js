@@ -24,12 +24,12 @@ import { Provider } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native'; // Import useNavigation hook
 import { doc, setDoc, onSnapshot } from "firebase/firestore";
 import { BarChart, PieChart } from 'react-native-gifted-charts';
+
 const DashboardScreen = ({ theme, setCurrentScreen }) => {
 
     const [isIncomeModalVisible, setIncomeModalVisible] = useState(false);
     const [isExpenseModalVisible, setExpenseModalVisible] = useState(false);
     const [transactionDate, setTransactionDate] = useState(new Date());
-
     const [activeButton, setActiveButton] = useState('income');
     const [isCategoryModalVisible, setCategoryModalVisible] = useState(false);
     const [isCreateCategoryModalVisible, setCreateCategoryModalVisible] = useState(false);
@@ -43,25 +43,18 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
 
     const [IncomeCategory, setIncomeCategory] = useState([]); // State to store the income data
     const [currency, setCurrency] = useState({ value: 'USD', label: '$ Dollar', locale: 'en-US' });
-
     const [barData, setBarData] = useState([]);
-
     const [totalIncome, setTotalIncome] = useState(0);
     const [totalExpense, setTotalExpense] = useState(0);
     const [balance, setBalance] = useState(0);
     const [lastUpdated, setLastUpdated] = useState("");
     const [isExpenseEmojiPickerVisible, setExpenseEmojiPickerVisible] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
-    // Default to current month
     const screenWidth = Dimensions.get('window').width;
     const maxValue = Math.max(totalIncome, totalExpense, balance);
-
-
     const [userInfos, setUserInfos] = useState(null);
-
     const route = useRoute();
     const [expenses, setExpenses] = useState([]);
-
 
     const initFinancialDataListener = () => {
         const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
@@ -322,7 +315,6 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
         }
     };
 
-
     const fetchExpenseData = (userId) => {
         try {
 
@@ -377,20 +369,10 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
         }
     };
 
-
-
-
-
-
-
-
-
-
     const toggleIncomeModals = () => {
         navigation.navigate('NewIncome', { type: 'income' });
     };
 
-    // Navigate to NewExpense screen
     const toggleExpenseModals = () => {
         navigation.navigate('NewExpense', { type: 'expense' });
     };
@@ -404,18 +386,12 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
         setCreateCategoryModalVisible(true);
     };
 
-
-
-
     const handleSaveCategory = () => {
         if (newCategory && selectedIcon) {
             // Save the new category (this is for demonstration; you may save it in a state)
             setCreateCategoryModalVisible(false);
         }
     };
-
-
-
 
     const closeModals = () => {
         setIncomeModalVisible(false);
@@ -424,24 +400,12 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
         setCreateCategoryModalVisible(false);
     };
 
-
-
-
-
-
-
-
-
-
     useEffect(() => {
         GoogleSignin.configure({
             webClientId:
                 "622095554406-32i6saoa7sn60bu32n33f4um21ep2i65.apps.googleusercontent.com",
         });
     }, []);
-
-
-
 
     useEffect(() => {
         const fetchData = async () => {
@@ -451,7 +415,6 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
         };
         fetchData();
     }, []);
-
 
     const onRefresh = () => {
         setIsRefreshing(true);
@@ -465,15 +428,11 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
             setIsRefreshing(false); // Reset the refreshing state
         }, 2000); // Example: 2-second delay
     };
-    // Determine colors based on the theme
+
     const isDarkMode = theme === 'dark';
     const backgroundColor = isDarkMode ? '#000' : '#fff';
-
     const textColor = isDarkMode ? '#fff' : '#000';
-
     const modalTextColor = isDarkMode ? '#fff' : '#000';
-    // Function to format the date
-
 
     return (
         <Provider>
@@ -963,7 +922,6 @@ const styles = StyleSheet.create({
         marginRight: 5,
     },
     legendContainer: {
-
         justifyContent: 'center',
         marginTop: 20,
 
@@ -1503,4 +1461,5 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
 });
+
 export default DashboardScreen;
