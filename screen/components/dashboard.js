@@ -177,6 +177,7 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
     }, []);
 
     const calculateAndSaveFinancialData = (userId) => {
+
         const userDocRef = doc(db, "users", userId);
 
         const unsubscribe = onSnapshot(
@@ -252,11 +253,6 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
 
         return unsubscribe;
     };
-
-
-
-
-
 
     const fetchIncomeData = (userId) => {
         try {
@@ -772,49 +768,49 @@ const DashboardScreen = ({ theme, setCurrentScreen }) => {
                 {/* History Section */}
                 <Card theme={theme}>
                     <Text style={[styles.sectionTitle, { color: theme.text }]}>History</Text>
-                   
-                            <PieChart
-                                data={barData}
-                                showText
-                                donut
 
-                                sectionAutoFocus
-                                focusOnPress
+                    <PieChart
+                        data={barData}
+                        showText
+                        donut
+
+                        sectionAutoFocus
+                        focusOnPress
 
 
-                                radius={140}
-                                innerRadius={60}// For a donut chart, set this value greater than 0
-                                centerLabelComponent={() => (
-                                    <View style={{ justifyContent: 'center', alignItems: 'center' }}>
-                                        <Text
-                                            style={{ fontSize: 22, color: 'black', fontWeight: 'bold' }}>
-                                            {balancePercentage}%
-                                        </Text>
-                                        <Text style={{ fontSize: 14, color: 'black' }}>Balance</Text>
-                                    </View>
+                        radius={140}
+                        innerRadius={60}// For a donut chart, set this value greater than 0
+                        centerLabelComponent={() => (
+                            <View style={{ justifyContent: 'center', alignItems: 'center' }}>
+                                <Text
+                                    style={{ fontSize: 22, color: 'black', fontWeight: 'bold' }}>
+                                    {balancePercentage}%
+                                </Text>
+                                <Text style={{ fontSize: 14, color: 'black' }}>Balance</Text>
+                            </View>
 
-                                )}
-                                onPress={(section) => handleSectionPress(section)} // Capture press events
-                            />
-                            <View style={styles.legendContainer}>
-                                {barData.map((item, index) => (
-                                    <View key={index} style={styles.legendItem}>
-                                        <View
-                                            style={[
-                                                styles.legendColor,
-                                                { backgroundColor: item.color },
-                                            ]}
-                                        />
-                                        <Text style={[styles.legendText, { color: theme.text }]}>
-                                            {item.label}: {item.value}
-                                        </Text>
-                                    </View>
-                                ))}
-                            
-                        
-{/* ============================================================================================================================================================ */}
+                        )}
+                        onPress={(section) => handleSectionPress(section)} // Capture press events
+                    />
+                    <View style={styles.legendContainer}>
+                        {barData.map((item, index) => (
+                            <View key={index} style={styles.legendItem}>
+                                <View
+                                    style={[
+                                        styles.legendColor,
+                                        { backgroundColor: item.color },
+                                    ]}
+                                />
+                                <Text style={[styles.legendText, { color: theme.text }]}>
+                                    {item.label}: {item.value}
+                                </Text>
+                            </View>
+                        ))}
 
-                       
+
+                        {/* ============================================================================================================================================================ */}
+
+
 
 
                     </View>
